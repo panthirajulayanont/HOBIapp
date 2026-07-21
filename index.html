@@ -828,7 +828,12 @@ function addOptionRow(triggerBtn,group,option,qty){
   const row=document.createElement('div');
   row.className='itemrow';
   row.style.background='#fff';
-  const groupOpts=groups.map(g=>`<option ${g===group?'selected':''}>${escapeHtml(g)}</option>`).join('');
+  let groupOpts=groups.map(g=>`<option ${g===group?'selected':''}>${escapeHtml(g)}</option>`).join('');
+  // ถ้ากลุ่มที่ส่งมา (เช่น จาก Claude Chat import) ยังไม่เคยตั้งค่าไว้ในระบบ ให้แสดงไว้เป็นตัวเลือกพิเศษ
+  // แทนที่จะหายไปเงียบๆ เพื่อให้ผู้ใช้เห็นและตรวจสอบได้ ไม่เสียข้อมูล
+  if(group && !groups.includes(group)){
+    groupOpts += `<option value="${escapeHtml(group)}" selected>${escapeHtml(group)} ⚠️ (ยังไม่ได้ตั้งค่าไว้)</option>`;
+  }
   row.innerHTML=`
     <select class="opt-group" style="flex:1" onchange="onOptGroupChange(this)">${groupOpts||'<option value="">(ยังไม่มีข้อมูลกลุ่มตัวเลือก)</option>'}</select>
     <select class="opt-name" style="flex:1.4"></select>
@@ -844,10 +849,15 @@ function onOptGroupChange(groupSel){
 function populateOptionNameSelect(groupSel,nameSel,selectedName){
   const group=groupSel.value;
   const opts=getOptionsForGroup(group);
-  nameSel.innerHTML=opts.map(o=>{
+  let html=opts.map(o=>{
     const oos=isOutOfStock(o.stock_status);
     return `<option value="${escapeHtml(o.name)}" ${o.name===selectedName?'selected':''} ${oos?'style="color:#c0392b"':''}>${escapeHtml(o.name)}${oos?' ⚠️ หมดสต็อก':''}</option>`;
-  }).join('') || '<option value="">(ไม่มีตัวเลือกในกลุ่มนี้)</option>';
+  }).join('');
+  // ถ้าชื่อออปชั่นที่ส่งมายังไม่เคยตั้งค่าไว้ในกลุ่มนี้ ให้แสดงไว้เป็นตัวเลือกพิเศษแทนที่จะหายไปเงียบๆ
+  if(selectedName && !opts.some(o=>o.name===selectedName)){
+    html += `<option value="${escapeHtml(selectedName)}" selected>${escapeHtml(selectedName)} ⚠️ (ยังไม่ได้ตั้งค่าไว้)</option>`;
+  }
+  nameSel.innerHTML = html || '<option value="">(ไม่มีตัวเลือกในกลุ่มนี้)</option>';
 }
 function markManualTotal(){ orderManualTotalEdited=true; }
 function onThaiPlusToggle(silent){
@@ -1684,24 +1694,4 @@ async function renderStockUsage(){
 }
 
 /* ============ INIT ============ */
-window.addEventListener('DOMContentLoaded',async ()=>{
-  await openDB();
-  const savedFbConfig=getFirebaseConfig();
-  if(savedFbConfig){
-    const fbInput=document.getElementById('fb-config');
-    if(fbInput) fbInput.value=JSON.stringify(savedFbConfig,null,2);
-    initFirebase(savedFbConfig); // onAuthStateChanged will refresh views once resolved
-  }
-  await refreshMenuCache();
-  await refreshOptionCache();
-  resetOrderForm();
-  resetPurForm();
-  document.getElementById('d-from').value='2000-01-01';
-  document.getElementById('d-to').value=todayISO();
-  renderRecentOrders();
-  renderRecentPurchases();
-  refreshDbStats();
-});
-</script>
-</body>
-</html>
+w
