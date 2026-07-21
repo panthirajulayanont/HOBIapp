@@ -393,6 +393,13 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     </div>
 
     <div class="card">
+      <h2>📋 นำเข้าจาก Claude Chat (ไม่เสียค่า API เพิ่ม)</h2>
+      <p class="hint">ไม่อยากเติมเครดิต Anthropic API แยก? ส่งรูปแคปออเดอร์/ใบเสร็จไปให้ Claude อ่านในแชทปกติได้เลย (ใช้โควต้า Claude ที่มีอยู่แล้ว ไม่มีค่าใช้จ่ายเพิ่ม) Claude จะสรุปเป็นโค้ด JSON กลับมาให้ ก็อปโค้ดนั้นมาวางที่นี่ แล้วกด "นำเข้าข้อมูล" — ระบบจะพักข้อมูลไว้ให้ตรวจสอบทีละรายการที่แท็บออเดอร์/ซื้อของ ก่อนกดบันทึกจริง (เหมือนโหมดอ่านรูปหลายรูปทุกอย่าง)</p>
+      <textarea id="claude-import-json" placeholder='วางโค้ด JSON ที่ Claude ให้มาตรงนี้ เช่น {"orders":[...],"purchases":[...]}' style="min-height:110px;font-family:monospace;font-size:11.5px"></textarea>
+      <div class="btn-row"><button class="btn-primary" onclick="importFromClaudeJSON()">📥 นำเข้าข้อมูล</button></div>
+    </div>
+
+    <div class="card">
       <h2>ข้อมูล / ฐานข้อมูล</h2>
       <div id="db-stats" class="hint">กำลังโหลด...</div>
       <h3>นำเข้าจากไฟล์ Excel เดิม</h3>
@@ -617,6 +624,35 @@ function saveSettings(){
   localStorage.setItem('hobi_api_key',document.getElementById('api-key').value.trim());
   localStorage.setItem('hobi_model',document.getElementById('api-model').value);
   toast('บันทึกการตั้งค่าแล้ว','ok');
+}
+function goToTab(name){
+  const idx={orders:0,purchases:1,dashboard:2,settings:3}[name];
+  const btn=document.querySelectorAll('nav.bottomnav button')[idx];
+  if(btn) switchTab(name,btn);
+}
+function importFromClaudeJSON(){
+  const box=document.getElementById('claude-import-json');
+  const raw=box.value.trim();
+  if(!raw){ toast('ยังไม่ได้วางข้อมูล','err'); return; }
+  let j;
+  try{
+    const match=raw.match(/\{[\s\S]*\}/);
+    j=JSON.parse(match?match[0]:raw);
+  }catch(err){ toast('อ่านโค้ด JSON ไม่ได้ ลองก็อปมาใหม่ทั้งก้อนอีกครั้ง','err'); return; }
+  const newOrders=Array.isArray(j.orders)?j.orders:[];
+  const newPurchases=Array.isArray(j.purchases)?j.purchases:(Array.isArray(j.receipts)?j.receipts:[]);
+  if(!newOrders.length && !newPurchases.length){ toast('ไม่พบข้อมูล orders/purchases ใน JSON นี้','err'); return; }
+  if(newOrders.length){ pendingOrders=pendingOrders.concat(newOrders); renderOrderPendingList(); }
+  if(newPurchases.length){ pendingPurchases=pendingPurchases.concat(newPurchases); renderPurPendingList(); }
+  box.value='';
+  toast(`นำเข้าแล้ว: ${newOrders.length} ออเดอร์, ${newPurchases.length} ใบเสร็จ — ไปตรวจสอบและบันทึกทีละรายการ`,'ok');
+  if(newOrders.length){
+    goToTab('orders'); switchOrderMode('ai');
+    document.getElementById('order-form').style.display='none';
+  }else if(newPurchases.length){
+    goToTab('purchases'); switchPurMode('ai');
+    document.getElementById('pur-form').style.display='none';
+  }
 }
 
 /* ============ CLOUD SYNC (Firebase) ============ */
