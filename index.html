@@ -1694,4 +1694,24 @@ async function renderStockUsage(){
 }
 
 /* ============ INIT ============ */
-w
+window.addEventListener('DOMContentLoaded',async ()=>{
+  await openDB();
+  const savedFbConfig=getFirebaseConfig();
+  if(savedFbConfig){
+    const fbInput=document.getElementById('fb-config');
+    if(fbInput) fbInput.value=JSON.stringify(savedFbConfig,null,2);
+    initFirebase(savedFbConfig); // onAuthStateChanged will refresh views once resolved
+  }
+  await refreshMenuCache();
+  await refreshOptionCache();
+  resetOrderForm();
+  resetPurForm();
+  document.getElementById('d-from').value='2000-01-01';
+  document.getElementById('d-to').value=todayISO();
+  renderRecentOrders();
+  renderRecentPurchases();
+  refreshDbStats();
+});
+</script>
+</body>
+</html>
