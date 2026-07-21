@@ -15,6 +15,9 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
 :root{
   --pink:#2e2b28; --pink-dark:#4a4038; --cream:#f5f1e7; --brown:#2e2b28;
@@ -397,6 +400,39 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     </div>
 
     <div class="card">
+      <h2>☁️ ซิงค์ข้อมูลข้ามเครื่อง (Cloud Sync)</h2>
+      <p class="hint">เชื่อมต่อ Firebase (ฟรี) เพื่อให้กรอกข้อมูลจากมือถือหรือคอมก็ได้ ข้อมูล sync กันอัตโนมัติแบบเรียลไทม์ ต้องตั้งค่าโปรเจกต์ Firebase ก่อนครั้งเดียว:</p>
+      <p class="hint">
+        1. เข้า <b>console.firebase.google.com</b> → สร้างโปรเจกต์ใหม่ (ฟรี)<br>
+        2. เมนูซ้าย "Build" → <b>Firestore Database</b> → Create database → เลือกโหมดใดก็ได้ (ตั้งค่า Rules เพิ่มด้านล่าง)<br>
+        3. เมนูซ้าย "Build" → <b>Authentication</b> → Get started → เปิดใช้ผู้ให้บริการ "Google"<br>
+        4. Authentication → Settings → Authorized domains → เพิ่มโดเมนเว็บที่ใช้เปิดแอพนี้ (เช่น ยูสเซอร์.github.io)<br>
+        5. ไปที่ ⚙️ Project settings → เลื่อนลงหา "Your apps" → กด "Add app" เลือกไอคอนเว็บ (&lt;/&gt;) → คัดลอกโค้ด <code>firebaseConfig</code> ทั้งก้อนมาวางด้านล่างนี้<br>
+        6. ที่ Firestore → แท็บ Rules วางกฎนี้แล้ว Publish:
+      </p>
+      <textarea readonly style="min-height:110px;font-family:monospace;font-size:11.5px" onclick="this.select()">rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+  }
+}</textarea>
+
+      <label style="margin-top:12px">วาง firebaseConfig ที่นี่ (ทั้งก้อน { ... })</label>
+      <textarea id="fb-config" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}' style="min-height:90px;font-family:monospace;font-size:11.5px"></textarea>
+      <div class="btn-row"><button class="btn-secondary" onclick="saveFirebaseConfig()">บันทึกการตั้งค่า Cloud</button></div>
+
+      <div id="cloud-status" class="hint" style="margin-top:10px">ยังไม่ได้เชื่อมต่อ Cloud Sync</div>
+      <div class="btn-row">
+        <button class="btn-primary" id="cloud-signin-btn" onclick="signInGoogle()">เข้าสู่ระบบด้วย Google</button>
+        <button class="btn-ghost" id="cloud-signout-btn" onclick="signOutCloud()" style="display:none">ออกจากระบบ</button>
+      </div>
+      <div class="warn-box" style="margin-top:10px">💡 ครั้งแรกหลัง sign in แล้ว ถ้ามีข้อมูลเดิมอยู่ในเครื่องนี้ (จากก่อนเปิด Cloud Sync) ให้กดปุ่มด้านล่างเพื่ออัพโหลดข้อมูลเดิมขึ้นคลาวด์ครั้งเดียว</div>
+      <div class="btn-row"><button class="btn-secondary" onclick="migrateLocalToCloud()">📤 อัพโหลดข้อมูลในเครื่องนี้ขึ้นคลาวด์</button></div>
+    </div>
+
+    <div class="card">
       <h2>ตัวเลือกเมนู & สต็อก (Option Groups)</h2>
       <p class="hint">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน แก้สถานะสต็อกได้ทันทีที่นี่</p>
       <div id="opt-manage-list"></div>
@@ -453,7 +489,7 @@ function switchTab(name,btn){
   document.querySelectorAll('nav.bottomnav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   if(name==='dashboard') renderDashboard();
-  if(name==='settings'){ refreshDbStats(); renderOptionManage(); renderStockUsage(); }
+  if(name==='settings'){ refreshDbStats(); renderOptionManage(); renderStockUsage(); updateSyncStatusUI(); }
 }
 
 /* ============ INDEXEDDB ============ */
@@ -495,29 +531,67 @@ function openDB(){
   });
 }
 function txStore(name,mode){ return db.transaction(name,mode||'readonly').objectStore(name); }
-function idbAll(storeName){
+
+/* ---- local (IndexedDB) primitives — always hit the local 'hobiDB', regardless of cloud mode ---- */
+function idbAllLocal(storeName){
   return new Promise((resolve,reject)=>{
     const req=txStore(storeName).getAll();
     req.onsuccess=()=>resolve(req.result); req.onerror=e=>reject(e);
   });
 }
-function idbPut(storeName,obj){
+function idbPutLocal(storeName,obj){
   return new Promise((resolve,reject)=>{
     const req=txStore(storeName,'readwrite').put(obj);
     req.onsuccess=()=>resolve(); req.onerror=e=>reject(e);
   });
 }
-function idbDelete(storeName,id){
+function idbDeleteLocal(storeName,id){
   return new Promise((resolve,reject)=>{
     const req=txStore(storeName,'readwrite').delete(id);
     req.onsuccess=()=>resolve(); req.onerror=e=>reject(e);
   });
 }
-function idbClear(storeName){
+function idbClearLocal(storeName){
   return new Promise((resolve,reject)=>{
     const req=txStore(storeName,'readwrite').clear();
     req.onsuccess=()=>resolve(); req.onerror=e=>reject(e);
   });
+}
+
+/* ---- dual-mode data layer used throughout the app — routes to Firestore when
+   cloud sync is signed in, otherwise falls back to local IndexedDB ---- */
+function isCloudActive(){ return !!(cloudUser && firestoreDB); }
+function cloudCollection(storeName){ return firestoreDB.collection('users').doc(cloudUser.uid).collection(storeName); }
+async function idbAll(storeName){
+  if(isCloudActive()){
+    const snap=await cloudCollection(storeName).get();
+    return snap.docs.map(d=>d.data());
+  }
+  return idbAllLocal(storeName);
+}
+async function idbPut(storeName,obj){
+  if(isCloudActive()){
+    await cloudCollection(storeName).doc(String(obj.id)).set(obj);
+    return;
+  }
+  return idbPutLocal(storeName,obj);
+}
+async function idbDelete(storeName,id){
+  if(isCloudActive()){
+    await cloudCollection(storeName).doc(String(id)).delete();
+    return;
+  }
+  return idbDeleteLocal(storeName,id);
+}
+async function idbClear(storeName){
+  if(isCloudActive()){
+    const snap=await cloudCollection(storeName).get();
+    const batch=firestoreDB.batch();
+    snap.docs.forEach(d=>batch.delete(d.ref));
+    await batch.commit();
+    return;
+  }
+  return idbClearLocal(storeName);
 }
 
 /* ============ SETTINGS ============ */
@@ -531,6 +605,123 @@ function saveSettings(){
   localStorage.setItem('hobi_api_key',document.getElementById('api-key').value.trim());
   localStorage.setItem('hobi_model',document.getElementById('api-model').value);
   toast('บันทึกการตั้งค่าแล้ว','ok');
+}
+
+/* ============ CLOUD SYNC (Firebase) ============ */
+let firebaseApp=null, firestoreDB=null, cloudUser=null, ordersUnsub=null, purUnsub=null;
+
+function getFirebaseConfig(){
+  const raw=localStorage.getItem('hobi_firebase_config');
+  if(!raw) return null;
+  try{ return JSON.parse(raw); }catch(e){ return null; }
+}
+function saveFirebaseConfig(){
+  const raw=document.getElementById('fb-config').value.trim();
+  if(!raw){ toast('วางค่า firebaseConfig ก่อน','err'); return; }
+  let cfg;
+  try{ cfg=JSON.parse(raw); }
+  catch(e){ toast('รูปแบบ firebaseConfig ไม่ถูกต้อง (ต้องเป็น JSON ที่มี { })','err'); return; }
+  if(!cfg.apiKey || !cfg.projectId){ toast('firebaseConfig ไม่ครบ ต้องมี apiKey และ projectId','err'); return; }
+  localStorage.setItem('hobi_firebase_config',JSON.stringify(cfg));
+  toast('บันทึกการตั้งค่า Cloud แล้ว กำลังเชื่อมต่อ...','ok');
+  initFirebase(cfg);
+}
+function initFirebase(cfg){
+  try{
+    if(typeof firebase==='undefined'){ toast('โหลดไลบรารี Firebase ไม่สำเร็จ ตรวจสอบอินเทอร์เน็ต','err'); return; }
+    if(!firebaseApp) firebaseApp=firebase.initializeApp(cfg);
+    firestoreDB=firebase.firestore();
+    firebase.auth().onAuthStateChanged(async (user)=>{
+      cloudUser=user;
+      updateSyncStatusUI();
+      attachRealtimeListeners();
+      await refreshAllViews();
+    });
+  }catch(err){
+    console.error(err);
+    toast('เชื่อมต่อ Firebase ไม่สำเร็จ: '+err.message,'err');
+  }
+}
+async function signInGoogle(){
+  if(!firestoreDB){ toast('บันทึกการตั้งค่า Cloud ก่อน (วาง firebaseConfig แล้วกดบันทึก)','err'); return; }
+  try{
+    const provider=new firebase.auth.GoogleAuthProvider();
+    await firebase.auth().signInWithPopup(provider);
+    toast('เข้าสู่ระบบสำเร็จ','ok');
+  }catch(err){
+    console.error(err);
+    toast('เข้าสู่ระบบไม่สำเร็จ: '+err.message,'err');
+  }
+}
+async function signOutCloud(){
+  detachRealtimeListeners();
+  if(firebase.auth) await firebase.auth().signOut();
+  cloudUser=null;
+  updateSyncStatusUI();
+  await refreshAllViews();
+  toast('ออกจากระบบ Cloud Sync แล้ว (กลับไปใช้ข้อมูลในเครื่อง)','ok');
+}
+function updateSyncStatusUI(){
+  const statusEl=document.getElementById('cloud-status');
+  const inBtn=document.getElementById('cloud-signin-btn');
+  const outBtn=document.getElementById('cloud-signout-btn');
+  if(!statusEl) return;
+  if(isCloudActive()){
+    statusEl.innerHTML='🟢 เชื่อมต่อ Cloud Sync แล้ว — เข้าสู่ระบบเป็น <b>'+escapeHtml(cloudUser.email||cloudUser.displayName||'')+'</b> (ข้อมูลจะ sync กับทุกเครื่องที่ login ด้วยบัญชีนี้)';
+    if(inBtn) inBtn.style.display='none';
+    if(outBtn) outBtn.style.display='inline-block';
+  }else if(firestoreDB){
+    statusEl.textContent='ตั้งค่า Cloud เรียบร้อย แต่ยังไม่ได้เข้าสู่ระบบ — กด "เข้าสู่ระบบด้วย Google"';
+    if(inBtn) inBtn.style.display='inline-block';
+    if(outBtn) outBtn.style.display='none';
+  }else{
+    statusEl.textContent='ยังไม่ได้เชื่อมต่อ Cloud Sync (ใช้ข้อมูลในเครื่องนี้เท่านั้น)';
+    if(inBtn) inBtn.style.display='inline-block';
+    if(outBtn) outBtn.style.display='none';
+  }
+}
+function attachRealtimeListeners(){
+  detachRealtimeListeners();
+  if(!isCloudActive()) return;
+  ordersUnsub=cloudCollection('orders').onSnapshot(()=>{
+    renderRecentOrders();
+    if(document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+  },err=>console.error('orders listener error',err));
+  purUnsub=cloudCollection('purchases').onSnapshot(()=>{
+    renderRecentPurchases();
+    if(document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+  },err=>console.error('purchases listener error',err));
+}
+function detachRealtimeListeners(){
+  if(ordersUnsub){ ordersUnsub(); ordersUnsub=null; }
+  if(purUnsub){ purUnsub(); purUnsub=null; }
+}
+async function refreshAllViews(){
+  await refreshMenuCache();
+  await refreshOptionCache();
+  await renderRecentOrders();
+  await renderRecentPurchases();
+  await renderOptionManage();
+  await renderStockUsage();
+  await refreshDbStats();
+  if(document.getElementById('tab-dashboard').classList.contains('active')) await renderDashboard();
+}
+async function migrateLocalToCloud(){
+  if(!isCloudActive()){ toast('ต้อง sign in Cloud Sync ก่อนถึงจะอัพโหลดได้','err'); return; }
+  if(!confirm('อัพโหลดข้อมูลทั้งหมดในเครื่องนี้ขึ้นคลาวด์? (ถ้าคลาวด์มีข้อมูล id ซ้ำอยู่แล้วจะถูกเขียนทับด้วยข้อมูลในเครื่อง)')) return;
+  const stores=['menu','orders','order_items','purchases','option_groups','order_item_options'];
+  let total=0;
+  try{
+    for(const s of stores){
+      const rows=await idbAllLocal(s);
+      for(const r of rows){ await idbPut(s,r); total++; }
+    }
+    toast(`อัพโหลดข้อมูล ${total} รายการขึ้นคลาวด์แล้ว 🎉`,'ok');
+    await refreshAllViews();
+  }catch(err){
+    console.error(err);
+    toast('อัพโหลดไม่สำเร็จ: '+err.message,'err');
+  }
 }
 
 /* ============ CLAUDE API ============ */
@@ -1556,6 +1747,12 @@ async function renderStockUsage(){
 /* ============ INIT ============ */
 window.addEventListener('DOMContentLoaded',async ()=>{
   await openDB();
+  const savedFbConfig=getFirebaseConfig();
+  if(savedFbConfig){
+    const fbInput=document.getElementById('fb-config');
+    if(fbInput) fbInput.value=JSON.stringify(savedFbConfig,null,2);
+    initFirebase(savedFbConfig); // onAuthStateChanged will refresh views once resolved
+  }
   await refreshMenuCache();
   await refreshOptionCache();
   loadSettingsUI();
