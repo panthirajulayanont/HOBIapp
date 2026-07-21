@@ -160,25 +160,16 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- ORDERS TAB -->
   <div class="tabpage active" id="tab-orders">
     <div class="card">
+      <h2>📋 นำเข้าจาก Claude Chat</h2>
+      <p class="hint">ส่งรูปแคปออเดอร์/ใบเสร็จไปให้ Claude อ่านในแชทปกติ (ไม่มีค่าใช้จ่ายเพิ่ม) แล้วก็อปโค้ด JSON ที่ได้มาวางตรงนี้ กด "นำเข้าข้อมูล" — ระบบจะพักข้อมูลไว้ให้ตรวจสอบทีละรายการก่อนบันทึกจริง (รองรับทั้งออเดอร์และรายการซื้อของในโค้ดเดียวกัน)</p>
+      <textarea id="claude-import-json" placeholder='วางโค้ด JSON ที่ Claude ให้มาตรงนี้ เช่น {"orders":[...],"purchases":[...]}' style="min-height:100px;font-family:monospace;font-size:11.5px"></textarea>
+      <div class="btn-row"><button class="btn-primary" onclick="importFromClaudeJSON()">📥 นำเข้าข้อมูล</button></div>
+      <div id="order-pending-list" class="pending-list" style="display:none"></div>
+    </div>
+
+    <div class="card">
       <h2>บันทึกออเดอร์ใหม่</h2>
-      <div class="seg">
-        <button id="seg-order-ai" class="active" onclick="switchOrderMode('ai')">📷 อ่านจากรูป</button>
-        <button id="seg-order-manual" onclick="switchOrderMode('manual')">✍️ กรอกเอง</button>
-      </div>
-
-      <div id="order-ai-panel">
-        <label class="imgdrop" id="order-imgdrop" for="order-img-input">
-          📷 แตะเพื่อเลือกรูปแคปหน้าออเดอร์ (Grab Food / Line Man) — เลือกได้หลายรูปพร้อมกัน<br><span class="hint">รองรับ .jpg .png — ถ้ามีหลายออเดอร์ปนอยู่ในหลายรูป AI จะแยกให้อัตโนมัติตามเลขออเดอร์ที่เห็นในภาพ</span>
-        </label>
-        <input type="file" id="order-img-input" accept="image/*" multiple style="display:none" onchange="handleOrderImage(event)">
-        <div id="order-img-preview" class="preview-grid" style="display:none"></div>
-        <div class="btn-row">
-          <button class="btn-primary" id="order-ai-btn" onclick="extractOrderFromImage()" disabled>✨ ให้ AI อ่านข้อมูล</button>
-        </div>
-        <div id="order-pending-list" class="pending-list" style="display:none"></div>
-      </div>
-
-      <form id="order-form" style="display:none;margin-top:14px" onsubmit="return false">
+      <form id="order-form" onsubmit="return false">
         <div class="row">
           <div><label>วันที่</label><input type="date" id="o-date"></div>
           <div><label>ช่องทาง</label>
@@ -263,24 +254,8 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <div class="tabpage" id="tab-purchases">
     <div class="card">
       <h2>บันทึกซื้อของเข้าร้าน</h2>
-      <div class="seg">
-        <button id="seg-pur-ai" class="active" onclick="switchPurMode('ai')">🧾 อ่านจากใบเสร็จ</button>
-        <button id="seg-pur-manual" onclick="switchPurMode('manual')">✍️ กรอกเอง</button>
-      </div>
-
-      <div id="pur-ai-panel">
-        <label class="imgdrop" id="pur-imgdrop" for="pur-img-input">
-          🧾 แตะเพื่อเลือกรูปใบเสร็จ — เลือกได้หลายรูปพร้อมกัน<br><span class="hint">ถ่ายรูปใบเสร็จซื้อของแล้วอัพโหลดได้เลย ถ้าเลือกหลายใบเสร็จพร้อมกัน AI จะแยกเป็นคนละใบให้อัตโนมัติ</span>
-        </label>
-        <input type="file" id="pur-img-input" accept="image/*" multiple style="display:none" onchange="handlePurImage(event)">
-        <div id="pur-img-preview" class="preview-grid" style="display:none"></div>
-        <div class="btn-row">
-          <button class="btn-primary" id="pur-ai-btn" onclick="extractPurchaseFromImage()" disabled>✨ ให้ AI อ่านข้อมูล</button>
-        </div>
-        <div id="pur-pending-list" class="pending-list" style="display:none"></div>
-      </div>
-
-      <form id="pur-form" style="display:none;margin-top:14px" onsubmit="return false">
+      <div id="pur-pending-list" class="pending-list" style="display:none"></div>
+      <form id="pur-form" onsubmit="return false">
         <div class="row">
           <div><label>วันที่ซื้อ</label><input type="date" id="p-date"></div>
           <div><label>ร้านที่ซื้อ</label><input type="text" id="p-store"></div>
@@ -379,26 +354,6 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
   <!-- SETTINGS TAB -->
   <div class="tabpage" id="tab-settings">
-    <div class="card">
-      <h2>Claude API</h2>
-      <p class="hint">ใช้สำหรับฟีเจอร์ AI อ่านรูปแคปออเดอร์/ใบเสร็จอัตโนมัติ ต้องมี Anthropic API key ของคุณเอง (สมัครได้ที่ console.anthropic.com) คีย์จะถูกเก็บไว้ในเบราว์เซอร์เครื่องนี้เท่านั้น ไม่ถูกส่งไปที่อื่น</p>
-      <label>Anthropic API Key</label>
-      <input type="password" id="api-key" placeholder="sk-ant-...">
-      <label>โมเดล</label>
-      <select id="api-model">
-        <option value="claude-sonnet-5">Claude Sonnet 5 (แม่นยำ แนะนำ)</option>
-        <option value="claude-haiku-4-5-20251001">Claude Haiku 4.5 (เร็ว/ถูกกว่า)</option>
-      </select>
-      <div class="btn-row"><button class="btn-primary" onclick="saveSettings()">บันทึกการตั้งค่า</button></div>
-    </div>
-
-    <div class="card">
-      <h2>📋 นำเข้าจาก Claude Chat (ไม่เสียค่า API เพิ่ม)</h2>
-      <p class="hint">ไม่อยากเติมเครดิต Anthropic API แยก? ส่งรูปแคปออเดอร์/ใบเสร็จไปให้ Claude อ่านในแชทปกติได้เลย (ใช้โควต้า Claude ที่มีอยู่แล้ว ไม่มีค่าใช้จ่ายเพิ่ม) Claude จะสรุปเป็นโค้ด JSON กลับมาให้ ก็อปโค้ดนั้นมาวางที่นี่ แล้วกด "นำเข้าข้อมูล" — ระบบจะพักข้อมูลไว้ให้ตรวจสอบทีละรายการที่แท็บออเดอร์/ซื้อของ ก่อนกดบันทึกจริง (เหมือนโหมดอ่านรูปหลายรูปทุกอย่าง)</p>
-      <textarea id="claude-import-json" placeholder='วางโค้ด JSON ที่ Claude ให้มาตรงนี้ เช่น {"orders":[...],"purchases":[...]}' style="min-height:110px;font-family:monospace;font-size:11.5px"></textarea>
-      <div class="btn-row"><button class="btn-primary" onclick="importFromClaudeJSON()">📥 นำเข้าข้อมูล</button></div>
-    </div>
-
     <div class="card">
       <h2>ข้อมูล / ฐานข้อมูล</h2>
       <div id="db-stats" class="hint">กำลังโหลด...</div>
@@ -614,17 +569,6 @@ async function idbClear(storeName){
 }
 
 /* ============ SETTINGS ============ */
-function getApiKey(){ return localStorage.getItem('hobi_api_key')||''; }
-function getModel(){ return localStorage.getItem('hobi_model')||'claude-sonnet-5'; }
-function loadSettingsUI(){
-  document.getElementById('api-key').value=getApiKey();
-  document.getElementById('api-model').value=getModel();
-}
-function saveSettings(){
-  localStorage.setItem('hobi_api_key',document.getElementById('api-key').value.trim());
-  localStorage.setItem('hobi_model',document.getElementById('api-model').value);
-  toast('บันทึกการตั้งค่าแล้ว','ok');
-}
 function goToTab(name){
   const idx={orders:0,purchases:1,dashboard:2,settings:3}[name];
   const btn=document.querySelectorAll('nav.bottomnav button')[idx];
@@ -647,11 +591,9 @@ function importFromClaudeJSON(){
   box.value='';
   toast(`นำเข้าแล้ว: ${newOrders.length} ออเดอร์, ${newPurchases.length} ใบเสร็จ — ไปตรวจสอบและบันทึกทีละรายการ`,'ok');
   if(newOrders.length){
-    goToTab('orders'); switchOrderMode('ai');
-    document.getElementById('order-form').style.display='none';
+    goToTab('orders');
   }else if(newPurchases.length){
-    goToTab('purchases'); switchPurMode('ai');
-    document.getElementById('pur-form').style.display='none';
+    goToTab('purchases');
   }
 }
 
@@ -772,49 +714,6 @@ async function migrateLocalToCloud(){
   }
 }
 
-/* ============ CLAUDE API ============ */
-async function callClaudeVision(images,promptText){
-  // images: array of {base64, mime}  (also accepts a single {base64,mime} object for back-compat)
-  if(!Array.isArray(images)) images=[images];
-  const apiKey=getApiKey();
-  if(!apiKey){ throw new Error('ยังไม่ได้ใส่ Anthropic API key ในหน้าตั้งค่า'); }
-  const imageBlocks=images.map(img=>({type:'image',source:{type:'base64',media_type:img.mime,data:img.base64}}));
-  const res=await fetch('https://api.anthropic.com/v1/messages',{
-    method:'POST',
-    headers:{
-      'content-type':'application/json',
-      'x-api-key':apiKey,
-      'anthropic-version':'2023-06-01',
-      'anthropic-dangerous-direct-browser-access':'true'
-    },
-    body:JSON.stringify({
-      model:getModel(),
-      max_tokens:4000,
-      messages:[{
-        role:'user',
-        content:[...imageBlocks, {type:'text',text:promptText}]
-      }]
-    })
-  });
-  if(!res.ok){
-    const errText=await res.text();
-    throw new Error('Claude API error ('+res.status+'): '+errText.slice(0,300));
-  }
-  const data=await res.json();
-  const text=data.content && data.content[0] && data.content[0].text ? data.content[0].text : '';
-  const match=text.match(/\{[\s\S]*\}/);
-  if(!match) throw new Error('อ่านผลลัพธ์ AI ไม่ได้: '+text.slice(0,200));
-  return JSON.parse(match[0]);
-}
-function fileToBase64(file){
-  return new Promise((resolve,reject)=>{
-    const r=new FileReader();
-    r.onload=()=>resolve(r.result.split(',')[1]);
-    r.onerror=reject;
-    r.readAsDataURL(file);
-  });
-}
-
 /* ============ MENU LOOKUP ============ */
 let menuCache=[];
 async function refreshMenuCache(){ menuCache=await idbAll('menu'); }
@@ -858,63 +757,9 @@ function buildOptionsPromptContext(){
 }
 
 /* ============ ORDER FORM ============ */
-let orderImages=[]; // [{base64,mime}]
 let orderManualTotalEdited=false;
-let pendingOrders=[]; // orders detected from a multi-image AI read, awaiting review/save
+let pendingOrders=[]; // orders imported from Claude Chat JSON, awaiting review/save
 let editingPendingOrderIndex=-1;
-function switchOrderMode(mode){
-  document.getElementById('seg-order-ai').classList.toggle('active',mode==='ai');
-  document.getElementById('seg-order-manual').classList.toggle('active',mode==='manual');
-  document.getElementById('order-ai-panel').style.display = mode==='ai' ? 'block':'none';
-  if(mode==='manual'){ resetOrderForm(); document.getElementById('order-form').style.display='block'; }
-}
-function renderOrderImagePreview(){
-  const prev=document.getElementById('order-img-preview');
-  prev.innerHTML=orderImages.map((img,i)=>`<div class="thumb-wrap"><img src="data:${img.mime};base64,${img.base64}"><button type="button" class="thumb-x" onclick="removeOrderImage(${i})">✕</button></div>`).join('');
-  prev.style.display=orderImages.length?'flex':'none';
-  document.getElementById('order-ai-btn').disabled=!orderImages.length;
-}
-function removeOrderImage(i){
-  orderImages.splice(i,1);
-  renderOrderImagePreview();
-}
-function handleOrderImage(e){
-  const files=[...e.target.files]; if(!files.length) return;
-  Promise.all(files.map(f=>fileToBase64(f).then(b64=>({base64:b64,mime:f.type})))).then(imgs=>{
-    orderImages=orderImages.concat(imgs);
-    renderOrderImagePreview();
-  });
-  e.target.value='';
-}
-async function extractOrderFromImage(){
-  const btn=document.getElementById('order-ai-btn');
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>กำลังอ่านรูป...';
-  try{
-    const prompt=`ต่อไปนี้คือภาพแคปหน้าจอออเดอร์จากแอพ Grab Food หรือ Line Man หรือใบสั่งซื้อของร้านเค้กชีสเค้ก (HOBI Cheesecake) อาจมี 1 ภาพหรือหลายภาพ และอาจมีมากกว่า 1 ออเดอร์ปนกันอยู่ในภาพที่ให้มา
-วิธีแยกออเดอร์: ถ้าเห็นเลขออเดอร์ (order_no) ต่างกันในแต่ละภาพ ให้ถือเป็นคนละออเดอร์แยกกัน ถ้าหลายภาพมีเลขออเดอร์เดียวกัน หรือดูเป็นภาพต่อเนื่องของออเดอร์เดียวกัน (เช่น สกรีนช็อตยาวที่ถูกตัดเป็นหลายภาพ) ให้รวมเป็นออเดอร์เดียวกัน พยายามอ่านวันที่ของแต่ละออเดอร์แยกกันด้วยถ้าเห็นในภาพ
-ตอบกลับเป็น JSON เท่านั้น ห้ามมีข้อความอื่นนอก JSON ตามโครงสร้างนี้:
-{"orders":[{"channel":"Grab Food หรือ Line Man หรือ อื่นๆ","order_no":"เลขออร์เดอร์ถ้ามี ไม่งั้นค่าว่าง","date":"YYYY-MM-DD ถ้าเห็นวันที่ ไม่งั้นค่าว่าง","items":[{"name":"ชื่อเมนูภาษาอังกฤษ","qty":จำนวนเป็นตัวเลข,"unit_price":ราคาต่อชิ้นเป็นตัวเลข,"options":[{"group":"ชื่อกลุ่มตัวเลือก","option":"ชื่อออปชั่นที่เลือก","qty":จำนวนตัวเลข}]}],"total_sale":ยอดขายรวมเป็นตัวเลข,"note":"หมายเหตุถ้ามี","thai_plus":true หรือ false (true ถ้าเห็นป้าย/ข้อความ "Thais Help Thai Plus" หรือ "เราชนะไทย" หรือ "60/40" ในภาพ)}]}
-ชื่อเมนูให้เขียนแบบเดียวกับที่ใช้ขายจริง เช่น Honey cheesecake, Cacao cheesecake, Matcha cheesecake ถ้าอ่านราคาต่อชิ้นไม่ได้ให้คำนวณจาก total หารจำนวน ถ้าเมนูไม่มีตัวเลือกพิเศษให้ใส่ options เป็น array ว่าง []${buildOptionsPromptContext()}`;
-    const j=await callClaudeVision(orderImages,prompt);
-    const orders=Array.isArray(j.orders) ? j.orders : ((j.channel||j.items) ? [j] : []);
-    if(!orders.length){ toast('ไม่พบข้อมูลออเดอร์ในภาพที่เลือก','err'); return; }
-    if(orders.length===1){
-      pendingOrders=[]; editingPendingOrderIndex=-1; renderOrderPendingList();
-      fillOrderForm(orders[0]);
-      document.getElementById('order-form').style.display='block';
-      toast('อ่านข้อมูลสำเร็จ ตรวจสอบความถูกต้องก่อนบันทึก','ok');
-    }else{
-      pendingOrders=orders; editingPendingOrderIndex=-1;
-      renderOrderPendingList();
-      document.getElementById('order-form').style.display='none';
-      toast(`พบ ${orders.length} ออเดอร์ในภาพที่เลือก กด "ตรวจสอบ" ทีละรายการเพื่อแก้ไข/บันทึก`,'ok');
-    }
-  }catch(err){
-    console.error(err); toast(err.message,'err');
-  }finally{
-    btn.disabled=false; btn.innerHTML='✨ ให้ AI อ่านข้อมูล';
-  }
-}
 function renderOrderPendingList(){
   const box=document.getElementById('order-pending-list');
   if(!pendingOrders.length){ box.style.display='none'; box.innerHTML=''; return; }
@@ -1056,9 +901,6 @@ function resetOrderForm(){
   document.getElementById('o-adfee').value=0;
   document.getElementById('o-thaiplus').checked=false;
   recalcOrderTotals();
-  orderImages=[];
-  renderOrderImagePreview();
-  document.getElementById('order-img-input').value='';
 }
 async function saveOrder(){
   const blocks=[...document.querySelectorAll('#o-items .itemblock')].map(b=>{
@@ -1120,7 +962,6 @@ async function saveOrder(){
     renderOrderPendingList();
   }
   resetOrderForm();
-  if(pendingOrders.length) document.getElementById('order-form').style.display='none';
   renderRecentOrders();
 }
 async function deleteOrderById(id){
@@ -1267,59 +1108,8 @@ async function showOrderDetail(id){
 }
 
 /* ============ PURCHASE FORM ============ */
-let purImages=[]; // [{base64,mime}]
-let pendingPurchases=[]; // purchases (receipts) detected from a multi-image AI read, awaiting review/save
+let pendingPurchases=[]; // purchases (receipts) imported from Claude Chat JSON, awaiting review/save
 let editingPendingPurchaseIndex=-1;
-function switchPurMode(mode){
-  document.getElementById('seg-pur-ai').classList.toggle('active',mode==='ai');
-  document.getElementById('seg-pur-manual').classList.toggle('active',mode==='manual');
-  document.getElementById('pur-ai-panel').style.display = mode==='ai' ? 'block':'none';
-  if(mode==='manual'){ resetPurForm(); document.getElementById('pur-form').style.display='block'; }
-}
-function renderPurImagePreview(){
-  const prev=document.getElementById('pur-img-preview');
-  prev.innerHTML=purImages.map((img,i)=>`<div class="thumb-wrap"><img src="data:${img.mime};base64,${img.base64}"><button type="button" class="thumb-x" onclick="removePurImage(${i})">✕</button></div>`).join('');
-  prev.style.display=purImages.length?'flex':'none';
-  document.getElementById('pur-ai-btn').disabled=!purImages.length;
-}
-function removePurImage(i){
-  purImages.splice(i,1);
-  renderPurImagePreview();
-}
-function handlePurImage(e){
-  const files=[...e.target.files]; if(!files.length) return;
-  Promise.all(files.map(f=>fileToBase64(f).then(b64=>({base64:b64,mime:f.type})))).then(imgs=>{
-    purImages=purImages.concat(imgs);
-    renderPurImagePreview();
-  });
-  e.target.value='';
-}
-async function extractPurchaseFromImage(){
-  const btn=document.getElementById('pur-ai-btn');
-  btn.disabled=true; btn.innerHTML='<span class="spinner"></span>กำลังอ่านรูป...';
-  try{
-    const prompt=`ต่อไปนี้คือภาพใบเสร็จซื้อของเข้าร้านเค้กชีสเค้ก อาจมี 1 ใบหรือหลายใบปนกันอยู่ในภาพที่ให้มา ให้แยกแต่ละใบเสร็จออกจากกันเป็นคนละรายการ (ถ้าดูเป็นใบเสร็จเดียวกันที่ถ่ายต่อกันหลายภาพ เช่น ใบเสร็จยาว ให้รวมเป็นใบเดียวกัน) อ่านข้อมูลแล้วตอบกลับเป็น JSON เท่านั้น ห้ามมีข้อความอื่นนอก JSON ตามโครงสร้างนี้:
-{"receipts":[{"date":"YYYY-MM-DD ถ้าเห็นวันที่ ไม่งั้นค่าว่าง","store":"ชื่อร้าน/สถานที่ซื้อ","items":[{"item_name":"ชื่อสินค้า","category":"เลือกจาก วัตถุดิบ, แพ็กเกจจิ้ง, อุปกรณ์ทำครัว, อื่นๆ","qty":จำนวนตัวเลข,"unit":"หน่วยเช่น ชิ้น กก. ฟอง","unit_price":ราคาต่อหน่วยตัวเลข,"total":ยอดรวมรายการตัวเลข}]}]}`;
-    const j=await callClaudeVision(purImages,prompt);
-    const receipts=Array.isArray(j.receipts) ? j.receipts : ((j.store||j.items) ? [j] : []);
-    if(!receipts.length){ toast('ไม่พบข้อมูลใบเสร็จในภาพที่เลือก','err'); return; }
-    if(receipts.length===1){
-      pendingPurchases=[]; editingPendingPurchaseIndex=-1; renderPurPendingList();
-      fillPurForm(receipts[0]);
-      document.getElementById('pur-form').style.display='block';
-      toast('อ่านข้อมูลสำเร็จ ตรวจสอบความถูกต้องก่อนบันทึก','ok');
-    }else{
-      pendingPurchases=receipts; editingPendingPurchaseIndex=-1;
-      renderPurPendingList();
-      document.getElementById('pur-form').style.display='none';
-      toast(`พบ ${receipts.length} ใบเสร็จในภาพที่เลือก กด "ตรวจสอบ" ทีละรายการเพื่อแก้ไข/บันทึก`,'ok');
-    }
-  }catch(err){
-    console.error(err); toast(err.message,'err');
-  }finally{
-    btn.disabled=false; btn.innerHTML='✨ ให้ AI อ่านข้อมูล';
-  }
-}
 function renderPurPendingList(){
   const box=document.getElementById('pur-pending-list');
   if(!pendingPurchases.length){ box.style.display='none'; box.innerHTML=''; return; }
@@ -1374,9 +1164,6 @@ function resetPurForm(){
   document.getElementById('p-note').value='';
   document.getElementById('p-items').innerHTML='';
   addPurItemRow();
-  purImages=[];
-  renderPurImagePreview();
-  document.getElementById('pur-img-input').value='';
 }
 async function savePurchase(){
   const date=document.getElementById('p-date').value||todayISO();
@@ -1403,7 +1190,6 @@ async function savePurchase(){
     renderPurPendingList();
   }
   resetPurForm();
-  if(pendingPurchases.length) document.getElementById('pur-form').style.display='none';
   renderRecentPurchases();
 }
 async function deletePurchaseById(id){
@@ -1908,7 +1694,6 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   }
   await refreshMenuCache();
   await refreshOptionCache();
-  loadSettingsUI();
   resetOrderForm();
   resetPurForm();
   document.getElementById('d-from').value='2000-01-01';
