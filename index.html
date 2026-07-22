@@ -169,6 +169,12 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .donut-center{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
 .donut-center .dc-val{font-size:16px;font-weight:800;color:var(--brown);}
 .donut-center .dc-lbl{font-size:9.5px;color:var(--muted);margin-top:1px;}
+.mini-chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px;}
+.mini-chart-card{background:#fdfbf7;border:1px solid var(--border);border-radius:13px;padding:10px 12px 12px;}
+.mini-chart-card .mc-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;margin-bottom:6px;}
+.mini-chart-card canvas{max-height:130px;}
+.chart-drilldown-back{display:inline-flex;align-items:center;gap:5px;background:var(--border);color:var(--pink-dark);border:none;border-radius:20px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;margin-bottom:10px;}
+.chart-drilldown-back:hover{background:var(--tan);}
 .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:100;opacity:0;transition:.25s;pointer-events:none;max-width:90%;text-align:center;}
 .toast.show{opacity:1;top:24px;}
 .toast.err{background:#c0392b;}
@@ -552,6 +558,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <div class="cc-title">เมนูขายดี Top 10 (ตามยอดขาย)</div>
         </div>
         <canvas id="chart-topmenu"></canvas>
+        <div class="mini-chart-grid" id="topmenu-bycat-grid"></div>
       </div>
       <div class="chart-card">
         <div class="chart-card-head">
@@ -563,8 +570,10 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <div class="chart-card">
         <div class="chart-card-head">
           <div class="cc-icon" style="background:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
-          <div class="cc-title">จำนวนไอเทมที่ขายได้รายวัน (ชิ้น)</div>
+          <div class="cc-title" id="chart-qty-title">จำนวนไอเทมที่ขายได้รายสัปดาห์ (ชิ้น)</div>
         </div>
+        <button type="button" class="chart-drilldown-back" id="chart-qty-back-btn" style="display:none" onclick="qtyChartBackToWeekly()">← กลับไปดูรายสัปดาห์</button>
+        <p class="hint" style="margin:0 0 8px">💡 คลิกที่แท่งของสัปดาห์ไหนก็ได้ เพื่อดูรายละเอียดเป็นรายวันภายในสัปดาห์นั้น</p>
         <div class="pillrow" id="qty-mode-pillrow" style="margin-bottom:12px">
           <div class="pill active" onclick="setQtyChartMode('grouped',this)">ตามหมวดหมู่ (รวม Set Menu)</div>
           <div class="pill" onclick="setQtyChartMode('decomposed',this)">แจกแจง Set Menu เป็นไอเทมย่อย</div>
@@ -1118,16 +1127,13 @@ function refreshOrderItemNameDropdowns(){
   });
 }
 function findMenuCost(name){
-  if(!name) return 0;
-  const n=name.trim().toLowerCase();
-  let m=menuCache.find(x=>(x.name||'').trim().toLowerCase()===n);
-  if(!m) m=menuCache.find(x=>n.includes((x.name||'').trim().toLowerCase()) && x.name);
+  const m=fuzzyFindMenu(name);
   return m? Number(m.cost)||0 : 0;
 }
 // ต้นทุนต่อ 1 หน่วยของรายการเมนู — ถ้าเป็น set menu ที่มีสูตรส่วนประกอบ (ดู FIXED_SET_RULES/melty wakey) ให้รวมต้นทุนของไอเทมย่อยแทนต้นทุนของตัว set menu เอง
 // optsForItem = [{group,option}] ตัวเลือกที่เลือกไว้ในบรรทัดนี้ (ใช้กรณี melty wakey set ที่ต้นทุนขึ้นกับรสเค้ก/กาแฟที่เลือก)
 function findItemCost(name,optsForItem){
-  const n=normFuzzy(name);
+  const n=normFuzzy(canonicalMenuName(name)); // ทำให้ตรวจจับ set menu ได้แม้ order_items.name จะเก็บเป็นชื่อย่อ (เช่น "MW") แทนชื่อเต็ม
   const fixedRule=FIXED_SET_RULES.find(r=>r.test(n));
   if(fixedRule){
     return fixedRule.components.reduce((s,c)=>{
@@ -1144,21 +1150,23 @@ function findItemCost(name,optsForItem){
   return findMenuCost(name);
 }
 function findMenuPrice(name){
-  const n=(name||'').trim().toLowerCase();
-  const m=menuCache.find(x=>(x.name||'').trim().toLowerCase()===n);
+  const m=fuzzyFindMenu(name);
   return m? Number(m.price)||0 : null;
 }
 function findMenuCategory(name){
-  if(!name) return '';
-  const n=name.trim().toLowerCase();
-  const m=menuCache.find(x=>(x.name||'').trim().toLowerCase()===n);
+  const m=fuzzyFindMenu(name);
   return m ? (m.category||'').trim() : '';
 }
 function findMenuShortName(name){
   if(!name) return name;
-  const n=name.trim().toLowerCase();
-  const m=menuCache.find(x=>(x.name||'').trim().toLowerCase()===n);
+  const m=fuzzyFindMenu(name);
   return (m && m.short_name && m.short_name.trim()) ? m.short_name.trim() : name;
+}
+// เอาไว้รวมยอดต่อเมนูให้ถูก แม้ order_items.name ในแต่ละออเดอร์จะสะกดไม่ตรงกันเป๊ะ (เช่น "MW" กับ "Melty Wakey Set" คือเมนูเดียวกัน)
+// คืนชื่อเต็มตามที่ตั้งไว้ในเมนู (canonical name) ถ้าจับคู่ได้ ไม่งั้นคืนชื่อเดิมเพื่อไม่ให้ข้อมูลหาย
+function canonicalMenuName(name){
+  const m=fuzzyFindMenu(name);
+  return m ? m.name : name;
 }
 const CAT_PALETTE=['#7c8a3e','#8c5c46','#e8b876','#f2e0ab','#2e2b28','#a89a7a','#5a6b2e','#b5793f'];
 const CATEGORY_PRIORITY=['cheesecake slice','set menu','drinks','toppings','whole cake'];
@@ -1201,7 +1209,7 @@ const FIXED_SET_RULES=[
 const MELTY_WAKEY_TEST=n=>n.includes('meltywakey');
 // แจกแจง order_item 1 รายการ ให้กลายเป็น [{category, qty}] ตามกฎเซ็ทเมนู — คืนค่า null ถ้าไม่ใช่เซ็ทเมนูที่มีกฎ (ให้ผู้เรียกใช้หมวดหมู่ปกติของมันแทน)
 function breakdownSetMenuItem(item, optsForItem){
-  const n=normFuzzy(item.name);
+  const n=normFuzzy(canonicalMenuName(item.name)); // รองรับกรณี order_items.name เก็บเป็นชื่อย่อ (เช่น "MW") แทนชื่อเต็ม
   const fixedRule=FIXED_SET_RULES.find(r=>r.test(n));
   if(fixedRule){
     const qtyMult=Number(item.qty)||1;
@@ -2019,13 +2027,50 @@ async function renderRecentPurchases(){
 
 /* ============ DASHBOARD ============ */
 let charts={};
+let topMenuCatCanvasIds=[];
+function renderTopMenuByCategoryMinis(items,catsOrdered,catColorMap){
+  const grid=document.getElementById('topmenu-bycat-grid');
+  if(!grid) return;
+  // เคลียร์กราฟเล็กเก่าก่อน (canvas แบบไดนามิก ต้อง destroy chart instance เองก่อนลบ DOM กันหน่วยความจำรั่ว)
+  topMenuCatCanvasIds.forEach(id=>{ if(charts[id]){ charts[id].destroy(); delete charts[id]; } });
+  topMenuCatCanvasIds=[];
+  grid.innerHTML='';
+  catsOrdered.forEach((cat,idx)=>{
+    const catItems=items.filter(i=>(findMenuCategory(i.name)||'ไม่ระบุหมวดหมู่')===cat);
+    if(!catItems.length) return;
+    const bySale={}, byQty={};
+    catItems.forEach(i=>{
+      const key=canonicalMenuName(i.name);
+      bySale[key]=(bySale[key]||0)+Number(i.line_sale||0);
+      byQty[key]=(byQty[key]||0)+Number(i.qty||0);
+    });
+    const top5=Object.entries(bySale).sort((a,b)=>b[1]-a[1]).slice(0,5);
+    if(!top5.length) return;
+    const canvasId=`chart-topmenu-cat-${idx}`;
+    const card=document.createElement('div');
+    card.className='mini-chart-card';
+    card.innerHTML=`<div class="mc-title">${escapeHtml(cat)}</div><canvas id="${canvasId}"></canvas>`;
+    grid.appendChild(card);
+    topMenuCatCanvasIds.push(canvasId);
+    const labels=top5.map(x=>findMenuShortName(x[0]));
+    const sales=top5.map(x=>x[1]);
+    const qtys=top5.map(x=>byQty[x[0]]||0);
+    const color=catColorMap[cat]||'#8c5c46';
+    drawTopMenuChart(canvasId,labels,sales,qtys,labels.map(()=>color),true);
+  });
+}
 let qtyChartMode='grouped'; // 'grouped' = นับ set menu รวมเป็นหมวดเดียว (ปกติ) | 'decomposed' = แจกแจง set menu เป็นไอเทมย่อย
 let dashQtyItemsCache=[];
+let qtyDrilldownWeek=null; // null = ภาพรวมรายสัปดาห์ | 'YYYY-MM-DD' (วันจันทร์ต้นสัปดาห์) = กำลังดูรายวันของสัปดาห์นั้น
 function setQtyChartMode(mode,el){
   qtyChartMode=mode;
   const row=el.closest('.pillrow');
   if(row) row.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
+  renderQtyChart(dashQtyItemsCache);
+}
+function qtyChartBackToWeekly(){
+  qtyDrilldownWeek=null;
   renderQtyChart(dashQtyItemsCache);
 }
 async function renderQtyChart(items){
@@ -2044,8 +2089,25 @@ async function renderQtyChart(items){
     const key=i.date+'|'+i.order_no+'|'+i.name;
     return breakdownSetMenuItem(i, optsByKey[key]||[]);
   }
+
+  // ภาพรวมรายสัปดาห์ (ค่าเริ่มต้น) หรือแจกแจงรายวันภายในสัปดาห์ที่คลิกไป (drill-down)
+  let workItems=items, groupKeyFn, labelFn, title;
+  if(qtyDrilldownWeek){
+    const weekStart=new Date(qtyDrilldownWeek+'T00:00:00');
+    const weekEnd=new Date(weekStart); weekEnd.setDate(weekEnd.getDate()+6);
+    const weekEndStr=toLocalISO(weekEnd);
+    workItems=items.filter(i=>i.date>=qtyDrilldownWeek && i.date<=weekEndStr);
+    groupKeyFn=i=>i.date;
+    labelFn=d=>{ const [y,m,dd]=d.split('-'); return Number(dd)+' '+THAI_MONTHS[Number(m)-1]; };
+    title='จำนวนไอเทมที่ขายได้รายวัน — สัปดาห์ '+formatWeekLabel(qtyDrilldownWeek);
+  }else{
+    groupKeyFn=i=>getWeekKey(i.date);
+    labelFn=formatWeekLabel;
+    title='จำนวนไอเทมที่ขายได้รายสัปดาห์ (ชิ้น)';
+  }
+
   const catSetAll=new Set();
-  items.forEach(i=>{
+  workItems.forEach(i=>{
     const bd=itemBreakdown(i);
     if(bd) bd.forEach(b=>catSetAll.add(b.category));
     else catSetAll.add(findMenuCategory(i.name)||'ไม่ระบุหมวดหมู่');
@@ -2054,25 +2116,34 @@ async function renderQtyChart(items){
   const catColorMap={};
   catsOrdered.forEach((c,idx)=>{ catColorMap[c]=CAT_PALETTE[idx % CAT_PALETTE.length]; });
 
-  const byDateCatQty={};
-  items.forEach(i=>{
-    byDateCatQty[i.date]=byDateCatQty[i.date]||{};
+  const byGroupCatQty={};
+  workItems.forEach(i=>{
+    const gk=groupKeyFn(i);
+    byGroupCatQty[gk]=byGroupCatQty[gk]||{};
     const bd=itemBreakdown(i);
     if(bd){
-      bd.forEach(b=>{ byDateCatQty[i.date][b.category]=(byDateCatQty[i.date][b.category]||0)+b.qty; });
+      bd.forEach(b=>{ byGroupCatQty[gk][b.category]=(byGroupCatQty[gk][b.category]||0)+b.qty; });
     }else{
       const cat=findMenuCategory(i.name)||'ไม่ระบุหมวดหมู่';
-      byDateCatQty[i.date][cat]=(byDateCatQty[i.date][cat]||0)+Number(i.qty||0);
+      byGroupCatQty[gk][cat]=(byGroupCatQty[gk][cat]||0)+Number(i.qty||0);
     }
   });
-  const datesQty=Object.keys(byDateCatQty).sort();
+  const groupKeys=Object.keys(byGroupCatQty).sort();
+  const groupLabels=groupKeys.map(labelFn);
   const qtyDatasets=catsOrdered.map(cat=>({
     type:'bar',
     label:cat,
-    data:datesQty.map(d=>(byDateCatQty[d]&&byDateCatQty[d][cat])||0),
+    data:groupKeys.map(gk=>(byGroupCatQty[gk]&&byGroupCatQty[gk][cat])||0),
     backgroundColor:catColorMap[cat]
   }));
-  drawStackedBar('chart-qty',datesQty,qtyDatasets);
+
+  const titleEl=document.getElementById('chart-qty-title');
+  if(titleEl) titleEl.textContent=title;
+  const backBtn=document.getElementById('chart-qty-back-btn');
+  if(backBtn) backBtn.style.display=qtyDrilldownWeek?'inline-flex':'none';
+
+  const onBarClick = qtyDrilldownWeek ? null : (idx)=>{ qtyDrilldownWeek=groupKeys[idx]; renderQtyChart(dashQtyItemsCache); };
+  drawStackedBar('chart-qty',groupLabels,qtyDatasets,onBarClick);
 }
 function setRangePreset(preset,prefix,el){
   const row=el.closest('.pillrow');
@@ -2234,11 +2305,12 @@ async function renderDashboard(){
     const catColorMap={};
     catsOrdered.forEach((c,idx)=>{ catColorMap[c]=CAT_PALETTE[idx % CAT_PALETTE.length]; });
 
-    // top menu (by sales value, with qty shown alongside)
+    // top menu (by sales value, with qty shown alongside) — กราฟใหญ่ = รวมทุกเมนู
     const byMenuSale={}, byMenuQty={};
     items.forEach(i=>{
-      byMenuSale[i.name]=(byMenuSale[i.name]||0)+Number(i.line_sale||0);
-      byMenuQty[i.name]=(byMenuQty[i.name]||0)+Number(i.qty||0);
+      const key=canonicalMenuName(i.name);
+      byMenuSale[key]=(byMenuSale[key]||0)+Number(i.line_sale||0);
+      byMenuQty[key]=(byMenuQty[key]||0)+Number(i.qty||0);
     });
     const topMenu=Object.entries(byMenuSale).sort((a,b)=>b[1]-a[1]).slice(0,10);
     const topMenuLabels=topMenu.map(x=>findMenuShortName(x[0]));
@@ -2247,14 +2319,21 @@ async function renderDashboard(){
     const topMenuColors=topMenu.map(x=>catColorMap[findMenuCategory(x[0])||'ไม่ระบุหมวดหมู่']||'#8c5c46');
     drawTopMenuChart('chart-topmenu',topMenuLabels,topMenuSales,topMenuQtys,topMenuColors);
 
-    // ยอดใช้ตัวเลือกเสริมสะสม (ย้ายมาจากหน้าตั้งค่า — นับตามช่วงเวลาที่เลือกเหมือนกราฟอื่นๆ ในหน้านี้)
+    // กราฟเล็กแยกรายหมวดหมู่ — top 5 ต่อหมวด สร้าง canvas แบบไดนามิกใหม่ทุกครั้งที่ render
+    renderTopMenuByCategoryMinis(items,catsOrdered,catColorMap);
+
+    // ยอดใช้ตัวเลือกเสริมสะสม (ย้ายมาจากหน้าตั้งค่า — นับตามช่วงเวลาที่เลือกเหมือนกราฟอื่นๆ ในหน้านี้) — สีตามกลุ่มตัวเลือก ชื่อแท่งใส่แค่ชื่อไอเทม
+    const optGroupsPresent=sortCategories([...new Set(itemOpts.map(o=>o.group||'อื่นๆ'))]);
+    const optGroupColorMap={};
+    optGroupsPresent.forEach((g,idx)=>{ optGroupColorMap[g]=CAT_PALETTE[idx % CAT_PALETTE.length]; });
     const byOptUsage={};
     itemOpts.forEach(o=>{
-      const key=(o.group||'')+' · '+(o.option||'');
-      byOptUsage[key]=(byOptUsage[key]||0)+Number(o.qty||0);
+      const key=(o.group||'อื่นๆ')+'|'+(o.option||'');
+      byOptUsage[key]=byOptUsage[key]||{group:o.group||'อื่นๆ',option:o.option||'',qty:0};
+      byOptUsage[key].qty+=Number(o.qty||0);
     });
-    const topOptUsage=Object.entries(byOptUsage).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    drawOptionUsageChart('chart-optusage',topOptUsage.map(x=>x[0]),topOptUsage.map(x=>x[1]));
+    const topOptUsage=Object.values(byOptUsage).sort((a,b)=>b.qty-a.qty).slice(0,10);
+    drawOptionUsageChart('chart-optusage',topOptUsage.map(x=>x.option),topOptUsage.map(x=>x.qty),topOptUsage.map(x=>optGroupColorMap[x.group]||'#8c5c46'));
 
     // daily quantity of items sold — stacked by menu category, ordered: cheesecake slice > set menu > drinks > toppings > whole cake > อื่นๆ
     await renderQtyChart(items);
@@ -2281,7 +2360,7 @@ function drawChart(canvasId,type,labels,datasets,horizontal,showLegend){
     }
   });
 }
-function drawStackedBar(canvasId,labels,datasets){
+function drawStackedBar(canvasId,labels,datasets,onBarClick){
   if(charts[canvasId]) charts[canvasId].destroy();
   const ctx=document.getElementById(canvasId).getContext('2d');
   charts[canvasId]=new Chart(ctx,{
@@ -2289,7 +2368,12 @@ function drawStackedBar(canvasId,labels,datasets){
     data:{labels,datasets},
     options:{
       plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},datalabels:{display:false}},
-      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,grid:{color:GRID_COLOR}}}
+      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,grid:{color:GRID_COLOR}}},
+      onClick: onBarClick ? function(evt,_els,chart){
+        const pts=chart.getElementsAtEventForMode(evt,'index',{intersect:false},true);
+        if(pts && pts.length) onBarClick(pts[0].index);
+      } : undefined,
+      onHover: onBarClick ? function(evt,els){ if(evt.native && evt.native.target) evt.native.target.style.cursor = els.length?'pointer':'default'; } : undefined
     }
   });
 }
@@ -2312,47 +2396,52 @@ function drawPie(canvasId,labels,data,centerElId,centerLabelText){
     }
   }
 }
-function drawTopMenuChart(canvasId,labels,sales,qtys,colors){
+// กราฟแท่งจัดอันดับแบบ "ชื่อ+ค่าตัวเลขอยู่ในแท่งเลย" (ตัวหนังสือขาว มีขอบดำบางๆ กันอ่านไม่ออกตอนแท่งสีอ่อน)
+// items: [{label, value, valueText, color}] เรียงมาจากมากไปน้อยแล้วจากผู้เรียก
+function drawRankedBarChart(canvasId,items,{small=false}={}){
   if(charts[canvasId]) charts[canvasId].destroy();
-  const ctx=document.getElementById(canvasId).getContext('2d');
+  const canvasEl=document.getElementById(canvasId);
+  if(!canvasEl) return;
+  const ctx=canvasEl.getContext('2d');
+  const labels=items.map(x=>x.label);
+  const data=items.map(x=>x.value);
+  const colors=items.map(x=>x.color);
+  const valueTexts=items.map(x=>x.valueText);
   charts[canvasId]=new Chart(ctx,{
     type:'bar',
-    data:{labels,datasets:[{label:'ยอดขาย (฿)',data:sales,backgroundColor:colors,borderRadius:5,borderSkipped:false,maxBarThickness:26}]},
+    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:small?5:7,borderSkipped:false,maxBarThickness:small?20:30}]},
     options:{
       indexAxis:'y',
-      layout:{padding:{right:64}},
       plugins:{
         legend:{display:false},
         datalabels:{
-          display:true,
-          clip:false,
-          color:'#2e2b28',
-          anchor:'end',
-          align:'end',
-          font:{size:10.5,weight:'700'},
-          formatter:(val,ctx)=>fmtMoney(val)+' ('+(qtys[ctx.dataIndex]||0)+' ชิ้น)'
+          display:items.length>0,
+          clamp:true,
+          clip:true,
+          color:'#fff',
+          textStrokeColor:'rgba(30,26,20,.55)',
+          textStrokeWidth:small?2:3,
+          font:{size:small?9.5:11.5,weight:'700'},
+          anchor:'center',
+          align:'center',
+          textAlign:'center',
+          formatter:(v,c)=>[labels[c.dataIndex],valueTexts[c.dataIndex]]
         }
       },
-      scales:{x:{beginAtZero:true,grid:{color:GRID_COLOR}},y:{grid:{display:false}}}
+      scales:{
+        x:{beginAtZero:true,display:false,grid:{display:false}},
+        y:{display:false,grid:{display:false}}
+      }
     }
   });
 }
-function drawOptionUsageChart(canvasId,labels,qtys){
-  if(charts[canvasId]) charts[canvasId].destroy();
-  const ctx=document.getElementById(canvasId).getContext('2d');
-  charts[canvasId]=new Chart(ctx,{
-    type:'bar',
-    data:{labels,datasets:[{label:'ยอดใช้ (ชิ้น)',data:qtys,backgroundColor:'#8c5c46',borderRadius:5,borderSkipped:false,maxBarThickness:26}]},
-    options:{
-      indexAxis:'y',
-      layout:{padding:{right:40}},
-      plugins:{
-        legend:{display:false},
-        datalabels:{display:true,clip:false,color:'#2e2b28',anchor:'end',align:'end',font:{size:10.5,weight:'700'},formatter:v=>v+' ชิ้น'}
-      },
-      scales:{x:{beginAtZero:true,grid:{color:GRID_COLOR}},y:{grid:{display:false}}}
-    }
-  });
+function drawTopMenuChart(canvasId,labels,sales,qtys,colors,small){
+  const items=labels.map((lbl,i)=>({label:lbl,value:sales[i],valueText:fmtMoney(sales[i])+' · '+(qtys[i]||0)+'ชิ้น',color:colors[i]}));
+  drawRankedBarChart(canvasId,items,{small});
+}
+function drawOptionUsageChart(canvasId,labels,qtys,colors){
+  const items=labels.map((lbl,i)=>({label:lbl,value:qtys[i],valueText:qtys[i]+' ชิ้น',color:colors[i]}));
+  drawRankedBarChart(canvasId,items);
 }
 function drawProfitBar(canvasId,labels,data){
   if(charts[canvasId]) charts[canvasId].destroy();
