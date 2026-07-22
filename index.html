@@ -124,6 +124,8 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:-2px;margin-right:6px;}
 @keyframes spin{to{transform:rotate(360deg);}}
 .hint{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5;}
+.info-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--border);color:var(--pink-dark);font-size:11.5px;font-weight:700;font-style:normal;border:none;cursor:pointer;margin-left:6px;vertical-align:middle;padding:0;line-height:1;}
+.info-btn:hover{background:var(--tan);}
 .warn-box{background:#fff8e1;border:1px solid #f0d896;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#8a6d00;margin-bottom:10px;}
 .pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
 .pill{padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12.5px;cursor:pointer;color:var(--muted);}
@@ -160,8 +162,8 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- ORDERS TAB -->
   <div class="tabpage active" id="tab-orders">
     <div class="card">
-      <h2>📋 นำเข้าจาก Claude Chat</h2>
-      <p class="hint">ส่งรูปแคปออเดอร์/ใบเสร็จไปให้ Claude อ่านในแชทปกติ (ไม่มีค่าใช้จ่ายเพิ่ม) แล้วก็อปโค้ด JSON ที่ได้มาวางตรงนี้ กด "นำเข้าข้อมูล" — ระบบจะพักข้อมูลไว้ให้ตรวจสอบทีละรายการก่อนบันทึกจริง (รองรับทั้งออเดอร์และรายการซื้อของในโค้ดเดียวกัน)</p>
+      <h2>📋 นำเข้าจาก Claude Chat <button type="button" class="info-btn" onclick="toggleEl('hint-claude-import')">i</button></h2>
+      <p class="hint" id="hint-claude-import" style="display:none">ส่งรูปแคปออเดอร์/ใบเสร็จไปให้ Claude อ่านในแชทปกติ (ไม่มีค่าใช้จ่ายเพิ่ม) แล้วก็อปโค้ด JSON ที่ได้มาวางตรงนี้ กด "นำเข้าข้อมูล" — ระบบจะพักข้อมูลไว้ให้ตรวจสอบทีละรายการก่อนบันทึกจริง (รองรับทั้งออเดอร์และรายการซื้อของในโค้ดเดียวกัน)</p>
       <textarea id="claude-import-json" placeholder='วางโค้ด JSON ที่ Claude ให้มาตรงนี้ เช่น {"orders":[...],"purchases":[...]}' style="min-height:100px;font-family:monospace;font-size:11.5px"></textarea>
       <div class="btn-row"><button class="btn-primary" onclick="importFromClaudeJSON()">📥 นำเข้าข้อมูล</button></div>
       <div id="order-pending-list" class="pending-list" style="display:none"></div>
@@ -184,8 +186,8 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
         <div class="thaiplus-box">
           <input type="checkbox" id="o-thaiplus" onchange="onThaiPlusToggle()">
-          <label style="margin:0;font-weight:600;color:var(--terracotta);cursor:pointer" for="o-thaiplus">🇹🇭 แคมเปญ "Thais Help Thai Plus" (เราชนะไทย 60/40)
-            <div class="hint" style="margin-top:2px;font-weight:400">ค่าคอมมิชชั่นคำนวณต่างจากปกติ และยอดขายนี้จะไม่โชว์ใน Grab Earnings (หน้า Finance โชว์แต่ยอดหักลบ) — ระบบจะจดไว้ในหมายเหตุให้อัตโนมัติ</div>
+          <label style="margin:0;font-weight:600;color:var(--terracotta);cursor:pointer" for="o-thaiplus">แคมเปญ 60/40 <button type="button" class="info-btn" onclick="event.preventDefault();event.stopPropagation();toggleEl('hint-thaiplus')">i</button>
+            <div class="hint" id="hint-thaiplus" style="margin-top:2px;font-weight:400;display:none">ค่าคอมมิชชั่นคำนวณต่างจากปกติ และยอดขายนี้จะไม่โชว์ใน Grab Earnings (หน้า Finance โชว์แต่ยอดหักลบ) — ระบบจะจดไว้ในหมายเหตุให้อัตโนมัติ</div>
           </label>
         </div>
 
@@ -357,13 +359,13 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     <div class="card">
       <h2>ข้อมูล / ฐานข้อมูล</h2>
       <div id="db-stats" class="hint">กำลังโหลด...</div>
-      <h3>นำเข้าจากไฟล์ Excel เดิม</h3>
-      <p class="hint">เลือกไฟล์ HOBI_ระบบบัญชีร้าน.xlsx เพื่อดึงข้อมูล Orders / Order_Items / Purchases / Menu เข้ามาในแอพ (ข้อมูลจะถูกเพิ่มเข้าไป ไม่ลบของเดิมในแอพ)</p>
+      <h3>นำเข้าจากไฟล์ Excel เดิม <button type="button" class="info-btn" onclick="toggleEl('hint-import-excel')">i</button></h3>
+      <p class="hint" id="hint-import-excel" style="display:none">เลือกไฟล์ HOBI_ระบบบัญชีร้าน.xlsx เพื่อดึงข้อมูล Orders / Order_Items / Purchases / Menu เข้ามาในแอพ (ข้อมูลจะถูกเพิ่มเข้าไป ไม่ลบของเดิมในแอพ)</p>
       <input type="file" id="import-file" accept=".xlsx,.xls">
       <div class="btn-row"><button class="btn-secondary" onclick="importExcel()">📥 นำเข้าไฟล์ Excel</button></div>
 
-      <h3>ส่งออกเป็น Excel</h3>
-      <p class="hint">ดาวน์โหลดข้อมูลทั้งหมดในแอพตอนนี้เป็นไฟล์ .xlsx (Orders / Order_Items / Purchases / Menu) — ไฟล์นี้เป็นข้อมูลล้วนๆ ไม่มีสูตร/แดชบอร์ดแบบไฟล์เดิม เพราะแดชบอร์ดอยู่ในแอพนี้แล้ว</p>
+      <h3>ส่งออกเป็น Excel <button type="button" class="info-btn" onclick="toggleEl('hint-export-excel')">i</button></h3>
+      <p class="hint" id="hint-export-excel" style="display:none">ดาวน์โหลดข้อมูลทั้งหมดในแอพตอนนี้เป็นไฟล์ .xlsx (Orders / Order_Items / Purchases / Menu) — ไฟล์นี้เป็นข้อมูลล้วนๆ ไม่มีสูตร/แดชบอร์ดแบบไฟล์เดิม เพราะแดชบอร์ดอยู่ในแอพนี้แล้ว</p>
       <div class="btn-row"><button class="btn-secondary" onclick="exportExcel()">📤 ส่งออกเป็น Excel</button></div>
 
       <h3 style="color:var(--red)">ลบข้อมูลทั้งหมด</h3>
@@ -374,7 +376,8 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     </div>
 
     <div class="card">
-      <h2>☁️ ซิงค์ข้อมูลข้ามเครื่อง (Cloud Sync)</h2>
+      <h2>☁️ ซิงค์ข้อมูลข้ามเครื่อง (Cloud Sync) <button type="button" class="info-btn" onclick="toggleEl('hint-cloud-sync')">i</button></h2>
+      <div id="hint-cloud-sync" style="display:none">
       <p class="hint">เชื่อมต่อ Firebase (ฟรี) เพื่อให้กรอกข้อมูลจากมือถือหรือคอมก็ได้ ข้อมูล sync กันอัตโนมัติแบบเรียลไทม์ ต้องตั้งค่าโปรเจกต์ Firebase ก่อนครั้งเดียว:</p>
       <p class="hint">
         1. เข้า <b>console.firebase.google.com</b> → สร้างโปรเจกต์ใหม่ (ฟรี)<br>
@@ -392,6 +395,7 @@ service cloud.firestore {
     }
   }
 }</textarea>
+      </div>
 
       <label style="margin-top:12px">วาง firebaseConfig ที่นี่ (ทั้งก้อน { ... })</label>
       <textarea id="fb-config" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","storageBucket":"...","messagingSenderId":"...","appId":"..."}' style="min-height:90px;font-family:monospace;font-size:11.5px"></textarea>
@@ -407,8 +411,34 @@ service cloud.firestore {
     </div>
 
     <div class="card">
-      <h2>ตัวเลือกเมนู & สต็อก (Option Groups)</h2>
-      <p class="hint">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน แก้สถานะสต็อกได้ทันทีที่นี่</p>
+      <h2>เมนูทั้งหมด <button type="button" class="info-btn" onclick="toggleEl('hint-menu-manage')">i</button></h2>
+      <p class="hint" id="hint-menu-manage" style="display:none">รายชื่อเมนูที่ร้านขาย ใช้เป็นตัวเลือก dropdown (แบ่งตามหมวดหมู่) ตอนกรอกออเดอร์ในหน้าแรก ตั้งราคาขาย/ต้นทุนไว้ที่นี่เพื่อให้ระบบคำนวณกำไรอัตโนมัติ</p>
+      <div id="menu-manage-list"></div>
+      <h3>เพิ่ม/แก้ไขเมนู</h3>
+      <div class="row">
+        <div><label>ชื่อเมนู</label><input type="text" id="mn-name" placeholder="เช่น Honey cheesecake"></div>
+        <div><label>ตัวย่อ</label><input type="text" id="mn-short" placeholder="เช่น Honey"></div>
+      </div>
+      <div class="row">
+        <div><label>หมวดหมู่</label><input type="text" id="mn-category" placeholder="เช่น ชีสเค้ก" list="mn-cat-list">
+          <datalist id="mn-cat-list"></datalist>
+        </div>
+        <div></div>
+      </div>
+      <div class="row">
+        <div><label>ราคาขาย (฿)</label><input type="number" id="mn-price" value="0" step="0.01"></div>
+        <div><label>ต้นทุน (฿)</label><input type="number" id="mn-cost" value="0" step="0.01"></div>
+      </div>
+      <input type="hidden" id="mn-edit-id">
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="saveMenuItem()">+ บันทึกเมนู</button>
+        <button class="btn-ghost" id="mn-cancel-btn" onclick="resetMenuForm()" style="display:none">ยกเลิกแก้ไข</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ตัวเลือกเมนู & สต็อก (Option Groups) <button type="button" class="info-btn" onclick="toggleEl('hint-option-groups')">i</button></h2>
+      <p class="hint" id="hint-option-groups" style="display:none">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน แก้สถานะสต็อกได้ทันทีที่นี่</p>
       <div id="opt-manage-list"></div>
       <h3>เพิ่มตัวเลือกใหม่</h3>
       <div class="row">
@@ -429,8 +459,8 @@ service cloud.firestore {
     </div>
 
     <div class="card">
-      <h2>ยอดใช้สะสมต่อออปชั่น (Stock Usage)</h2>
-      <p class="hint">นับยอดใช้สะสมจากออเดอร์ที่บันทึกไว้ทั้งหมด (ยังไม่ใช่สต็อกคงเหลือจริง เพราะไม่มีสต็อกตั้งต้น)</p>
+      <h2>ยอดใช้สะสมต่อออปชั่น (Stock Usage) <button type="button" class="info-btn" onclick="toggleEl('hint-stock-usage')">i</button></h2>
+      <p class="hint" id="hint-stock-usage" style="display:none">นับยอดใช้สะสมจากออเดอร์ที่บันทึกไว้ทั้งหมด (ยังไม่ใช่สต็อกคงเหลือจริง เพราะไม่มีสต็อกตั้งต้น)</p>
       <div id="stock-usage-list" class="emptystate">ยังไม่มีข้อมูล</div>
     </div>
   </div>
@@ -452,6 +482,10 @@ function toast(msg,type){
   clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast',2600);
 }
 function fmtMoney(n){ n=Number(n)||0; return '฿'+n.toLocaleString('th-TH',{maximumFractionDigits:0}); }
+function toggleEl(id){
+  const el=document.getElementById(id);
+  if(el) el.style.display = (el.style.display==='none'||!el.style.display) ? 'block' : 'none';
+}
 function toLocalISO(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function todayISO(){ return toLocalISO(new Date()); }
 function uid(){ return Date.now()+'-'+Math.random().toString(36).slice(2,8); }
@@ -463,7 +497,7 @@ function switchTab(name,btn){
   document.querySelectorAll('nav.bottomnav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   if(name==='dashboard') renderDashboard();
-  if(name==='settings'){ refreshDbStats(); renderOptionManage(); renderStockUsage(); updateSyncStatusUI(); }
+  if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); renderStockUsage(); updateSyncStatusUI(); }
 }
 
 /* ============ INDEXEDDB ============ */
@@ -691,6 +725,7 @@ async function refreshAllViews(){
   await refreshOptionCache();
   await renderRecentOrders();
   await renderRecentPurchases();
+  renderMenuManage();
   await renderOptionManage();
   await renderStockUsage();
   await refreshDbStats();
@@ -803,6 +838,34 @@ function fillOrderForm(j){
   onThaiPlusToggle(true);
   recalcOrderTotals();
 }
+function buildMenuOptionsHtml(selected){
+  if(!menuCache.length){
+    return `<option value="${escapeHtml(selected||'')}">${selected?escapeHtml(selected):'ยังไม่มีเมนู — ไปเพิ่มที่ตั้งค่า'}</option>`;
+  }
+  const cats=[...new Set(menuCache.map(m=>m.category||'อื่นๆ'))];
+  let html='<option value="">-- เลือกเมนู --</option>';
+  cats.forEach(cat=>{
+    const items=menuCache.filter(m=>(m.category||'อื่นๆ')===cat);
+    if(!items.length) return;
+    html+=`<optgroup label="${escapeHtml(cat)}">`;
+    items.forEach(m=>{
+      html+=`<option value="${escapeHtml(m.name)}" ${m.name===selected?'selected':''}>${escapeHtml(m.name)}</option>`;
+    });
+    html+='</optgroup>';
+  });
+  if(selected && !menuCache.some(m=>m.name===selected)){
+    html+=`<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)} ⚠️ (ไม่อยู่ในรายการเมนู)</option>`;
+  }
+  return html;
+}
+function onOrderItemNameChange(sel){
+  const price=findMenuPrice(sel.value);
+  if(price!=null){
+    const row=sel.closest('.itemrow');
+    row.querySelector('.price').value=price;
+  }
+  recalcOrderTotals();
+}
 function addOrderItemRow(name,qty,price,options){
   name=name||''; qty=qty||1; price=price!=null?price: (findMenuPrice(name)||0);
   const wrap=document.getElementById('o-items');
@@ -810,7 +873,7 @@ function addOrderItemRow(name,qty,price,options){
   block.className='itemblock';
   block.innerHTML=`
     <div class="itemrow">
-      <input type="text" class="name" placeholder="ชื่อเมนู" value="${escapeHtml(name)}" oninput="recalcOrderTotals()">
+      <select class="name" onchange="onOrderItemNameChange(this)">${buildMenuOptionsHtml(name)}</select>
       <input type="number" class="qty" placeholder="จำนวน" value="${qty}" min="0" oninput="recalcOrderTotals()">
       <input type="number" class="price" placeholder="ราคา/ชิ้น" value="${price}" step="0.01" oninput="recalcOrderTotals()">
       <button type="button" class="closebtn" onclick="this.closest('.itemblock').remove();recalcOrderTotals()">✕</button>
@@ -1549,7 +1612,7 @@ async function importExcel(){
     await refreshMenuCache();
     await refreshOptionCache();
     toast(`นำเข้าสำเร็จ: เมนู ${counts.menu}, ออเดอร์ ${counts.orders}, รายการเมนูในออเดอร์ ${counts.items}, รายการซื้อ ${counts.purchases}, ตัวเลือก ${counts.options}, ออปชั่นในออเดอร์ ${counts.itemOptions}`,'ok');
-    refreshDbStats(); renderRecentOrders(); renderRecentPurchases(); renderOptionManage(); renderStockUsage();
+    refreshDbStats(); renderRecentOrders(); renderRecentPurchases(); renderMenuManage(); renderOptionManage(); renderStockUsage();
   }catch(err){
     console.error(err); toast('นำเข้าไม่สำเร็จ: '+err.message,'err');
   }
@@ -1618,12 +1681,91 @@ async function clearAllData(){
   document.getElementById('confirm-delete-text').value='';
   document.getElementById('confirm-delete-btn').disabled=true;
   toast('สำรองไฟล์แล้วและลบข้อมูลทั้งหมดแล้ว','ok');
-  refreshDbStats(); renderRecentOrders(); renderRecentPurchases(); renderOptionManage(); renderStockUsage();
+  refreshDbStats(); renderRecentOrders(); renderRecentPurchases(); renderMenuManage(); renderOptionManage(); renderStockUsage();
 }
 async function refreshDbStats(){
   const orders=await idbAll('orders'); const pur=await idbAll('purchases'); const menu=await idbAll('menu');
   const opts=await idbAll('option_groups');
   document.getElementById('db-stats').textContent=`ออเดอร์: ${orders.length} รายการ · ซื้อของ: ${pur.length} รายการ · เมนู: ${menu.length} รายการ · ตัวเลือก: ${opts.length} รายการ`;
+}
+
+/* ============ MENU MANAGEMENT UI ============ */
+function renderMenuManage(){
+  const el=document.getElementById('menu-manage-list');
+  if(!el) return;
+  if(!menuCache.length){
+    el.innerHTML='<div class="emptystate">ยังไม่มีเมนู — เพิ่มด้านล่าง หรือนำเข้าจาก Excel</div>';
+  }else{
+    const cats=[...new Set(menuCache.map(m=>m.category||'ไม่มีหมวดหมู่'))].sort((a,b)=>a.localeCompare(b));
+    el.innerHTML=cats.map(cat=>{
+      const rows=menuCache.filter(m=>(m.category||'ไม่มีหมวดหมู่')===cat)
+        .sort((a,b)=>(a.name||'').localeCompare(b.name||''))
+        .map(m=>`
+          <div class="list-item">
+            <div><b>${escapeHtml(m.name)}</b>${m.short_name?' <span class="meta">('+escapeHtml(m.short_name)+')</span>':''}
+              <div class="meta">ราคา ${fmtMoney(m.price)} · ต้นทุน ${fmtMoney(m.cost)}</div>
+            </div>
+            <div style="display:flex;gap:4px;flex-shrink:0">
+              <button type="button" class="btn-ghost btn-sm" onclick="editMenuItem('${m.id}')">แก้ไข</button>
+              <button type="button" class="btn-ghost btn-sm" onclick="deleteMenuItem('${m.id}')">ลบ</button>
+            </div>
+          </div>`).join('');
+      return `<h3>${escapeHtml(cat)}</h3>${rows}`;
+    }).join('');
+  }
+  const dl=document.getElementById('mn-cat-list');
+  if(dl) dl.innerHTML=[...new Set(menuCache.map(m=>m.category).filter(Boolean))].map(c=>`<option value="${escapeHtml(c)}">`).join('');
+}
+async function saveMenuItem(){
+  const name=document.getElementById('mn-name').value.trim();
+  if(!name){ toast('กรุณากรอกชื่อเมนู','err'); return; }
+  const editId=document.getElementById('mn-edit-id').value;
+  const price=Number(document.getElementById('mn-price').value)||0;
+  const cost=Number(document.getElementById('mn-cost').value)||0;
+  const existing=editId ? menuCache.find(m=>m.id===editId) : null;
+  const item={
+    id: editId || uid(),
+    code: existing ? existing.code : undefined,
+    name,
+    short_name: document.getElementById('mn-short').value.trim(),
+    category: document.getElementById('mn-category').value.trim(),
+    price, cost,
+    cost_pct: price>0 ? Math.round((cost/price)*10000)/100 : 0
+  };
+  await idbPut('menu',item);
+  await refreshMenuCache();
+  renderMenuManage();
+  resetMenuForm();
+  toast(editId?'แก้ไขเมนูแล้ว':'เพิ่มเมนูแล้ว','ok');
+  refreshDbStats();
+}
+function editMenuItem(id){
+  const m=menuCache.find(x=>x.id===id); if(!m) return;
+  document.getElementById('mn-edit-id').value=m.id;
+  document.getElementById('mn-name').value=m.name||'';
+  document.getElementById('mn-short').value=m.short_name||'';
+  document.getElementById('mn-category').value=m.category||'';
+  document.getElementById('mn-price').value=m.price||0;
+  document.getElementById('mn-cost').value=m.cost||0;
+  document.getElementById('mn-cancel-btn').style.display='inline-block';
+  document.getElementById('mn-name').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function resetMenuForm(){
+  document.getElementById('mn-edit-id').value='';
+  document.getElementById('mn-name').value='';
+  document.getElementById('mn-short').value='';
+  document.getElementById('mn-category').value='';
+  document.getElementById('mn-price').value=0;
+  document.getElementById('mn-cost').value=0;
+  document.getElementById('mn-cancel-btn').style.display='none';
+}
+async function deleteMenuItem(id){
+  if(!confirm('ลบเมนูนี้? (ไม่กระทบออเดอร์ที่บันทึกไปแล้ว)')) return;
+  await idbDelete('menu',id);
+  await refreshMenuCache();
+  renderMenuManage();
+  toast('ลบเมนูแล้ว','ok');
+  refreshDbStats();
 }
 
 /* ============ OPTION MANAGEMENT UI ============ */
