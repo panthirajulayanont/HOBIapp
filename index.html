@@ -190,6 +190,48 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <div class="btn-row"><button class="btn-primary" onclick="importFromClaudeJSON()">📥 นำเข้าข้อมูล</button></div>
     </div>
 
+    <div class="card" id="home-pending-card">
+      <h2>รายการที่รอตรวจสอบ <button type="button" class="info-btn" onclick="toggleEl('hint-pending')">i</button></h2>
+      <p class="hint" id="hint-pending" style="display:none">หลังนำเข้าข้อมูลจาก Claude Chat แล้ว ตรวจสอบรายการด้านล่างนี้ก่อน กด "ยืนยัน" เพื่อบันทึกจริงเข้าไปในลิสต์ของหน้าออเดอร์/ซื้อของ/การเงินทันที หรือกด "ลบ" ถ้าไม่ต้องการรายการนี้ (แก้ไขรายละเอียดเพิ่มเติมได้ทีหลังจากลิสต์ในแต่ละหน้า)</p>
+      <div id="home-pending-empty" class="emptystate">ยังไม่มีรายการรอตรวจสอบ</div>
+      <div id="home-pending-orders-wrap" style="display:none">
+        <h3>🧾 ออเดอร์</h3>
+        <div id="home-pending-orders"></div>
+      </div>
+      <div id="home-pending-purchases-wrap" style="display:none">
+        <h3>🛒 ซื้อของ</h3>
+        <div id="home-pending-purchases"></div>
+      </div>
+      <div id="home-pending-dailyfees-wrap" style="display:none">
+        <h3>💰 การเงิน (ค่าธรรมเนียมรายวัน)</h3>
+        <div id="home-pending-dailyfees"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>✍️ กรอกข้อมูลเอง (Manual Input)</h2>
+      <div class="home-nav-grid">
+        <div class="home-nav-btn" onclick="goToTab('orders')">
+          <div class="icon-circle" style="background:var(--terracotta)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+          </div>
+          <span>ออเดอร์</span>
+        </div>
+        <div class="home-nav-btn" onclick="goToTab('purchases')">
+          <div class="icon-circle" style="background:var(--olive)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+          </div>
+          <span>ซื้อของ</span>
+        </div>
+        <div class="home-nav-btn" onclick="goToTab('finance')">
+          <div class="icon-circle" style="background:var(--green)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.4"/></svg>
+          </div>
+          <span>การเงิน</span>
+        </div>
+      </div>
+    </div>
+
     <div class="card">
       <h2>เมนูลัด</h2>
       <div class="home-nav-grid">
@@ -231,8 +273,10 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <div class="tabpage" id="tab-orders">
     <div class="card">
       <h2>บันทึกออเดอร์ใหม่</h2>
-      <div id="order-pending-list" class="pending-list" style="display:none"></div>
       <form id="order-form" onsubmit="return false">
+        <input type="hidden" id="o-edit-id">
+        <input type="hidden" id="o-edit-old-no">
+        <input type="hidden" id="o-edit-old-date">
         <div class="row">
           <div><label>วันที่</label><input type="date" id="o-date"></div>
           <div><label>ช่องทาง</label>
@@ -275,35 +319,9 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="btn-row">
           <button class="btn-primary" onclick="saveOrder()">💾 บันทึกออเดอร์</button>
           <button class="btn-ghost" onclick="resetOrderForm()">ล้างฟอร์ม</button>
+          <button class="btn-ghost" id="o-cancel-btn" onclick="resetOrderForm()" style="display:none">ยกเลิกแก้ไข</button>
         </div>
       </form>
-    </div>
-
-    <div class="card">
-      <h2>ค่าธรรมเนียมแพลตฟอร์มรายวัน <button type="button" class="info-btn" onclick="toggleEl('hint-dailyfee')">i</button></h2>
-      <p class="hint" id="hint-dailyfee" style="display:none">แคปหน้า "การเงิน/Finance" สรุปรายวันจาก Grab/LineMan แล้วกรอกค่าคอมมิชชั่นกับค่าโฆษณารวมของวันนั้นต่อช่องทางที่นี่ (ไม่ต้องกรอกต่อออเดอร์ เพราะตัวเลขจริงในหน้าการเงินเป็นยอดรวมทั้งวัน) ระบบจะเอาไปหักออกจากยอดขายรวมของวันนั้นในแดชบอร์ดให้อัตโนมัติ</p>
-      <div id="dailyfee-pending-list" class="pending-list" style="display:none"></div>
-      <div class="row">
-        <div><label>วันที่</label><input type="date" id="df-date"></div>
-        <div><label>ช่องทาง</label>
-          <select id="df-channel">
-            <option>Grab Food</option><option>Line Man</option><option>คอนโด</option><option>อื่นๆ</option>
-          </select>
-        </div>
-      </div>
-      <div class="row">
-        <div><label>ค่าคอมมิชชั่นแพลตฟอร์มรวม (฿)</label><input type="number" id="df-commission" step="0.01" value="0"></div>
-        <div><label>ค่าโฆษณา/แคมเปญรวม (฿)</label><input type="number" id="df-adfee" step="0.01" value="0"></div>
-      </div>
-      <label>หมายเหตุ</label>
-      <input type="text" id="df-note" placeholder="เช่น อ้างอิงจากหน้าการเงินวันนี้">
-      <input type="hidden" id="df-edit-id">
-      <div class="btn-row">
-        <button class="btn-primary" onclick="saveDailyFee()">💾 บันทึก</button>
-        <button class="btn-ghost" id="df-cancel-btn" onclick="resetDailyFeeForm()" style="display:none">ยกเลิกแก้ไข</button>
-      </div>
-      <h3 style="margin-top:14px">รายการที่บันทึกไว้</h3>
-      <div id="dailyfee-list" class="emptystate">ยังไม่มีข้อมูล</div>
     </div>
 
     <div class="card">
@@ -346,8 +364,8 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <div class="tabpage" id="tab-purchases">
     <div class="card">
       <h2>บันทึกซื้อของเข้าร้าน</h2>
-      <div id="pur-pending-list" class="pending-list" style="display:none"></div>
       <form id="pur-form" onsubmit="return false">
+        <input type="hidden" id="p-edit-id">
         <div class="row">
           <div><label>วันที่ซื้อ</label><input type="date" id="p-date"></div>
           <div><label>ร้านที่ซื้อ</label><input type="text" id="p-store"></div>
@@ -355,11 +373,13 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <h3>รายการที่ซื้อ</h3>
         <div id="p-items"></div>
         <button type="button" class="btn-secondary btn-sm" onclick="addPurItemRow()">+ เพิ่มรายการ</button>
+        <p class="hint" id="p-edit-hint" style="display:none">กำลังแก้ไขรายการเดิม — ระบบจะอัพเดตเฉพาะรายการแรกในลิสต์นี้เท่านั้น ถ้าจะเพิ่มรายการใหม่ ให้กด "ยกเลิกแก้ไข" ก่อน</p>
         <label style="margin-top:12px">หมายเหตุ</label>
         <textarea id="p-note"></textarea>
         <div class="btn-row">
           <button class="btn-primary" onclick="savePurchase()">💾 บันทึกรายการซื้อ</button>
           <button class="btn-ghost" onclick="resetPurForm()">ล้างฟอร์ม</button>
+          <button class="btn-ghost" id="p-cancel-btn" onclick="resetPurForm()" style="display:none">ยกเลิกแก้ไข</button>
         </div>
       </form>
     </div>
@@ -447,6 +467,32 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
   <!-- FINANCE TAB -->
   <div class="tabpage" id="tab-finance">
+    <div class="card">
+      <h2>ค่าธรรมเนียมแพลตฟอร์มรายวัน <button type="button" class="info-btn" onclick="toggleEl('hint-dailyfee')">i</button></h2>
+      <p class="hint" id="hint-dailyfee" style="display:none">แคปหน้า "การเงิน/Finance" สรุปรายวันจาก Grab/LineMan แล้วกรอกค่าคอมมิชชั่นกับค่าโฆษณารวมของวันนั้นต่อช่องทางที่นี่ (ไม่ต้องกรอกต่อออเดอร์ เพราะตัวเลขจริงในหน้าการเงินเป็นยอดรวมทั้งวัน) ระบบจะเอาไปหักออกจากยอดขายรวมของวันนั้นในแดชบอร์ด/รายงานให้อัตโนมัติ</p>
+      <div class="row">
+        <div><label>วันที่</label><input type="date" id="df-date"></div>
+        <div><label>ช่องทาง</label>
+          <select id="df-channel">
+            <option>Grab Food</option><option>Line Man</option><option>คอนโด</option><option>อื่นๆ</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div><label>ค่าคอมมิชชั่นแพลตฟอร์มรวม (฿)</label><input type="number" id="df-commission" step="0.01" value="0"></div>
+        <div><label>ค่าโฆษณา/แคมเปญรวม (฿)</label><input type="number" id="df-adfee" step="0.01" value="0"></div>
+      </div>
+      <label>หมายเหตุ</label>
+      <input type="text" id="df-note" placeholder="เช่น อ้างอิงจากหน้าการเงินวันนี้">
+      <input type="hidden" id="df-edit-id">
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveDailyFee()">💾 บันทึก</button>
+        <button class="btn-ghost" id="df-cancel-btn" onclick="resetDailyFeeForm()" style="display:none">ยกเลิกแก้ไข</button>
+      </div>
+      <h3 style="margin-top:14px">รายการที่บันทึกไว้</h3>
+      <div id="dailyfee-list" class="emptystate">ยังไม่มีข้อมูล</div>
+    </div>
+
     <div class="card">
       <h2>เลือกช่วงเวลา</h2>
       <div class="pillrow">
@@ -643,8 +689,7 @@ function switchTab(name,btn){
   document.querySelectorAll('nav.bottomnav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   if(name==='dashboard') renderDashboard();
-  if(name==='orders') renderDailyFeeList();
-  if(name==='finance') renderFinance();
+  if(name==='finance'){ renderFinance(); renderDailyFeeList(); }
   if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); renderStockUsage(); updateSyncStatusUI(); }
 }
 
@@ -778,12 +823,8 @@ function importFromClaudeJSON(){
   if(newPurchases.length){ pendingPurchases=pendingPurchases.concat(newPurchases); renderPurPendingList(); }
   if(newDailyFees.length){ pendingDailyFees=pendingDailyFees.concat(newDailyFees); renderDailyFeePendingList(); }
   box.value='';
-  toast(`นำเข้าแล้ว: ${newOrders.length} ออเดอร์, ${newPurchases.length} ใบเสร็จ, ${newDailyFees.length} ค่าธรรมเนียมรายวัน — ไปตรวจสอบและบันทึกทีละรายการ`,'ok');
-  if(newOrders.length || newDailyFees.length){
-    goToTab('orders');
-  }else if(newPurchases.length){
-    goToTab('purchases');
-  }
+  toast(`นำเข้าแล้ว: ${newOrders.length} ออเดอร์, ${newPurchases.length} ใบเสร็จ, ${newDailyFees.length} ค่าธรรมเนียมรายวัน — ตรวจสอบรายการด้านล่างแล้วกดยืนยันได้เลย`,'ok');
+  document.getElementById('home-pending-card')?.scrollIntoView({behavior:'smooth',block:'start'});
 }
 
 /* ============ CLOUD SYNC (Firebase) ============ */
@@ -961,26 +1002,34 @@ function buildOptionsPromptContext(){
 let orderManualTotalEdited=false;
 let pendingOrders=[]; // orders imported from Claude Chat JSON, awaiting review/save
 let editingPendingOrderIndex=-1;
+function updateHomePendingEmptyState(){
+  const anyPending = pendingOrders.length || pendingPurchases.length || pendingDailyFees.length;
+  const el=document.getElementById('home-pending-empty');
+  if(el) el.style.display = anyPending ? 'none' : 'block';
+}
 function renderOrderPendingList(){
-  const box=document.getElementById('order-pending-list');
-  if(!pendingOrders.length){ box.style.display='none'; box.innerHTML=''; return; }
-  box.style.display='block';
+  const wrap=document.getElementById('home-pending-orders-wrap');
+  const box=document.getElementById('home-pending-orders');
+  if(!pendingOrders.length){ wrap.style.display='none'; box.innerHTML=''; updateHomePendingEmptyState(); return; }
+  wrap.style.display='block';
   box.innerHTML=`<div class="pl-title">พบ ${pendingOrders.length} ออเดอร์ที่ยังไม่ได้บันทึก</div>` +
     pendingOrders.map((o,i)=>`
       <div class="pending-card">
         <div class="pc-info"><b>${escapeHtml(o.order_no||'(ไม่มีเลขออเดอร์)')}</b>${escapeHtml(o.channel||'')} · ${escapeHtml(o.date||'')} · ${(o.items||[]).length} รายการ · ฿${Number(o.total_sale||0).toFixed(2)}</div>
         <div class="pc-btns">
-          <button type="button" class="btn-primary btn-sm" onclick="loadPendingOrder(${i})">ตรวจสอบ</button>
+          <button type="button" class="btn-primary btn-sm" onclick="confirmPendingOrder(${i})">✅ ยืนยัน</button>
           <button type="button" class="btn-ghost btn-sm" onclick="discardPendingOrder(${i})">ลบ</button>
         </div>
       </div>`).join('');
+  updateHomePendingEmptyState();
 }
-function loadPendingOrder(i){
+async function confirmPendingOrder(i){
+  const j=pendingOrders[i];
+  if(!j) return;
+  resetOrderForm(); // เคลียร์สถานะแก้ไขค้างไว้ก่อน กันชนกับการแก้ไขออเดอร์เดิมที่อาจค้างอยู่
+  fillOrderForm(j);
   editingPendingOrderIndex=i;
-  fillOrderForm(pendingOrders[i]);
-  const form=document.getElementById('order-form');
-  form.style.display='block';
-  form.scrollIntoView({behavior:'smooth',block:'start'});
+  await saveOrder();
 }
 function discardPendingOrder(i){
   pendingOrders.splice(i,1);
@@ -1129,6 +1178,10 @@ function recalcNetProfit(){
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function resetOrderForm(){
+  document.getElementById('o-edit-id').value='';
+  document.getElementById('o-edit-old-no').value='';
+  document.getElementById('o-edit-old-date').value='';
+  document.getElementById('o-cancel-btn').style.display='none';
   document.getElementById('o-date').value=todayISO();
   document.getElementById('o-channel').value='Grab Food';
   document.getElementById('o-orderno').value='';
@@ -1164,7 +1217,8 @@ async function saveOrder(){
     if(!confirm(`⚠️ ตัวเลือกนี้ถูกมาร์คว่าหมดสต็อก: ${names}\nยืนยันบันทึกต่อหรือไม่?`)) return;
   }
 
-  const orderId=uid();
+  const editId=document.getElementById('o-edit-id').value;
+  const orderId=editId||uid();
   const order={
     id:orderId,
     date:document.getElementById('o-date').value||todayISO(),
@@ -1181,6 +1235,18 @@ async function saveOrder(){
     thai_plus:document.getElementById('o-thaiplus').checked
   };
   await idbPut('orders',order);
+
+  if(editId){
+    // กำลังแก้ไขออเดอร์เดิม — ลบรายการเมนู/ออปชั่นเก่าของออเดอร์นี้ทิ้งก่อน แล้วค่อยเพิ่มชุดใหม่ตามฟอร์ม
+    // (ใช้ order_no/date เดิมตอนโหลดมาแก้ไข เผื่อผู้ใช้แก้เลขออเดอร์เดียวกันนี้ตอนบันทึก)
+    const oldNo=document.getElementById('o-edit-old-no').value;
+    const oldDate=document.getElementById('o-edit-old-date').value;
+    const allItems=await idbAll('order_items');
+    for(const it of allItems.filter(x=>x.order_id===orderId)) await idbDelete('order_items',it.id);
+    const allOpts=await idbAll('order_item_options');
+    for(const o of allOpts.filter(x=>x.order_no===oldNo && x.date===oldDate)) await idbDelete('order_item_options',o.id);
+  }
+
   for(const it of blocks){
     const cost=findMenuCost(it.name);
     await idbPut('order_items',{
@@ -1195,7 +1261,7 @@ async function saveOrder(){
       });
     }
   }
-  toast('บันทึกออเดอร์แล้ว 🎉','ok');
+  toast(editId?'แก้ไขออเดอร์แล้ว':'บันทึกออเดอร์แล้ว 🎉','ok');
   if(editingPendingOrderIndex>=0){
     pendingOrders.splice(editingPendingOrderIndex,1);
     editingPendingOrderIndex=-1;
@@ -1203,6 +1269,42 @@ async function saveOrder(){
   }
   resetOrderForm();
   renderRecentOrders();
+}
+async function editOrderById(id){
+  const orders=await idbAll('orders');
+  const order=orders.find(o=>o.id===id);
+  if(!order){ toast('ไม่พบข้อมูลออเดอร์นี้','err'); return; }
+  const allItems=await idbAll('order_items');
+  const items=allItems.filter(i=>i.order_id===id);
+  const allOpts=await idbAll('order_item_options');
+  const opts=allOpts.filter(o=>o.order_no===order.order_no && o.date===order.date);
+
+  resetOrderForm();
+  document.getElementById('o-edit-id').value=order.id;
+  document.getElementById('o-edit-old-no').value=order.order_no||'';
+  document.getElementById('o-edit-old-date').value=order.date||'';
+  document.getElementById('o-date').value=order.date||todayISO();
+  const sel=document.getElementById('o-channel');
+  sel.value=[...sel.options].some(o=>o.value===order.channel)?order.channel:'อื่นๆ';
+  document.getElementById('o-orderno').value=order.order_no||'';
+  document.getElementById('o-note').value=order.note||'';
+  document.getElementById('o-items').innerHTML='';
+  items.forEach(it=>{
+    const itOpts=opts.filter(o=>o.main_menu===it.name).map(o=>({group:o.group,option:o.option,qty:o.qty}));
+    addOrderItemRow(it.name,it.qty,it.unit_price,itOpts);
+  });
+  if(!items.length) addOrderItemRow();
+  document.getElementById('o-total-sale').value=order.total_sale||0;
+  orderManualTotalEdited=true;
+  document.getElementById('o-commission').value=order.commission||0;
+  document.getElementById('o-adfee').value=order.ad_fee||0;
+  const tpBox=document.getElementById('o-thaiplus');
+  tpBox.checked=!!order.thai_plus;
+  onThaiPlusToggle(true);
+  recalcOrderTotals();
+  document.getElementById('o-cancel-btn').style.display='inline-block';
+  goToTab('orders');
+  document.getElementById('order-form').scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function deleteOrderById(id){
   if(!confirm('ลบออเดอร์นี้?')) return;
@@ -1361,6 +1463,7 @@ async function showOrderDetail(id){
     `}
     ${order.note ? `<h3>หมายเหตุ</h3><div class="hint" style="white-space:pre-wrap">${escapeHtml(order.note)}</div>` : ''}
     <div class="btn-row" style="margin-top:14px">
+      <button class="btn-secondary" onclick="closeModal();editOrderById('${order.id}')">✏️ แก้ไข</button>
       <button class="btn-danger" onclick="closeModal();deleteOrderById('${order.id}')">🗑️ ลบออเดอร์นี้</button>
       <button class="btn-ghost" onclick="closeModal()">ปิด</button>
     </div>`;
@@ -1375,23 +1478,28 @@ async function refreshDailyFeeCache(){
   dailyFeeCache=(await idbAll('daily_fees')).sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:0));
 }
 function renderDailyFeePendingList(){
-  const box=document.getElementById('dailyfee-pending-list');
-  if(!pendingDailyFees.length){ box.style.display='none'; box.innerHTML=''; return; }
-  box.style.display='block';
+  const wrap=document.getElementById('home-pending-dailyfees-wrap');
+  const box=document.getElementById('home-pending-dailyfees');
+  if(!pendingDailyFees.length){ wrap.style.display='none'; box.innerHTML=''; updateHomePendingEmptyState(); return; }
+  wrap.style.display='block';
   box.innerHTML=`<div class="pl-title">พบ ${pendingDailyFees.length} รายการค่าธรรมเนียมรายวันที่ยังไม่ได้บันทึก</div>` +
     pendingDailyFees.map((f,i)=>`
       <div class="pending-card">
         <div class="pc-info"><b>${escapeHtml(f.channel||'')}</b>${escapeHtml(f.date||'')} · ค่าคอม ${fmtMoney(f.commission)} · ค่าโฆษณา ${fmtMoney(f.ad_fee)}</div>
         <div class="pc-btns">
-          <button type="button" class="btn-primary btn-sm" onclick="loadPendingDailyFee(${i})">ตรวจสอบ</button>
+          <button type="button" class="btn-primary btn-sm" onclick="confirmPendingDailyFee(${i})">✅ ยืนยัน</button>
           <button type="button" class="btn-ghost btn-sm" onclick="discardPendingDailyFee(${i})">ลบ</button>
         </div>
       </div>`).join('');
+  updateHomePendingEmptyState();
 }
-function loadPendingDailyFee(i){
+async function confirmPendingDailyFee(i){
+  const j=pendingDailyFees[i];
+  if(!j) return;
+  resetDailyFeeForm(); // เคลียร์สถานะแก้ไขค้างไว้ก่อน
+  fillDailyFeeForm(j);
   editingPendingDailyFeeIndex=i;
-  fillDailyFeeForm(pendingDailyFees[i]);
-  document.getElementById('df-date').scrollIntoView({behavior:'smooth',block:'center'});
+  await saveDailyFee();
 }
 function discardPendingDailyFee(i){
   pendingDailyFees.splice(i,1);
@@ -1471,25 +1579,28 @@ async function renderDailyFeeList(){
 let pendingPurchases=[]; // purchases (receipts) imported from Claude Chat JSON, awaiting review/save
 let editingPendingPurchaseIndex=-1;
 function renderPurPendingList(){
-  const box=document.getElementById('pur-pending-list');
-  if(!pendingPurchases.length){ box.style.display='none'; box.innerHTML=''; return; }
-  box.style.display='block';
+  const wrap=document.getElementById('home-pending-purchases-wrap');
+  const box=document.getElementById('home-pending-purchases');
+  if(!pendingPurchases.length){ wrap.style.display='none'; box.innerHTML=''; updateHomePendingEmptyState(); return; }
+  wrap.style.display='block';
   box.innerHTML=`<div class="pl-title">พบ ${pendingPurchases.length} ใบเสร็จที่ยังไม่ได้บันทึก</div>` +
     pendingPurchases.map((p,i)=>`
       <div class="pending-card">
         <div class="pc-info"><b>${escapeHtml(p.store||'(ไม่ทราบร้าน)')}</b>${escapeHtml(p.date||'')} · ${(p.items||[]).length} รายการ</div>
         <div class="pc-btns">
-          <button type="button" class="btn-primary btn-sm" onclick="loadPendingPurchase(${i})">ตรวจสอบ</button>
+          <button type="button" class="btn-primary btn-sm" onclick="confirmPendingPurchase(${i})">✅ ยืนยัน</button>
           <button type="button" class="btn-ghost btn-sm" onclick="discardPendingPurchase(${i})">ลบ</button>
         </div>
       </div>`).join('');
+  updateHomePendingEmptyState();
 }
-function loadPendingPurchase(i){
+async function confirmPendingPurchase(i){
+  const j=pendingPurchases[i];
+  if(!j) return;
+  resetPurForm(); // เคลียร์สถานะแก้ไขค้างไว้ก่อน
+  fillPurForm(j);
   editingPendingPurchaseIndex=i;
-  fillPurForm(pendingPurchases[i]);
-  const form=document.getElementById('pur-form');
-  form.style.display='block';
-  form.scrollIntoView({behavior:'smooth',block:'start'});
+  await savePurchase();
 }
 function discardPendingPurchase(i){
   pendingPurchases.splice(i,1);
@@ -1519,6 +1630,9 @@ function addPurItemRow(name,category,qty,unit,price){
   wrap.appendChild(row);
 }
 function resetPurForm(){
+  document.getElementById('p-edit-id').value='';
+  document.getElementById('p-cancel-btn').style.display='none';
+  document.getElementById('p-edit-hint').style.display='none';
   document.getElementById('p-date').value=todayISO();
   document.getElementById('p-store').value='';
   document.getElementById('p-note').value='';
@@ -1537,13 +1651,24 @@ async function savePurchase(){
     price:Number(r.querySelector('.price').value)||0
   })).filter(x=>x.name);
   if(!rows.length){ toast('กรุณาเพิ่มอย่างน้อย 1 รายการ','err'); return; }
-  for(const r of rows){
+  const editId=document.getElementById('p-edit-id').value;
+  if(editId){
+    // กำลังแก้ไขรายการเดิม — อัพเดตเฉพาะรายการแรก (1 รายการซื้อ = 1 record) ไม่สร้างซ้ำ
+    const r=rows[0];
     await idbPut('purchases',{
-      id:uid(), date, category:r.category, item_name:r.name, store,
+      id:editId, date, category:r.category, item_name:r.name, store,
       qty:r.qty, unit:r.unit, unit_price:r.price, total:r.qty*r.price, note
     });
+    toast('แก้ไขรายการซื้อแล้ว','ok');
+  }else{
+    for(const r of rows){
+      await idbPut('purchases',{
+        id:uid(), date, category:r.category, item_name:r.name, store,
+        qty:r.qty, unit:r.unit, unit_price:r.price, total:r.qty*r.price, note
+      });
+    }
+    toast('บันทึกรายการซื้อแล้ว 🎉','ok');
   }
-  toast('บันทึกรายการซื้อแล้ว 🎉','ok');
   if(editingPendingPurchaseIndex>=0){
     pendingPurchases.splice(editingPendingPurchaseIndex,1);
     editingPendingPurchaseIndex=-1;
@@ -1551,6 +1676,22 @@ async function savePurchase(){
   }
   resetPurForm();
   renderRecentPurchases();
+}
+async function editPurchaseById(id){
+  const rows=await idbAll('purchases');
+  const p=rows.find(x=>x.id===id);
+  if(!p){ toast('ไม่พบรายการนี้','err'); return; }
+  resetPurForm();
+  document.getElementById('p-edit-id').value=p.id;
+  document.getElementById('p-date').value=p.date||todayISO();
+  document.getElementById('p-store').value=p.store||'';
+  document.getElementById('p-note').value=p.note||'';
+  document.getElementById('p-items').innerHTML='';
+  addPurItemRow(p.item_name,p.category,p.qty,p.unit,p.unit_price);
+  document.getElementById('p-cancel-btn').style.display='inline-block';
+  document.getElementById('p-edit-hint').style.display='block';
+  goToTab('purchases');
+  document.getElementById('pur-form').scrollIntoView({behavior:'smooth',block:'start'});
 }
 async function deletePurchaseById(id){
   if(!confirm('ลบรายการนี้?')) return;
@@ -1579,7 +1720,10 @@ async function renderRecentPurchases(){
       <div><b>${escapeHtml(p.item_name)}</b> — ${fmtMoney(p.total)}
         <div class="meta">${p.date} · ${escapeHtml(p.category)} · ${escapeHtml(p.store||'-')}</div>
       </div>
-      <button class="btn-ghost btn-sm" onclick="deletePurchaseById('${p.id}')">ลบ</button>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button class="btn-ghost btn-sm" onclick="editPurchaseById('${p.id}')">แก้ไข</button>
+        <button class="btn-ghost btn-sm" onclick="deletePurchaseById('${p.id}')">ลบ</button>
+      </div>
     </div>`).join('');
 }
 
