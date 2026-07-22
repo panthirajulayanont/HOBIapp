@@ -135,7 +135,11 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .list-item:last-child{border-bottom:none;}
 .list-item .meta{font-size:12px;color:var(--muted);}
 .kpi-hero-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:10px;}
-.kpi-hero{border-radius:16px;padding:14px 16px;color:#fff;box-shadow:0 4px 14px rgba(46,43,40,.14);}
+.kpi-hero{position:relative;border-radius:16px;padding:14px 16px;color:#fff;box-shadow:0 4px 14px rgba(46,43,40,.14);}
+.kpi-info-btn{position:absolute;top:10px;right:10px;width:19px;height:19px;border-radius:50%;background:rgba(255,255,255,.28);color:#fff;border:none;font-size:10.5px;font-weight:800;cursor:pointer;padding:0;line-height:19px;font-style:normal;}
+.kpi-info-btn:hover{background:rgba(255,255,255,.42);}
+.kpi-mini .kpi-info-btn{position:absolute;top:6px;right:6px;width:16px;height:16px;border-radius:50%;background:var(--border);color:var(--pink-dark);border:none;font-size:9.5px;font-weight:800;cursor:pointer;padding:0;line-height:16px;font-style:normal;}
+.kpi-mini .kpi-info-btn:hover{background:var(--tan);}
 .kpi-hero .kpi-icon{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
 .kpi-hero .kpi-icon svg{width:17px;height:17px;stroke:#fff;}
 .kpi-hero .kpi-val{font-size:20px;font-weight:800;line-height:1.15;letter-spacing:-.2px;}
@@ -145,7 +149,7 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .kpi-hero.c3{background:linear-gradient(135deg,#3a3530,#2e2b28);}
 .kpi-hero.c4{background:linear-gradient(135deg,#c98a4b,#a8492f);}
 .kpi-mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;}
-.kpi-mini{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 11px;display:flex;align-items:center;gap:9px;}
+.kpi-mini{position:relative;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 11px;display:flex;align-items:center;gap:9px;}
 .kpi-mini .mini-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .kpi-mini .mini-icon svg{width:15px;height:15px;stroke:#fff;}
 .kpi-mini .mini-body{min-width:0;}
@@ -443,21 +447,25 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     <div id="dash-content" style="display:none">
       <div class="kpi-hero-grid">
         <div class="kpi-hero c1">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('s-sales')">i</button>
           <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="12" cy="12" r="2.3"/><path d="M6 10v4M18 10v4"/></svg></div>
           <div class="kpi-val" id="s-sales">฿0</div>
           <div class="kpi-lbl">ยอดขายรวม</div>
         </div>
         <div class="kpi-hero c2">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('s-profit')">i</button>
           <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 15 10 9 14 13 20 6"/><polyline points="14 6 20 6 20 12"/></svg></div>
           <div class="kpi-val" id="s-profit">฿0</div>
           <div class="kpi-lbl">กำไรขั้นต้น</div>
         </div>
         <div class="kpi-hero c3">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('s-net')">i</button>
           <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v2h2a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><circle cx="16.5" cy="14" r="1.3"/></svg></div>
           <div class="kpi-val" id="s-net">฿0</div>
           <div class="kpi-lbl">ยอดสุทธิร้านได้รับ</div>
         </div>
         <div class="kpi-hero c4">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('s-orders')">i</button>
           <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg></div>
           <div class="kpi-val" id="s-orders">0</div>
           <div class="kpi-lbl">จำนวนออเดอร์</div>
@@ -466,27 +474,31 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
       <div class="kpi-mini-grid">
         <div class="kpi-mini">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('s-cost')">i</button>
           <div class="mini-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div>
           <div class="mini-body"><div class="mini-val" id="s-cost">฿0</div><div class="mini-lbl">ต้นทุนสินค้า</div></div>
         </div>
         <div class="kpi-mini">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('s-comm')">i</button>
           <div class="mini-icon" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="16" x2="16" y2="8"/><circle cx="9" cy="9" r=".6" fill="#fff"/><circle cx="15" cy="15" r=".6" fill="#fff"/></svg></div>
           <div class="mini-body"><div class="mini-val" id="s-comm">฿0</div><div class="mini-lbl">ค่าคอมมิชชั่น+โฆษณา</div></div>
         </div>
         <div class="kpi-mini">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('s-purchases')">i</button>
           <div class="mini-icon" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
           <div class="mini-body"><div class="mini-val" id="s-purchases">฿0</div><div class="mini-lbl">ยอดซื้อของเข้าร้าน</div></div>
         </div>
         <div class="kpi-mini">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('s-aov')">i</button>
           <div class="mini-icon" style="background:var(--olive)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
           <div class="mini-body"><div class="mini-val" id="s-aov">฿0</div><div class="mini-lbl">เฉลี่ยต่อออเดอร์</div></div>
         </div>
         <div class="kpi-mini">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('s-thaiplus')">i</button>
           <div class="mini-icon" style="background:var(--tan)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1"/><path d="M12 8v13"/><path d="M3 12h18"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8"/><path d="M16.5 8a2.5 2.5 0 0 0 0-5C14 3 12 8 12 8"/></svg></div>
           <div class="mini-body"><div class="mini-val" id="s-thaiplus">฿0</div><div class="mini-lbl">ยอดขาย Thai+ (60/40)</div></div>
         </div>
       </div>
-      <div class="warn-box">💡 "กำไรขั้นต้น" คำนวณจากต้นทุนสินค้าต่อออร์เดอร์ ยังไม่ได้หัก "ยอดซื้อของเข้าร้าน" ทั้งหมด (เพราะของที่ซื้ออาจยังไม่ถูกขายหมด) ดูยอดซื้อของแยกไว้ด้านล่างเพื่อเทียบกระแสเงินสด</div>
 
       <div class="chart-card">
         <div class="chart-card-head">
@@ -536,6 +548,10 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="chart-card-head">
           <div class="cc-icon" style="background:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
           <div class="cc-title">จำนวนไอเทมที่ขายได้รายวัน (ชิ้น)</div>
+        </div>
+        <div class="pillrow" id="qty-mode-pillrow" style="margin-bottom:12px">
+          <div class="pill active" onclick="setQtyChartMode('grouped',this)">ตามหมวดหมู่ (รวม Set Menu)</div>
+          <div class="pill" onclick="setQtyChartMode('decomposed',this)">แจกแจง Set Menu เป็นไอเทมย่อย</div>
         </div>
         <canvas id="chart-qty"></canvas>
       </div>
@@ -1104,6 +1120,76 @@ function findMenuCategory(name){
   const m=menuCache.find(x=>(x.name||'').trim().toLowerCase()===n);
   return m ? (m.category||'').trim() : '';
 }
+function findMenuShortName(name){
+  if(!name) return name;
+  const n=name.trim().toLowerCase();
+  const m=menuCache.find(x=>(x.name||'').trim().toLowerCase()===n);
+  return (m && m.short_name && m.short_name.trim()) ? m.short_name.trim() : name;
+}
+const CAT_PALETTE=['#7c8a3e','#8c5c46','#e8b876','#f2e0ab','#2e2b28','#a89a7a','#5a6b2e','#b5793f'];
+const CATEGORY_PRIORITY=['cheesecake slice','set menu','drinks','toppings','whole cake'];
+function normCatName(c){ return (c||'').trim().toLowerCase().replace(/[\s_-]+/g,''); }
+function categoryRank(cat){
+  const n=normCatName(cat);
+  if(!cat || n==='' || n==='ไม่ระบุหมวดหมู่' || n==='อื่นๆ') return 999;
+  const idx=CATEGORY_PRIORITY.findIndex(p=>normCatName(p)===n);
+  return idx>=0 ? idx : 500;
+}
+function sortCategories(cats){
+  return [...cats].sort((a,b)=>{
+    const ra=categoryRank(a), rb=categoryRank(b);
+    if(ra!==rb) return ra-rb;
+    return (a||'').localeCompare(b||'','th');
+  });
+}
+
+/* ============ SET MENU BREAKDOWN (สำหรับกราฟจำนวนไอเทมรายวัน โหมด "แจกแจง") ============ */
+function normFuzzy(s){ return (s||'').toString().trim().toLowerCase().replace(/[\s\-_()]+/g,''); }
+// จับคู่ข้อความ (ชื่อย่อ/ชื่อออปชั่นที่ลูกค้าเลือก) กับเมนูจริงในระบบ แบบยืดหยุ่น: ตรงเป๊ะก่อน แล้วค่อย fallback เป็นจับคู่แบบ substring
+function fuzzyFindMenu(text){
+  if(!text) return null;
+  const n=normFuzzy(text);
+  if(!n) return null;
+  let m=menuCache.find(x=>normFuzzy(x.short_name)===n || normFuzzy(x.name)===n);
+  if(m) return m;
+  m=menuCache.find(x=>{
+    const xs=normFuzzy(x.short_name), xn=normFuzzy(x.name);
+    return (xs && (xs.includes(n)||n.includes(xs))) || (xn && (xn.includes(n)||n.includes(xn)));
+  });
+  return m||null;
+}
+// เซ็ทเมนูที่มีสูตรส่วนประกอบตายตัว (นับตาม "ชื่อย่อ (สำหรับกราฟ)" ของเมนูย่อย) — จับชื่อออเดอร์แบบไม่ต้องตรงเป๊ะๆ ด้วยคำเด่นเฉพาะตัว
+const FIXED_SET_RULES=[
+  {test:n=>n.includes('bestseller')||n.includes('คู่ฮิต'), components:[{code:'HN',qty:1},{code:'MT1',qty:1}]},
+  {test:n=>n.includes('greenxbrown')||n.includes('duoset')||n.includes('(gb)')||n.includes('gb)'), components:[{code:'cc',qty:1},{code:'mt',qty:1}]},
+  {test:n=>n.includes('kyoto'), components:[{code:'hj',qty:1},{code:'mt',qty:1}]},
+];
+const MELTY_WAKEY_TEST=n=>n.includes('meltywakey');
+// แจกแจง order_item 1 รายการ ให้กลายเป็น [{category, qty}] ตามกฎเซ็ทเมนู — คืนค่า null ถ้าไม่ใช่เซ็ทเมนูที่มีกฎ (ให้ผู้เรียกใช้หมวดหมู่ปกติของมันแทน)
+function breakdownSetMenuItem(item, optsForItem){
+  const n=normFuzzy(item.name);
+  const fixedRule=FIXED_SET_RULES.find(r=>r.test(n));
+  if(fixedRule){
+    const qtyMult=Number(item.qty)||1;
+    return fixedRule.components.map(c=>{
+      const m=fuzzyFindMenu(c.code);
+      const cat=m ? (m.category||'').trim()||'ไม่ระบุหมวดหมู่' : 'ไม่ระบุหมวดหมู่';
+      return {category:cat, qty:c.qty*qtyMult};
+    });
+  }
+  if(MELTY_WAKEY_TEST(n)){
+    if(!optsForItem || !optsForItem.length){
+      // ไม่พบข้อมูลออปชั่นที่เลือกไว้ — กันข้อมูลหาย ให้นับไว้ในหมวดของ set menu เองแทน
+      return [{category:findMenuCategory(item.name)||'ไม่ระบุหมวดหมู่', qty:Number(item.qty)||1}];
+    }
+    return optsForItem.map(o=>{
+      const m=fuzzyFindMenu(o.option);
+      const cat=m ? (m.category||'').trim()||'ไม่ระบุหมวดหมู่' : 'ไม่ระบุหมวดหมู่';
+      return {category:cat, qty:Number(o.qty)||Number(item.qty)||1};
+    });
+  }
+  return null;
+}
 
 /* ============ OPTION GROUPS / STOCK ============ */
 let optionCache=[];
@@ -1549,6 +1635,23 @@ async function renderRecentOrders(){
 function openModal(){ document.getElementById('modal-overlay').style.display='flex'; }
 function closeModal(){ document.getElementById('modal-overlay').style.display='none'; }
 function closeModalOnOverlay(e){ if(e.target.id==='modal-overlay') closeModal(); }
+const KPI_INFO={
+  's-sales':{title:'ยอดขายรวม',body:'ผลรวมยอดขาย (total_sale) ของทุกออเดอร์ในช่วงเวลาที่เลือก ตามราคาขายรวมที่กรอกไว้ในแต่ละออเดอร์ ยังไม่หักค่าคอมมิชชั่น ค่าโฆษณา หรือต้นทุนสินค้าใดๆ'},
+  's-profit':{title:'กำไรขั้นต้น',body:'กำไรขั้นต้น = ยอดสุทธิร้านได้รับ − ต้นทุนสินค้าต่อออเดอร์<br><br>💡 คำนวณจากต้นทุนสินค้าต่อออร์เดอร์ ยังไม่ได้หัก "ยอดซื้อของเข้าร้าน" ทั้งหมด (เพราะของที่ซื้ออาจยังไม่ถูกขายหมด) ดูยอดซื้อของแยกไว้ด้านล่างเพื่อเทียบกระแสเงินสด'},
+  's-net':{title:'ยอดสุทธิร้านได้รับ',body:'ยอดขายรวม − ค่าคอมมิชชั่น − ค่าโฆษณา ทุกช่องทางรวมกัน (ใช้ยอดที่กรอกต่อออเดอร์หรือยอดรวมรายวันจากหน้าการเงิน แล้วแต่ว่าวันที่+ช่องทางนั้นมีบันทึกแบบไหนไว้ — เลือกใช้แหล่งเดียวเพื่อไม่ให้นับซ้ำ) คือเงินที่ร้านได้รับจริงก่อนหักต้นทุนสินค้า'},
+  's-orders':{title:'จำนวนออเดอร์',body:'จำนวนออเดอร์ทั้งหมดที่บันทึกไว้ในช่วงเวลาที่เลือก นับรวมทุกช่องทาง'},
+  's-cost':{title:'ต้นทุนสินค้า',body:'ผลรวมต้นทุนวัตถุดิบ (total_cost) ที่กรอกไว้ในแต่ละออเดอร์ ตามสูตรต้นทุนของเมนูที่ขายในออเดอร์นั้นๆ'},
+  's-comm':{title:'ค่าคอมมิชชั่น+โฆษณา',body:'ผลรวมค่าคอมมิชชั่นและค่าโฆษณาทุกช่องทาง โดยระบบจะเลือกใช้ยอดที่กรอกต่อออเดอร์ (เช่น Grab) หรือยอดรวมรายวันจากหน้าการเงิน (เช่น LineMan) แล้วแต่ว่าวันที่+ช่องทางนั้นมีบันทึกแบบไหนไว้ — เลือกใช้แหล่งเดียวต่อ วันที่+ช่องทาง เพื่อไม่ให้นับซ้ำ'},
+  's-purchases':{title:'ยอดซื้อของเข้าร้าน',body:'ผลรวมยอดซื้อของเข้าร้าน (total) จากหน้าซื้อของ ในช่วงเวลาที่เลือก เป็นกระแสเงินสดจริงที่จ่ายออกไป ไม่ผูกกับว่าของนั้นถูกขายไปแล้วหรือยัง'},
+  's-aov':{title:'เฉลี่ยต่อออเดอร์',body:'ยอดขายรวม ÷ จำนวนออเดอร์ทั้งหมดในช่วงเวลาที่เลือก (Average Order Value)'},
+  's-thaiplus':{title:'ยอดขาย Thai+ (60/40)',body:'ผลรวมยอดขายเฉพาะออเดอร์ที่ติ๊กแคมเปญ Thai+ (60/40) ในช่วงเวลาที่เลือก พร้อมจำนวนออเดอร์ในวงเล็บ'}
+};
+function showKpiInfo(key){
+  const info=KPI_INFO[key]; if(!info) return;
+  document.getElementById('modal-title').textContent=info.title;
+  document.getElementById('modal-body').innerHTML=`<div style="font-size:13.5px;line-height:1.6;color:var(--text)">${info.body}</div>`;
+  openModal();
+}
 async function showOrderDetail(id){
   const orders=await idbAll('orders');
   const order=orders.find(o=>o.id===id);
@@ -1859,6 +1962,61 @@ async function renderRecentPurchases(){
 
 /* ============ DASHBOARD ============ */
 let charts={};
+let qtyChartMode='grouped'; // 'grouped' = นับ set menu รวมเป็นหมวดเดียว (ปกติ) | 'decomposed' = แจกแจง set menu เป็นไอเทมย่อย
+let dashQtyItemsCache=[];
+function setQtyChartMode(mode,el){
+  qtyChartMode=mode;
+  const row=el.closest('.pillrow');
+  if(row) row.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  renderQtyChart(dashQtyItemsCache);
+}
+async function renderQtyChart(items){
+  dashQtyItemsCache=items;
+  let optsByKey=null;
+  if(qtyChartMode==='decomposed'){
+    const allOpts=await idbAll('order_item_options');
+    optsByKey={};
+    allOpts.forEach(o=>{
+      const k=o.date+'|'+o.order_no+'|'+o.main_menu;
+      (optsByKey[k]=optsByKey[k]||[]).push(o);
+    });
+  }
+  function itemBreakdown(i){
+    if(qtyChartMode!=='decomposed') return null;
+    const key=i.date+'|'+i.order_no+'|'+i.name;
+    return breakdownSetMenuItem(i, optsByKey[key]||[]);
+  }
+  const catSetAll=new Set();
+  items.forEach(i=>{
+    const bd=itemBreakdown(i);
+    if(bd) bd.forEach(b=>catSetAll.add(b.category));
+    else catSetAll.add(findMenuCategory(i.name)||'ไม่ระบุหมวดหมู่');
+  });
+  const catsOrdered=sortCategories([...catSetAll]);
+  const catColorMap={};
+  catsOrdered.forEach((c,idx)=>{ catColorMap[c]=CAT_PALETTE[idx % CAT_PALETTE.length]; });
+
+  const byDateCatQty={};
+  items.forEach(i=>{
+    byDateCatQty[i.date]=byDateCatQty[i.date]||{};
+    const bd=itemBreakdown(i);
+    if(bd){
+      bd.forEach(b=>{ byDateCatQty[i.date][b.category]=(byDateCatQty[i.date][b.category]||0)+b.qty; });
+    }else{
+      const cat=findMenuCategory(i.name)||'ไม่ระบุหมวดหมู่';
+      byDateCatQty[i.date][cat]=(byDateCatQty[i.date][cat]||0)+Number(i.qty||0);
+    }
+  });
+  const datesQty=Object.keys(byDateCatQty).sort();
+  const qtyDatasets=catsOrdered.map(cat=>({
+    type:'bar',
+    label:cat,
+    data:datesQty.map(d=>(byDateCatQty[d]&&byDateCatQty[d][cat])||0),
+    backgroundColor:catColorMap[cat]
+  }));
+  drawStackedBar('chart-qty',datesQty,qtyDatasets);
+}
 function setRangePreset(preset,prefix,el){
   const row=el.closest('.pillrow');
   if(row) row.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
@@ -2001,31 +2159,28 @@ async function renderDashboard(){
     pur.forEach(p=>{ byCat[p.category]=(byCat[p.category]||0)+Number(p.total||0); });
     drawPie('chart-purcat',Object.keys(byCat),Object.values(byCat),'donut-purcat-center','ซื้อของรวม');
 
-    // top menu (by sales value)
-    const byMenu={};
-    items.forEach(i=>{ byMenu[i.name]=(byMenu[i.name]||0)+Number(i.line_sale||0); });
-    const topMenu=Object.entries(byMenu).sort((a,b)=>b[1]-a[1]).slice(0,10);
-    drawChart('chart-topmenu','bar',topMenu.map(x=>x[0]),[{label:'ยอดขาย (฿)',data:topMenu.map(x=>x[1]),backgroundColor:'#8c5c46'}],true);
+    // category set + shared color map (used by both top-menu bar colors and qty chart stacks, so the same category = same color everywhere)
+    const catSetAll=new Set();
+    items.forEach(i=>{ catSetAll.add(findMenuCategory(i.name)||'ไม่ระบุหมวดหมู่'); });
+    const catsOrdered=sortCategories([...catSetAll]);
+    const catColorMap={};
+    catsOrdered.forEach((c,idx)=>{ catColorMap[c]=CAT_PALETTE[idx % CAT_PALETTE.length]; });
 
-    // daily quantity of items sold — stacked by menu category
-    const catPalette=['#7c8a3e','#8c5c46','#e8b876','#f2e0ab','#2e2b28','#a89a7a','#5a6b2e','#b5793f'];
-    const byDateCatQty={};
-    const catSet=new Set();
+    // top menu (by sales value, with qty shown alongside)
+    const byMenuSale={}, byMenuQty={};
     items.forEach(i=>{
-      const cat=findMenuCategory(i.name)||'ไม่ระบุหมวดหมู่';
-      catSet.add(cat);
-      byDateCatQty[i.date]=byDateCatQty[i.date]||{};
-      byDateCatQty[i.date][cat]=(byDateCatQty[i.date][cat]||0)+Number(i.qty||0);
+      byMenuSale[i.name]=(byMenuSale[i.name]||0)+Number(i.line_sale||0);
+      byMenuQty[i.name]=(byMenuQty[i.name]||0)+Number(i.qty||0);
     });
-    const cats=[...catSet].sort();
-    const datesQty=Object.keys(byDateCatQty).sort();
-    const qtyDatasets=cats.map((cat,idx)=>({
-      type:'bar',
-      label:cat,
-      data:datesQty.map(d=>(byDateCatQty[d]&&byDateCatQty[d][cat])||0),
-      backgroundColor:catPalette[idx % catPalette.length]
-    }));
-    drawStackedBar('chart-qty',datesQty,qtyDatasets);
+    const topMenu=Object.entries(byMenuSale).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    const topMenuLabels=topMenu.map(x=>findMenuShortName(x[0]));
+    const topMenuSales=topMenu.map(x=>x[1]);
+    const topMenuQtys=topMenu.map(x=>byMenuQty[x[0]]||0);
+    const topMenuColors=topMenu.map(x=>catColorMap[findMenuCategory(x[0])||'ไม่ระบุหมวดหมู่']||'#8c5c46');
+    drawTopMenuChart('chart-topmenu',topMenuLabels,topMenuSales,topMenuQtys,topMenuColors);
+
+    // daily quantity of items sold — stacked by menu category, ordered: cheesecake slice > set menu > drinks > toppings > whole cake > อื่นๆ
+    await renderQtyChart(items);
   }catch(err){
     console.error('chart render error',err);
     toast('วาดกราฟไม่สำเร็จ: '+err.message,'err');
@@ -2079,6 +2234,31 @@ function drawPie(canvasId,labels,data,centerElId,centerLabelText){
       if(centerLabelText){ const lblEl=el.querySelector('.dc-lbl'); if(lblEl) lblEl.textContent=centerLabelText; }
     }
   }
+}
+function drawTopMenuChart(canvasId,labels,sales,qtys,colors){
+  if(charts[canvasId]) charts[canvasId].destroy();
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  charts[canvasId]=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{label:'ยอดขาย (฿)',data:sales,backgroundColor:colors,borderRadius:5,borderSkipped:false,maxBarThickness:26}]},
+    options:{
+      indexAxis:'y',
+      layout:{padding:{right:64}},
+      plugins:{
+        legend:{display:false},
+        datalabels:{
+          display:true,
+          clip:false,
+          color:'#2e2b28',
+          anchor:'end',
+          align:'end',
+          font:{size:10.5,weight:'700'},
+          formatter:(val,ctx)=>fmtMoney(val)+' ('+(qtys[ctx.dataIndex]||0)+' ชิ้น)'
+        }
+      },
+      scales:{x:{beginAtZero:true,grid:{color:GRID_COLOR}},y:{grid:{display:false}}}
+    }
+  });
 }
 function drawProfitBar(canvasId,labels,data){
   if(charts[canvasId]) charts[canvasId].destroy();
