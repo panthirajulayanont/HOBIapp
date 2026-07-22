@@ -2398,6 +2398,11 @@ function drawPie(canvasId,labels,data,centerElId,centerLabelText){
 }
 // กราฟแท่งจัดอันดับแบบ "ชื่อ+ค่าตัวเลขอยู่ในแท่งเลย" (ตัวหนังสือขาว มีขอบดำบางๆ กันอ่านไม่ออกตอนแท่งสีอ่อน)
 // items: [{label, value, valueText, color}] เรียงมาจากมากไปน้อยแล้วจากผู้เรียก
+// ประมาณความกว้าง (px) ของข้อความคร่าวๆ พอสำหรับตัดสินใจว่าจะใส่ตัวหนังสือในแท่งได้มั้ย ไม่ต้องเป๊ะระดับ canvas.measureText
+function estimateTextPx(text,fontSize){ return (text||'').length*fontSize*0.6; }
+function truncateLabel(s,max){ s=s||''; return s.length>max ? s.slice(0,max-1)+'…' : s; }
+// กราฟแท่งจัดอันดับ — ชื่อ+ค่าตัวเลขอยู่บรรทัดเดียวกันเสมอ แท่งยาวพอ = ตัวหนังสือสีอ่อนอยู่ในแท่ง, แท่งสั้น = ตัวหนังสือสีเข้มอยู่นอกแท่ง (ต่อท้าย)
+// items: [{label, value, valueText, color}] เรียงมาจากมากไปน้อยแล้วจากผู้เรียก
 function drawRankedBarChart(canvasId,items,{small=false}={}){
   if(charts[canvasId]) charts[canvasId].destroy();
   const canvasEl=document.getElementById(canvasId);
@@ -2407,25 +2412,37 @@ function drawRankedBarChart(canvasId,items,{small=false}={}){
   const data=items.map(x=>x.value);
   const colors=items.map(x=>x.color);
   const valueTexts=items.map(x=>x.valueText);
+  const fullTexts=labels.map((lbl,i)=>truncateLabel(lbl,small?14:22)+'  '+valueTexts[i]);
+  const fontSize=small?9.5:11.5;
+  function fitsInside(dctx){
+    try{
+      const xScale=dctx.chart.scales.x;
+      const val=Number(dctx.dataset.data[dctx.dataIndex])||0;
+      const barPx=Math.abs(xScale.getPixelForValue(val)-xScale.getPixelForValue(0));
+      const textPx=estimateTextPx(fullTexts[dctx.dataIndex],fontSize);
+      return barPx > textPx+14;
+    }catch(e){ return false; }
+  }
   charts[canvasId]=new Chart(ctx,{
     type:'bar',
-    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:small?5:7,borderSkipped:false,maxBarThickness:small?20:30}]},
+    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:small?5:7,borderSkipped:false,maxBarThickness:small?24:34}]},
     options:{
       indexAxis:'y',
+      layout:{padding:{right:small?70:110}},
       plugins:{
         legend:{display:false},
         datalabels:{
           display:items.length>0,
           clamp:true,
-          clip:true,
-          color:'#fff',
-          textStrokeColor:'rgba(30,26,20,.55)',
-          textStrokeWidth:small?2:3,
-          font:{size:small?9.5:11.5,weight:'700'},
-          anchor:'center',
-          align:'center',
-          textAlign:'center',
-          formatter:(v,c)=>[labels[c.dataIndex],valueTexts[c.dataIndex]]
+          clip:false,
+          color:dctx=>fitsInside(dctx)?'#fff':'#2e2b28',
+          textStrokeColor:dctx=>fitsInside(dctx)?'rgba(30,26,20,.55)':'transparent',
+          textStrokeWidth:dctx=>fitsInside(dctx)?(small?2:2.5):0,
+          font:{size:fontSize,weight:'700'},
+          anchor:dctx=>fitsInside(dctx)?'center':'end',
+          align:dctx=>fitsInside(dctx)?'center':'end',
+          textAlign:'left',
+          formatter:(v,dctx)=>fullTexts[dctx.dataIndex]
         }
       },
       scales:{
