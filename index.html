@@ -134,15 +134,34 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .list-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
 .list-item:last-child{border-bottom:none;}
 .list-item .meta{font-size:12px;color:var(--muted);}
-.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-bottom:14px;}
-.sumcard{background:#fff;border-radius:12px;padding:12px;border:1px solid var(--border);}
-.sumcard .val{font-size:19px;font-weight:800;color:var(--brown);}
-.sumcard .lbl{font-size:11.5px;color:var(--muted);margin-top:2px;}
-.sumcard.pink .val{color:var(--pink-dark);}
-.sumcard.green .val{color:var(--green);}
-.sumcard.red .val{color:var(--red);}
-.chart-wrap{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:14px;}
-.chart-wrap canvas{max-height:260px;}
+.kpi-hero-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:10px;}
+.kpi-hero{border-radius:16px;padding:14px 16px;color:#fff;box-shadow:0 4px 14px rgba(46,43,40,.14);}
+.kpi-hero .kpi-icon{width:32px;height:32px;border-radius:9px;background:rgba(255,255,255,.22);display:flex;align-items:center;justify-content:center;margin-bottom:10px;}
+.kpi-hero .kpi-icon svg{width:17px;height:17px;stroke:#fff;}
+.kpi-hero .kpi-val{font-size:20px;font-weight:800;line-height:1.15;letter-spacing:-.2px;}
+.kpi-hero .kpi-lbl{font-size:11.5px;opacity:.92;margin-top:3px;font-weight:600;}
+.kpi-hero.c1{background:linear-gradient(135deg,#8c5c46,#6b4634);}
+.kpi-hero.c2{background:linear-gradient(135deg,#7c8a3e,#5c6a2c);}
+.kpi-hero.c3{background:linear-gradient(135deg,#3a3530,#2e2b28);}
+.kpi-hero.c4{background:linear-gradient(135deg,#c98a4b,#a8492f);}
+.kpi-mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;}
+.kpi-mini{background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 11px;display:flex;align-items:center;gap:9px;}
+.kpi-mini .mini-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.kpi-mini .mini-icon svg{width:15px;height:15px;stroke:#fff;}
+.kpi-mini .mini-body{min-width:0;}
+.kpi-mini .mini-val{font-size:14px;font-weight:800;color:var(--brown);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.kpi-mini .mini-lbl{font-size:10.5px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chart-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 4px rgba(0,0,0,.04);}
+.chart-card-head{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
+.chart-card-head .cc-icon{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.chart-card-head .cc-icon svg{width:15px;height:15px;stroke:#fff;}
+.chart-card-head .cc-title{font-size:13.5px;font-weight:700;color:var(--brown);flex:1;min-width:0;}
+.chart-card-head .cc-badge{font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;}
+.chart-card canvas{max-height:260px;}
+.chart-card .cc-donut-wrap{position:relative;}
+.donut-center{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
+.donut-center .dc-val{font-size:16px;font-weight:800;color:var(--brown);}
+.donut-center .dc-lbl{font-size:9.5px;color:var(--muted);margin-top:1px;}
 .toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:10px;font-size:13px;z-index:100;opacity:0;transition:.25s;pointer-events:none;max-width:90%;text-align:center;}
 .toast.show{opacity:1;top:24px;}
 .toast.err{background:#c0392b;}
@@ -422,33 +441,104 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     <div id="dash-empty" class="card emptystate">ยังไม่มีข้อมูลออเดอร์ในช่วงที่เลือก</div>
 
     <div id="dash-content" style="display:none">
-      <div class="summary-grid">
-        <div class="sumcard pink"><div class="val" id="s-sales">฿0</div><div class="lbl">ยอดขายรวม</div></div>
-        <div class="sumcard"><div class="val" id="s-cost">฿0</div><div class="lbl">ต้นทุนสินค้า</div></div>
-        <div class="sumcard"><div class="val" id="s-comm">฿0</div><div class="lbl">ค่าคอมมิชชั่น+โฆษณา</div></div>
-        <div class="sumcard"><div class="val" id="s-net">฿0</div><div class="lbl">ยอดสุทธิร้านได้รับ</div></div>
-        <div class="sumcard green"><div class="val" id="s-profit">฿0</div><div class="lbl">กำไรขั้นต้น</div></div>
-        <div class="sumcard red"><div class="val" id="s-purchases">฿0</div><div class="lbl">ยอดซื้อของเข้าร้าน</div></div>
-        <div class="sumcard"><div class="val" id="s-orders">0</div><div class="lbl">จำนวนออเดอร์</div></div>
-        <div class="sumcard"><div class="val" id="s-aov">฿0</div><div class="lbl">เฉลี่ยต่อออเดอร์</div></div>
-        <div class="sumcard"><div class="val" id="s-thaiplus">฿0</div><div class="lbl">ยอดขายแคมเปญ Thai+ (60/40)</div></div>
+      <div class="kpi-hero-grid">
+        <div class="kpi-hero c1">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="12" cy="12" r="2.3"/><path d="M6 10v4M18 10v4"/></svg></div>
+          <div class="kpi-val" id="s-sales">฿0</div>
+          <div class="kpi-lbl">ยอดขายรวม</div>
+        </div>
+        <div class="kpi-hero c2">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 15 10 9 14 13 20 6"/><polyline points="14 6 20 6 20 12"/></svg></div>
+          <div class="kpi-val" id="s-profit">฿0</div>
+          <div class="kpi-lbl">กำไรขั้นต้น</div>
+        </div>
+        <div class="kpi-hero c3">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v2h2a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><circle cx="16.5" cy="14" r="1.3"/></svg></div>
+          <div class="kpi-val" id="s-net">฿0</div>
+          <div class="kpi-lbl">ยอดสุทธิร้านได้รับ</div>
+        </div>
+        <div class="kpi-hero c4">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg></div>
+          <div class="kpi-val" id="s-orders">0</div>
+          <div class="kpi-lbl">จำนวนออเดอร์</div>
+        </div>
+      </div>
+
+      <div class="kpi-mini-grid">
+        <div class="kpi-mini">
+          <div class="mini-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8l-9-5-9 5 9 5 9-5z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div>
+          <div class="mini-body"><div class="mini-val" id="s-cost">฿0</div><div class="mini-lbl">ต้นทุนสินค้า</div></div>
+        </div>
+        <div class="kpi-mini">
+          <div class="mini-icon" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="16" x2="16" y2="8"/><circle cx="9" cy="9" r=".6" fill="#fff"/><circle cx="15" cy="15" r=".6" fill="#fff"/></svg></div>
+          <div class="mini-body"><div class="mini-val" id="s-comm">฿0</div><div class="mini-lbl">ค่าคอมมิชชั่น+โฆษณา</div></div>
+        </div>
+        <div class="kpi-mini">
+          <div class="mini-icon" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></div>
+          <div class="mini-body"><div class="mini-val" id="s-purchases">฿0</div><div class="mini-lbl">ยอดซื้อของเข้าร้าน</div></div>
+        </div>
+        <div class="kpi-mini">
+          <div class="mini-icon" style="background:var(--olive)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="12"/><line x1="12" y1="20" x2="12" y2="8"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
+          <div class="mini-body"><div class="mini-val" id="s-aov">฿0</div><div class="mini-lbl">เฉลี่ยต่อออเดอร์</div></div>
+        </div>
+        <div class="kpi-mini">
+          <div class="mini-icon" style="background:var(--tan)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="13" rx="1"/><path d="M12 8v13"/><path d="M3 12h18"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C10 3 12 8 12 8"/><path d="M16.5 8a2.5 2.5 0 0 0 0-5C14 3 12 8 12 8"/></svg></div>
+          <div class="mini-body"><div class="mini-val" id="s-thaiplus">฿0</div><div class="mini-lbl">ยอดขาย Thai+ (60/40)</div></div>
+        </div>
       </div>
       <div class="warn-box">💡 "กำไรขั้นต้น" คำนวณจากต้นทุนสินค้าต่อออร์เดอร์ ยังไม่ได้หัก "ยอดซื้อของเข้าร้าน" ทั้งหมด (เพราะของที่ซื้ออาจยังไม่ถูกขายหมด) ดูยอดซื้อของแยกไว้ด้านล่างเพื่อเทียบกระแสเงินสด</div>
 
-      <div class="chart-wrap"><h3 style="margin-top:0">ยอดขายรายวัน</h3><canvas id="chart-daily"></canvas></div>
-      <div class="chart-wrap">
-        <h3 style="margin-top:0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px">
-          <span>กำไรรายเดือน (ยอดสุทธิ − ยอดซื้อของ)</span>
-          <span id="total-profit-badge" class="badge grab">฿0</span>
-        </h3>
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
+          <div class="cc-title">ยอดขายรายวัน</div>
+        </div>
+        <canvas id="chart-daily"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <div class="cc-icon" style="background:var(--olive)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 15 10 9 14 13 20 6"/><polyline points="14 6 20 6 20 12"/></svg></div>
+          <div class="cc-title">กำไรรายเดือน (ยอดสุทธิ − ยอดซื้อของ)</div>
+          <span id="total-profit-badge" class="cc-badge">฿0</span>
+        </div>
         <canvas id="chart-monthprofit"></canvas>
       </div>
       <div class="row">
-        <div class="chart-wrap"><h3 style="margin-top:0">สัดส่วนยอดขายตามช่องทาง</h3><canvas id="chart-channel"></canvas></div>
-        <div class="chart-wrap"><h3 style="margin-top:0">ค่าใช้จ่ายซื้อของตามหมวดหมู่</h3><canvas id="chart-purcat"></canvas></div>
+        <div class="chart-card">
+          <div class="chart-card-head">
+            <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.5 4.3"/></svg></div>
+            <div class="cc-title">สัดส่วนยอดขายตามช่องทาง</div>
+          </div>
+          <div class="cc-donut-wrap">
+            <canvas id="chart-channel"></canvas>
+            <div class="donut-center" id="donut-channel-center"><div class="dc-val">฿0</div><div class="dc-lbl">ยอดขายรวม</div></div>
+          </div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-card-head">
+            <div class="cc-icon" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.5 4.3"/></svg></div>
+            <div class="cc-title">ค่าใช้จ่ายซื้อของตามหมวดหมู่</div>
+          </div>
+          <div class="cc-donut-wrap">
+            <canvas id="chart-purcat"></canvas>
+            <div class="donut-center" id="donut-purcat-center"><div class="dc-val">฿0</div><div class="dc-lbl">ซื้อของรวม</div></div>
+          </div>
+        </div>
       </div>
-      <div class="chart-wrap"><h3 style="margin-top:0">เมนูขายดี Top 10 (ตามยอดขาย)</h3><canvas id="chart-topmenu"></canvas></div>
-      <div class="chart-wrap"><h3 style="margin-top:0">จำนวนไอเทมที่ขายได้รายวัน (ชิ้น)</h3><canvas id="chart-qty"></canvas></div>
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <div class="cc-icon" style="background:var(--tan)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15 9 22 9.5 16.5 14 18.5 21 12 17 5.5 21 7.5 14 2 9.5 9 9"/></svg></div>
+          <div class="cc-title">เมนูขายดี Top 10 (ตามยอดขาย)</div>
+        </div>
+        <canvas id="chart-topmenu"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <div class="cc-icon" style="background:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
+          <div class="cc-title">จำนวนไอเทมที่ขายได้รายวัน (ชิ้น)</div>
+        </div>
+        <canvas id="chart-qty"></canvas>
+      </div>
     </div>
   </div>
 
@@ -512,21 +602,53 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     <div id="fin-empty" class="card emptystate">ยังไม่มีข้อมูลในช่วงที่เลือก</div>
 
     <div id="fin-content" style="display:none">
-      <div class="summary-grid">
-        <div class="sumcard pink"><div class="val" id="fin-revenue">฿0</div><div class="lbl">รายรับรวม (ยอดขาย)</div></div>
-        <div class="sumcard red"><div class="val" id="fin-commission">฿0</div><div class="lbl">ค่าคอมมิชชั่นรวม</div></div>
-        <div class="sumcard red"><div class="val" id="fin-adfee">฿0</div><div class="lbl">ค่าโฆษณารวม</div></div>
-        <div class="sumcard green"><div class="val" id="fin-net">฿0</div><div class="lbl">ยอดสุทธิร้านได้รับ</div></div>
+      <div class="kpi-hero-grid">
+        <div class="kpi-hero c1">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="12" cy="12" r="2.3"/><path d="M6 10v4M18 10v4"/></svg></div>
+          <div class="kpi-val" id="fin-revenue">฿0</div>
+          <div class="kpi-lbl">รายรับรวม (ยอดขาย)</div>
+        </div>
+        <div class="kpi-hero c2">
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v2h2a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><circle cx="16.5" cy="14" r="1.3"/></svg></div>
+          <div class="kpi-val" id="fin-net">฿0</div>
+          <div class="kpi-lbl">ยอดสุทธิร้านได้รับ</div>
+        </div>
+      </div>
+      <div class="kpi-mini-grid">
+        <div class="kpi-mini">
+          <div class="mini-icon" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="16" x2="16" y2="8"/><circle cx="9" cy="9" r=".6" fill="#fff"/><circle cx="15" cy="15" r=".6" fill="#fff"/></svg></div>
+          <div class="mini-body"><div class="mini-val" id="fin-commission">฿0</div><div class="mini-lbl">ค่าคอมมิชชั่นรวม</div></div>
+        </div>
+        <div class="kpi-mini">
+          <div class="mini-icon" style="background:var(--tan)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a2 2 0 0 0 2 2h1l3 5V6l-3 5H5a2 2 0 0 0-2 2z"/><path d="M13 8a4 4 0 0 1 0 8"/><path d="M17 4a9 9 0 0 1 0 16"/></svg></div>
+          <div class="mini-body"><div class="mini-val" id="fin-adfee">฿0</div><div class="mini-lbl">ค่าโฆษณารวม</div></div>
+        </div>
       </div>
 
-      <div class="chart-wrap"><h3 style="margin-top:0">รายรับรายวัน แยกยอดสุทธิ/ค่าคอม/ค่าโฆษณา</h3><canvas id="chart-fin-daily"></canvas></div>
-      <div class="chart-wrap"><h3 style="margin-top:0">ค่าธรรมเนียมคิดเป็น % ของยอดขาย แยกตามแอพ</h3><canvas id="chart-fin-channelpct"></canvas></div>
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
+          <div class="cc-title">รายรับรายวัน แยกยอดสุทธิ/ค่าคอม/ค่าโฆษณา</div>
+        </div>
+        <canvas id="chart-fin-daily"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-head">
+          <div class="cc-icon" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="16" x2="16" y2="8"/><circle cx="9" cy="9" r=".6" fill="#fff"/><circle cx="15" cy="15" r=".6" fill="#fff"/></svg></div>
+          <div class="cc-title">ค่าธรรมเนียมคิดเป็น % ของยอดขาย แยกตามแอพ</div>
+        </div>
+        <canvas id="chart-fin-channelpct"></canvas>
+      </div>
 
-      <h3>สรุปตามแอพ</h3>
-      <div id="fin-channel-summary" class="emptystate">ยังไม่มีข้อมูล</div>
+      <div class="card">
+        <h3 style="margin-top:0">สรุปตามแอพ</h3>
+        <div id="fin-channel-summary" class="emptystate">ยังไม่มีข้อมูล</div>
+      </div>
 
-      <h3>รายละเอียดรายวัน แยกตามแอพ</h3>
-      <div id="fin-list" class="emptystate">ยังไม่มีข้อมูล</div>
+      <div class="card">
+        <h3 style="margin-top:0">รายละเอียดรายวัน แยกตามแอพ</h3>
+        <div id="fin-list" class="emptystate">ยังไม่มีข้อมูล</div>
+      </div>
     </div>
   </div>
 
@@ -1872,12 +1994,12 @@ async function renderDashboard(){
     // by channel
     const byChannel={};
     orders.forEach(o=>{ byChannel[o.channel]=(byChannel[o.channel]||0)+Number(o.total_sale||0); });
-    drawPie('chart-channel',Object.keys(byChannel),Object.values(byChannel));
+    drawPie('chart-channel',Object.keys(byChannel),Object.values(byChannel),'donut-channel-center','ยอดขายรวม');
 
     // purchases by category
     const byCat={};
     pur.forEach(p=>{ byCat[p.category]=(byCat[p.category]||0)+Number(p.total||0); });
-    drawPie('chart-purcat',Object.keys(byCat),Object.values(byCat));
+    drawPie('chart-purcat',Object.keys(byCat),Object.values(byCat),'donut-purcat-center','ซื้อของรวม');
 
     // top menu (by sales value)
     const byMenu={};
@@ -1912,16 +2034,18 @@ async function renderDashboard(){
 if(typeof Chart!=='undefined' && typeof ChartDataLabels!=='undefined'){
   try{ Chart.register(ChartDataLabels); }catch(e){}
 }
+const GRID_COLOR='rgba(46,43,40,.06)';
 function drawChart(canvasId,type,labels,datasets,horizontal,showLegend){
   if(charts[canvasId]) charts[canvasId].destroy();
   const ctx=document.getElementById(canvasId).getContext('2d');
+  if(type==='bar') datasets=datasets.map(ds=>({borderRadius:5,borderSkipped:false,maxBarThickness:34,...ds}));
   charts[canvasId]=new Chart(ctx,{
     type,
     data:{labels,datasets},
     options:{
       indexAxis:horizontal?'y':'x',
       plugins:{legend:{display:!!showLegend,position:'bottom',labels:{boxWidth:12,font:{size:11}}},datalabels:{display:false}},
-      scales:{y:{beginAtZero:true}}
+      scales:{y:{beginAtZero:true,grid:{color:GRID_COLOR}},x:{grid:{display:false}}}
     }
   });
 }
@@ -1933,19 +2057,28 @@ function drawStackedBar(canvasId,labels,datasets){
     data:{labels,datasets},
     options:{
       plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},datalabels:{display:false}},
-      scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}
+      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,grid:{color:GRID_COLOR}}}
     }
   });
 }
-function drawPie(canvasId,labels,data){
+function drawPie(canvasId,labels,data,centerElId,centerLabelText){
   if(charts[canvasId]) charts[canvasId].destroy();
   const ctx=document.getElementById(canvasId).getContext('2d');
   const colors=['#7c8a3e','#8c5c46','#e8b876','#f2e0ab','#2e2b28','#a89a7a','#5a6b2e'];
   charts[canvasId]=new Chart(ctx,{
     type:'doughnut',
-    data:{labels,datasets:[{data,backgroundColor:colors}]},
-    options:{plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},datalabels:{display:false}}}
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:6}]},
+    options:{cutout:'68%',plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},datalabels:{display:false}}}
   });
+  if(centerElId){
+    const el=document.getElementById(centerElId);
+    if(el){
+      const total=data.reduce((s,v)=>s+Number(v||0),0);
+      const valEl=el.querySelector('.dc-val');
+      if(valEl) valEl.textContent=fmtMoney(total);
+      if(centerLabelText){ const lblEl=el.querySelector('.dc-lbl'); if(lblEl) lblEl.textContent=centerLabelText; }
+    }
+  }
 }
 function drawProfitBar(canvasId,labels,data){
   if(charts[canvasId]) charts[canvasId].destroy();
@@ -1953,7 +2086,7 @@ function drawProfitBar(canvasId,labels,data){
   const colors=data.map(v=>v>=0?'#7c8a3e':'#a8492f');
   charts[canvasId]=new Chart(ctx,{
     type:'bar',
-    data:{labels,datasets:[{label:'กำไรสุทธิรายเดือน (฿)',data,backgroundColor:colors}]},
+    data:{labels,datasets:[{label:'กำไรสุทธิรายเดือน (฿)',data,backgroundColor:colors,borderRadius:6,borderSkipped:false,maxBarThickness:44}]},
     options:{
       plugins:{
         legend:{display:false},
