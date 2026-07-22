@@ -150,6 +150,7 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .kpi-hero.c2{background:linear-gradient(135deg,#7c8a3e,#5c6a2c);}
 .kpi-hero.c3{background:linear-gradient(135deg,#3a3530,#2e2b28);}
 .kpi-hero.c4{background:linear-gradient(135deg,#c98a4b,#a8492f);}
+.kpi-hero.c5{background:linear-gradient(135deg,#5c7a6e,#3f5850);}
 .kpi-mini-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-bottom:12px;}
 .kpi-mini{position:relative;background:#fff;border:1px solid var(--border);border-radius:12px;padding:10px 11px;display:flex;align-items:center;gap:9px;}
 .kpi-mini .mini-icon{width:30px;height:30px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
@@ -472,6 +473,12 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <div class="kpi-val" id="s-orders">0</div>
           <div class="kpi-lbl">จำนวนออเดอร์</div>
         </div>
+        <div class="kpi-hero c5">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('s-netprofit')">i</button>
+          <div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg></div>
+          <div class="kpi-val" id="s-netprofit">฿0</div>
+          <div class="kpi-lbl">กำไรสุทธิ</div>
+        </div>
       </div>
 
       <div class="kpi-mini-grid">
@@ -505,7 +512,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <div class="chart-card">
         <div class="chart-card-head">
           <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
-          <div class="cc-title">ยอดขายรายวัน</div>
+          <div class="cc-title">ยอดขายรายสัปดาห์ (เส้น = กำไรสุทธิ)</div>
         </div>
         <canvas id="chart-daily"></canvas>
       </div>
@@ -1117,6 +1124,25 @@ function findMenuCost(name){
   if(!m) m=menuCache.find(x=>n.includes((x.name||'').trim().toLowerCase()) && x.name);
   return m? Number(m.cost)||0 : 0;
 }
+// ต้นทุนต่อ 1 หน่วยของรายการเมนู — ถ้าเป็น set menu ที่มีสูตรส่วนประกอบ (ดู FIXED_SET_RULES/melty wakey) ให้รวมต้นทุนของไอเทมย่อยแทนต้นทุนของตัว set menu เอง
+// optsForItem = [{group,option}] ตัวเลือกที่เลือกไว้ในบรรทัดนี้ (ใช้กรณี melty wakey set ที่ต้นทุนขึ้นกับรสเค้ก/กาแฟที่เลือก)
+function findItemCost(name,optsForItem){
+  const n=normFuzzy(name);
+  const fixedRule=FIXED_SET_RULES.find(r=>r.test(n));
+  if(fixedRule){
+    return fixedRule.components.reduce((s,c)=>{
+      const m=fuzzyFindMenu(c.code);
+      return s+(m?Number(m.cost)||0:0)*c.qty;
+    },0);
+  }
+  if(MELTY_WAKEY_TEST(n) && optsForItem && optsForItem.length){
+    return optsForItem.reduce((s,o)=>{
+      const m=fuzzyFindMenu(o.option);
+      return s+(m?Number(m.cost)||0:0);
+    },0);
+  }
+  return findMenuCost(name);
+}
 function findMenuPrice(name){
   const n=(name||'').trim().toLowerCase();
   const m=menuCache.find(x=>(x.name||'').trim().toLowerCase()===n);
@@ -1338,15 +1364,17 @@ function addOptionRow(triggerBtn,group,option,qty){
   }
   row.innerHTML=`
     <select class="opt-group" style="flex:1" onchange="onOptGroupChange(this)">${groupOpts||'<option value="">(ยังไม่มีข้อมูลกลุ่มตัวเลือก)</option>'}</select>
-    <select class="opt-name" style="flex:1.4"></select>
-    <input type="number" class="opt-qty" value="${qty||1}" min="1" style="flex:0 0 50px">
-    <button type="button" class="closebtn" onclick="this.parentElement.remove()">✕</button>`;
+    <select class="opt-name" style="flex:1.4" onchange="recalcOrderTotals()"></select>
+    <input type="number" class="opt-qty" value="${qty||1}" min="1" style="flex:0 0 50px" oninput="recalcOrderTotals()">
+    <button type="button" class="closebtn" onclick="this.parentElement.remove();recalcOrderTotals()">✕</button>`;
   list.appendChild(row);
   populateOptionNameSelect(row.querySelector('.opt-group'),row.querySelector('.opt-name'),option);
+  recalcOrderTotals();
 }
 function onOptGroupChange(groupSel){
   const nameSel=groupSel.parentElement.querySelector('.opt-name');
   populateOptionNameSelect(groupSel,nameSel);
+  recalcOrderTotals();
 }
 function populateOptionNameSelect(groupSel,nameSel,selectedName){
   const group=groupSel.value;
@@ -1374,14 +1402,19 @@ function onThaiPlusToggle(silent){
 }
 function recalcOrderTotals(){
   let totalSale=0, totalCost=0;
-  document.querySelectorAll('#o-items .itemrow').forEach(r=>{
-    const nameEl=r.querySelector('.name');
-    if(!nameEl) return; // skip option sub-rows
+  document.querySelectorAll('#o-items .itemblock').forEach(block=>{
+    const r=block.querySelector('.itemrow');
+    const nameEl=r&&r.querySelector('.name');
+    if(!nameEl) return;
     const name=nameEl.value;
     const qty=Number(r.querySelector('.qty').value)||0;
     const price=Number(r.querySelector('.price').value)||0;
     totalSale+=qty*price;
-    totalCost+=qty*findMenuCost(name);
+    const optsForItem=[...block.querySelectorAll('.opt-list .itemrow')].map(o=>({
+      group:o.querySelector('.opt-group')?.value,
+      option:o.querySelector('.opt-name')?.value
+    })).filter(o=>o.group && o.option);
+    totalCost+=qty*findItemCost(name,optsForItem);
   });
   if(!orderManualTotalEdited) document.getElementById('o-total-sale').value=totalSale.toFixed(2);
   document.getElementById('o-total-cost').value=totalCost.toFixed(2);
@@ -1543,6 +1576,21 @@ async function deleteOrderById(id){
   toast('ลบแล้ว','ok');
 }
 const THAI_MONTHS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+// จัดกลุ่มวันที่เป็นสัปดาห์ (เริ่มวันจันทร์) — ใช้กับกราฟยอดขายรายสัปดาห์บนแดชบอร์ด
+function getWeekStartDate(dateStr){
+  const d=new Date(dateStr+'T00:00:00');
+  const day=d.getDay();
+  const diff=(day===0?-6:1-day);
+  d.setDate(d.getDate()+diff);
+  return d;
+}
+function getWeekKey(dateStr){ return toLocalISO(getWeekStartDate(dateStr)); }
+function formatWeekLabel(weekStartStr){
+  const start=new Date(weekStartStr+'T00:00:00');
+  const end=new Date(start); end.setDate(end.getDate()+6);
+  const f=d=>`${d.getDate()} ${THAI_MONTHS[d.getMonth()]}`;
+  return f(start)+' - '+f(end);
+}
 function computeRangeBounds(preset){
   const now=new Date();
   let from='2000-01-01', to=todayISO();
@@ -1648,6 +1696,7 @@ const KPI_INFO={
   's-profit':{title:'กำไรขั้นต้น',body:'กำไรขั้นต้น = ยอดสุทธิร้านได้รับ − ต้นทุนสินค้าต่อออเดอร์<br><br>💡 คำนวณจากต้นทุนสินค้าต่อออร์เดอร์ ยังไม่ได้หัก "ยอดซื้อของเข้าร้าน" ทั้งหมด (เพราะของที่ซื้ออาจยังไม่ถูกขายหมด) ดูยอดซื้อของแยกไว้ด้านล่างเพื่อเทียบกระแสเงินสด'},
   's-net':{title:'ยอดสุทธิร้านได้รับ',body:'ยอดขายรวม − ค่าคอมมิชชั่น − ค่าโฆษณา ทุกช่องทางรวมกัน (ใช้ยอดที่กรอกต่อออเดอร์หรือยอดรวมรายวันจากหน้าการเงิน แล้วแต่ว่าวันที่+ช่องทางนั้นมีบันทึกแบบไหนไว้ — เลือกใช้แหล่งเดียวเพื่อไม่ให้นับซ้ำ) คือเงินที่ร้านได้รับจริงก่อนหักต้นทุนสินค้า'},
   's-orders':{title:'จำนวนออเดอร์',body:'จำนวนออเดอร์ทั้งหมดที่บันทึกไว้ในช่วงเวลาที่เลือก นับรวมทุกช่องทาง'},
+  's-netprofit':{title:'กำไรสุทธิ',body:'กำไรสุทธิ = ยอดสุทธิร้านได้รับ − ยอดซื้อของเข้าร้าน<br><br>ต่างจาก "กำไรขั้นต้น" ตรงที่ตัวนี้หักยอดซื้อของเข้าร้านทั้งหมดในช่วงเวลาที่เลือก (ไม่ใช่แค่ต้นทุนต่อออเดอร์) จึงสะท้อนกระแสเงินสดจริงของร้านได้ใกล้เคียงกว่า'},
   's-cost':{title:'ต้นทุนสินค้า',body:'ผลรวมต้นทุนวัตถุดิบ (total_cost) ที่กรอกไว้ในแต่ละออเดอร์ ตามสูตรต้นทุนของเมนูที่ขายในออเดอร์นั้นๆ'},
   's-comm':{title:'ค่าคอมมิชชั่น+โฆษณา',body:'ผลรวมค่าคอมมิชชั่นและค่าโฆษณาทุกช่องทาง โดยระบบจะเลือกใช้ยอดที่กรอกต่อออเดอร์ (เช่น Grab) หรือยอดรวมรายวันจากหน้าการเงิน (เช่น LineMan) แล้วแต่ว่าวันที่+ช่องทางนั้นมีบันทึกแบบไหนไว้ — เลือกใช้แหล่งเดียวต่อ วันที่+ช่องทาง เพื่อไม่ให้นับซ้ำ'},
   's-purchases':{title:'ยอดซื้อของเข้าร้าน',body:'ผลรวมยอดซื้อของเข้าร้าน (total) จากหน้าซื้อของ ในช่วงเวลาที่เลือก เป็นกระแสเงินสดจริงที่จ่ายออกไป ไม่ผูกกับว่าของนั้นถูกขายไปแล้วหรือยัง'},
@@ -2098,6 +2147,7 @@ async function renderDashboard(){
   profitBadge.textContent=fmtMoney(totalProfitAll);
   profitBadge.style.background=totalProfitAll>=0?'#7c8a3e':'#a8492f';
   profitBadge.style.color='#fff';
+  document.getElementById('s-netprofit').textContent=fmtMoney(totalProfitAll);
   document.getElementById('s-orders').textContent=orders.length;
   document.getElementById('s-aov').textContent=fmtMoney(orders.length?totalSale/orders.length:0);
   const thaiPlusOrders=orders.filter(o=>o.thai_plus);
@@ -2111,29 +2161,37 @@ async function renderDashboard(){
   document.getElementById('chart-lib-warn')?.remove();
 
   try{
-    // daily sales — stacked bar by channel: Grab (bottom) -> Line Man -> คอนโด -> อื่นๆ
+    // ยอดขายรายสัปดาห์ — stacked bar by channel: Grab (bottom) -> Line Man -> คอนโด -> อื่นๆ พร้อมเส้นกำไรสุทธิรายสัปดาห์ซ้อนทับ
     const channelOrder=['Grab Food','Line Man','คอนโด','อื่นๆ'];
     const channelColors={'Grab Food':'#7c8a3e','Line Man':'#8c5c46','คอนโด':'#e8b876','อื่นๆ':'#f2e0ab'};
-    const dates=[...new Set(orders.map(o=>o.date))].sort();
-    const byDateChannel={};
+    const weekKeys=[...new Set(orders.map(o=>getWeekKey(o.date)))].sort();
+    const weekLabels=weekKeys.map(formatWeekLabel);
+    const byWeekChannel={};
     orders.forEach(o=>{
-      byDateChannel[o.date]=byDateChannel[o.date]||{};
-      byDateChannel[o.date][o.channel]=(byDateChannel[o.date][o.channel]||0)+Number(o.total_sale||0);
+      const wk=getWeekKey(o.date);
+      byWeekChannel[wk]=byWeekChannel[wk]||{};
+      byWeekChannel[wk][o.channel]=(byWeekChannel[wk][o.channel]||0)+Number(o.total_sale||0);
     });
     const stackDatasets=channelOrder.map(ch=>({
       type:'bar',
       order:1,
       label:ch,
-      data:dates.map(d=>(byDateChannel[d]&&byDateChannel[d][ch])||0),
+      data:weekKeys.map(wk=>(byWeekChannel[wk]&&byWeekChannel[wk][ch])||0),
       backgroundColor:channelColors[ch]
     }));
-    const byDateProfit={};
-    dates.forEach(d=>{ byDateProfit[d]=(byDateSaleAgg[d]||0)-(byDateCostAgg[d]||0)-feeForDate(d); });
-    const profitLine={
+    // กำไรสุทธิรายสัปดาห์ = (ยอดขาย − ค่าคอม/ค่าโฆษณา) ของสัปดาห์นั้น − ยอดซื้อของเข้าร้านของสัปดาห์นั้น
+    const byWeekNet={}, byWeekPurchase={};
+    Object.keys(byDateSaleAgg).forEach(d=>{
+      const wk=getWeekKey(d);
+      const dateNet=(byDateSaleAgg[d]||0)-feeForDate(d);
+      byWeekNet[wk]=(byWeekNet[wk]||0)+dateNet;
+    });
+    pur.forEach(p=>{ const wk=getWeekKey(p.date); byWeekPurchase[wk]=(byWeekPurchase[wk]||0)+Number(p.total||0); });
+    const netProfitLine={
       type:'line',
       order:0,
-      label:'กำไรขั้นต้น',
-      data:dates.map(d=>byDateProfit[d]||0),
+      label:'กำไรสุทธิ',
+      data:weekKeys.map(wk=>(byWeekNet[wk]||0)-(byWeekPurchase[wk]||0)),
       borderColor:'#2e2b28',
       backgroundColor:'#2e2b28',
       borderWidth:2.5,
@@ -2142,7 +2200,7 @@ async function renderDashboard(){
       tension:.3,
       fill:false
     };
-    drawStackedBar('chart-daily',dates,[...stackDatasets,profitLine]);
+    drawStackedBar('chart-daily',weekLabels,[...stackDatasets,netProfitLine]);
 
     // monthly profit = (ยอดขาย - ค่าคอม/ค่าโฆษณา ต่อวัน) รวมทั้งเดือน - ยอดซื้อของทั้งเดือน
     // รวมที่ระดับวันก่อน (feeForDate คิดเป็นรายวัน ไม่ใช่รายออเดอร์) แล้วค่อยรวมขึ้นเป็นเดือน กันนับค่าธรรมเนียมซ้ำเวลาวันเดียวกันมีหลายออเดอร์
