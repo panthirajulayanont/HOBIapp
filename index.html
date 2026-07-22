@@ -255,11 +255,12 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <div><label>ต้นทุนสินค้ารวม (฿, คำนวณอัตโนมัติ)</label><input type="number" id="o-total-cost" step="0.01"></div>
         </div>
         <div class="row">
-          <div><label>ค่าคอมมิชชั่นแพลตฟอร์ม (฿)</label><input type="number" id="o-commission" step="0.01" value="0"></div>
-          <div><label>ค่าโฆษณา/แคมเปญ (฿)</label><input type="number" id="o-adfee" step="0.01" value="0"></div>
+          <div><label>ค่าคอมมิชชั่นแพลตฟอร์ม (฿, ถ้ามีข้อมูลรายออเดอร์) <button type="button" class="info-btn" onclick="event.preventDefault();toggleEl('hint-order-fee')">i</button></label><input type="number" id="o-commission" step="0.01" value="0" oninput="recalcNetProfit()"></div>
+          <div><label>ค่าโฆษณา/แคมเปญ (฿, ถ้ามีข้อมูลรายออเดอร์)</label><input type="number" id="o-adfee" step="0.01" value="0" oninput="recalcNetProfit()"></div>
         </div>
+        <p class="hint" id="hint-order-fee" style="display:none">กรอกตรงนี้ได้เลยถ้าเช็คค่าคอม/ค่าโฆษณาต่อออเดอร์ได้ (เช่น Grab ดูได้จากหน้า Transactions) — ถ้าไม่สะดวกดูรายออเดอร์ (เช่น LineMan ที่หน้าการเงินให้แค่ยอดรวมทั้งวัน) ปล่อยเป็น 0 ไว้แล้วไปบันทึกรวมเป็นยอดรายวันที่การ์ด "ค่าธรรมเนียมแพลตฟอร์มรายวัน" ด้านล่างแทนได้เลย ระบบจะไม่นับซ้ำ — ถ้าวันนั้น+ช่องทางนั้นมีบันทึกรวมรายวันแล้ว จะใช้ยอดรวมรายวันแทนค่าที่กรอกต่อออเดอร์ให้อัตโนมัติตอนคำนวณกำไรในแดชบอร์ด</p>
         <div class="row">
-          <div><label>ยอดสุทธิร้านได้รับ (฿)</label><input type="number" id="o-net" step="0.01"></div>
+          <div><label>ยอดสุทธิร้านได้รับ (฿)</label><input type="number" id="o-net" step="0.01" readonly></div>
           <div><label>กำไรขั้นต้น (฿)</label><input type="number" id="o-profit" step="0.01" readonly></div>
         </div>
         <label>หมายเหตุ</label>
@@ -270,6 +271,33 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <button class="btn-ghost" onclick="resetOrderForm()">ล้างฟอร์ม</button>
         </div>
       </form>
+    </div>
+
+    <div class="card">
+      <h2>ค่าธรรมเนียมแพลตฟอร์มรายวัน <button type="button" class="info-btn" onclick="toggleEl('hint-dailyfee')">i</button></h2>
+      <p class="hint" id="hint-dailyfee" style="display:none">แคปหน้า "การเงิน/Finance" สรุปรายวันจาก Grab/LineMan แล้วกรอกค่าคอมมิชชั่นกับค่าโฆษณารวมของวันนั้นต่อช่องทางที่นี่ (ไม่ต้องกรอกต่อออเดอร์ เพราะตัวเลขจริงในหน้าการเงินเป็นยอดรวมทั้งวัน) ระบบจะเอาไปหักออกจากยอดขายรวมของวันนั้นในแดชบอร์ดให้อัตโนมัติ</p>
+      <div id="dailyfee-pending-list" class="pending-list" style="display:none"></div>
+      <div class="row">
+        <div><label>วันที่</label><input type="date" id="df-date"></div>
+        <div><label>ช่องทาง</label>
+          <select id="df-channel">
+            <option>Grab Food</option><option>Line Man</option><option>คอนโด</option><option>อื่นๆ</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div><label>ค่าคอมมิชชั่นแพลตฟอร์มรวม (฿)</label><input type="number" id="df-commission" step="0.01" value="0"></div>
+        <div><label>ค่าโฆษณา/แคมเปญรวม (฿)</label><input type="number" id="df-adfee" step="0.01" value="0"></div>
+      </div>
+      <label>หมายเหตุ</label>
+      <input type="text" id="df-note" placeholder="เช่น อ้างอิงจากหน้าการเงินวันนี้">
+      <input type="hidden" id="df-edit-id">
+      <div class="btn-row">
+        <button class="btn-primary" onclick="saveDailyFee()">💾 บันทึก</button>
+        <button class="btn-ghost" id="df-cancel-btn" onclick="resetDailyFeeForm()" style="display:none">ยกเลิกแก้ไข</button>
+      </div>
+      <h3 style="margin-top:14px">รายการที่บันทึกไว้</h3>
+      <div id="dailyfee-list" class="emptystate">ยังไม่มีข้อมูล</div>
     </div>
 
     <div class="card">
@@ -567,6 +595,7 @@ function switchTab(name,btn){
   document.querySelectorAll('nav.bottomnav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   if(name==='dashboard') renderDashboard();
+  if(name==='orders') renderDailyFeeList();
   if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); renderStockUsage(); updateSyncStatusUI(); }
 }
 
@@ -574,7 +603,7 @@ function switchTab(name,btn){
 let db;
 function openDB(){
   return new Promise((resolve,reject)=>{
-    const req=indexedDB.open('hobiDB',2);
+    const req=indexedDB.open('hobiDB',3);
     req.onupgradeneeded=(e)=>{
       const d=e.target.result;
       if(!d.objectStoreNames.contains('orders')){
@@ -602,6 +631,11 @@ function openDB(){
         const s=d.createObjectStore('order_item_options',{keyPath:'id'});
         s.createIndex('order_no','order_no',{unique:false});
         s.createIndex('date','date',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('daily_fees')){
+        const s=d.createObjectStore('daily_fees',{keyPath:'id'});
+        s.createIndex('date','date',{unique:false});
+        s.createIndex('channel','channel',{unique:false});
       }
     };
     req.onsuccess=(e)=>{ db=e.target.result; resolve(db); };
@@ -689,12 +723,14 @@ function importFromClaudeJSON(){
   }catch(err){ toast('อ่านโค้ด JSON ไม่ได้ ลองก็อปมาใหม่ทั้งก้อนอีกครั้ง','err'); return; }
   const newOrders=Array.isArray(j.orders)?j.orders:[];
   const newPurchases=Array.isArray(j.purchases)?j.purchases:(Array.isArray(j.receipts)?j.receipts:[]);
-  if(!newOrders.length && !newPurchases.length){ toast('ไม่พบข้อมูล orders/purchases ใน JSON นี้','err'); return; }
+  const newDailyFees=Array.isArray(j.daily_fees)?j.daily_fees:[];
+  if(!newOrders.length && !newPurchases.length && !newDailyFees.length){ toast('ไม่พบข้อมูล orders/purchases/daily_fees ใน JSON นี้','err'); return; }
   if(newOrders.length){ pendingOrders=pendingOrders.concat(newOrders); renderOrderPendingList(); }
   if(newPurchases.length){ pendingPurchases=pendingPurchases.concat(newPurchases); renderPurPendingList(); }
+  if(newDailyFees.length){ pendingDailyFees=pendingDailyFees.concat(newDailyFees); renderDailyFeePendingList(); }
   box.value='';
-  toast(`นำเข้าแล้ว: ${newOrders.length} ออเดอร์, ${newPurchases.length} ใบเสร็จ — ไปตรวจสอบและบันทึกทีละรายการ`,'ok');
-  if(newOrders.length){
+  toast(`นำเข้าแล้ว: ${newOrders.length} ออเดอร์, ${newPurchases.length} ใบเสร็จ, ${newDailyFees.length} ค่าธรรมเนียมรายวัน — ไปตรวจสอบและบันทึกทีละรายการ`,'ok');
+  if(newOrders.length || newDailyFees.length){
     goToTab('orders');
   }else if(newPurchases.length){
     goToTab('purchases');
@@ -914,6 +950,8 @@ function fillOrderForm(j){
   if(!(j.items||[]).length) addOrderItemRow();
   document.getElementById('o-total-sale').value=j.total_sale||0;
   orderManualTotalEdited = !!j.total_sale; // trust AI-read total if provided; recalc from items only if not
+  document.getElementById('o-commission').value=j.commission||0;
+  document.getElementById('o-adfee').value=j.ad_fee||0;
   const tpBox=document.getElementById('o-thaiplus');
   tpBox.checked=!!j.thai_plus;
   onThaiPlusToggle(true);
@@ -1039,9 +1077,6 @@ function recalcNetProfit(){
   document.getElementById('o-net').value=net.toFixed(2);
   document.getElementById('o-profit').value=(net-cost).toFixed(2);
 }
-['o-commission','o-adfee','o-total-cost'].forEach(id=>{
-  document.addEventListener('input',e=>{ if(e.target.id===id) recalcNetProfit(); });
-});
 function escapeHtml(s){ return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
 function resetOrderForm(){
@@ -1088,6 +1123,7 @@ async function saveOrder(){
     order_no:document.getElementById('o-orderno').value.trim(),
     total_sale:Number(document.getElementById('o-total-sale').value)||0,
     total_cost:Number(document.getElementById('o-total-cost').value)||0,
+    // ค่าคอม/ค่าโฆษณาต่อออเดอร์: กรอกได้ถ้ามีข้อมูลจริง (เช่น Grab) ปล่อย 0 ได้ถ้าจะบันทึกรวมรายวันแทนที่การ์ด daily_fees
     commission:Number(document.getElementById('o-commission').value)||0,
     ad_fee:Number(document.getElementById('o-adfee').value)||0,
     net_received:Number(document.getElementById('o-net').value)||0,
@@ -1263,16 +1299,121 @@ async function showOrderDetail(id){
     <h3>สรุปการเงิน</h3>
     <div class="detail-row"><span class="k">ยอดขายรวม</span><span class="v">${fmtMoney(order.total_sale)}</span></div>
     <div class="detail-row"><span class="k">ต้นทุนสินค้ารวม</span><span class="v">${fmtMoney(order.total_cost)}</span></div>
+    ${(order.commission || order.ad_fee) ? `
     <div class="detail-row"><span class="k">ค่าคอมมิชชั่นแพลตฟอร์ม</span><span class="v">${fmtMoney(order.commission)}</span></div>
     <div class="detail-row"><span class="k">ค่าโฆษณา/แคมเปญ</span><span class="v">${fmtMoney(order.ad_fee)}</span></div>
     <div class="detail-row"><span class="k">ยอดสุทธิร้านได้รับ</span><span class="v">${fmtMoney(order.net_received)}</span></div>
     <div class="detail-row"><span class="k">กำไรขั้นต้น</span><span class="v">${fmtMoney(order.gross_profit)}</span></div>
+    ` : `
+    <div class="detail-row"><span class="k">กำไรขั้นต้น (ก่อนหักค่าธรรมเนียมแพลตฟอร์ม)</span><span class="v">${fmtMoney(order.total_sale-order.total_cost)}</span></div>
+    <p class="hint">ค่าคอมมิชชั่น/ค่าโฆษณาของวันนี้ดูรวมได้ที่การ์ด "ค่าธรรมเนียมแพลตฟอร์มรายวัน" ในหน้าออเดอร์</p>
+    `}
     ${order.note ? `<h3>หมายเหตุ</h3><div class="hint" style="white-space:pre-wrap">${escapeHtml(order.note)}</div>` : ''}
     <div class="btn-row" style="margin-top:14px">
       <button class="btn-danger" onclick="closeModal();deleteOrderById('${order.id}')">🗑️ ลบออเดอร์นี้</button>
       <button class="btn-ghost" onclick="closeModal()">ปิด</button>
     </div>`;
   openModal();
+}
+
+/* ============ DAILY PLATFORM FEES (ค่าคอม/ค่าโฆษณารวมรายวัน แยกจากออเดอร์) ============ */
+let dailyFeeCache=[];
+let pendingDailyFees=[]; // imported from Claude Chat JSON, awaiting review/save
+let editingPendingDailyFeeIndex=-1;
+async function refreshDailyFeeCache(){
+  dailyFeeCache=(await idbAll('daily_fees')).sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:0));
+}
+function renderDailyFeePendingList(){
+  const box=document.getElementById('dailyfee-pending-list');
+  if(!pendingDailyFees.length){ box.style.display='none'; box.innerHTML=''; return; }
+  box.style.display='block';
+  box.innerHTML=`<div class="pl-title">พบ ${pendingDailyFees.length} รายการค่าธรรมเนียมรายวันที่ยังไม่ได้บันทึก</div>` +
+    pendingDailyFees.map((f,i)=>`
+      <div class="pending-card">
+        <div class="pc-info"><b>${escapeHtml(f.channel||'')}</b>${escapeHtml(f.date||'')} · ค่าคอม ${fmtMoney(f.commission)} · ค่าโฆษณา ${fmtMoney(f.ad_fee)}</div>
+        <div class="pc-btns">
+          <button type="button" class="btn-primary btn-sm" onclick="loadPendingDailyFee(${i})">ตรวจสอบ</button>
+          <button type="button" class="btn-ghost btn-sm" onclick="discardPendingDailyFee(${i})">ลบ</button>
+        </div>
+      </div>`).join('');
+}
+function loadPendingDailyFee(i){
+  editingPendingDailyFeeIndex=i;
+  fillDailyFeeForm(pendingDailyFees[i]);
+  document.getElementById('df-date').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function discardPendingDailyFee(i){
+  pendingDailyFees.splice(i,1);
+  if(editingPendingDailyFeeIndex===i) editingPendingDailyFeeIndex=-1;
+  renderDailyFeePendingList();
+}
+function fillDailyFeeForm(j){
+  document.getElementById('df-date').value=j.date||todayISO();
+  const ch=j.channel||'Grab Food';
+  const sel=document.getElementById('df-channel');
+  sel.value=[...sel.options].some(o=>o.value===ch)?ch:'อื่นๆ';
+  document.getElementById('df-commission').value=Number(j.commission)||0;
+  document.getElementById('df-adfee').value=Number(j.ad_fee)||0;
+  document.getElementById('df-note').value=j.note||'';
+}
+async function saveDailyFee(){
+  const date=document.getElementById('df-date').value||todayISO();
+  const channel=document.getElementById('df-channel').value;
+  const commission=Number(document.getElementById('df-commission').value)||0;
+  const ad_fee=Number(document.getElementById('df-adfee').value)||0;
+  const note=document.getElementById('df-note').value.trim();
+  const editId=document.getElementById('df-edit-id').value;
+  await idbPut('daily_fees',{ id: editId||uid(), date, channel, commission, ad_fee, note });
+  const wasEditing=editingPendingDailyFeeIndex>=0;
+  if(wasEditing){
+    pendingDailyFees.splice(editingPendingDailyFeeIndex,1);
+    editingPendingDailyFeeIndex=-1;
+    renderDailyFeePendingList();
+  }
+  resetDailyFeeForm();
+  await renderDailyFeeList();
+  toast(editId?'แก้ไขค่าธรรมเนียมแล้ว':'บันทึกค่าธรรมเนียมแล้ว 🎉','ok');
+}
+function editDailyFeeRow(id){
+  const f=dailyFeeCache.find(x=>x.id===id); if(!f) return;
+  document.getElementById('df-edit-id').value=f.id;
+  document.getElementById('df-date').value=f.date||todayISO();
+  document.getElementById('df-channel').value=f.channel||'Grab Food';
+  document.getElementById('df-commission').value=f.commission||0;
+  document.getElementById('df-adfee').value=f.ad_fee||0;
+  document.getElementById('df-note').value=f.note||'';
+  document.getElementById('df-cancel-btn').style.display='inline-block';
+  document.getElementById('df-date').scrollIntoView({behavior:'smooth',block:'center'});
+}
+async function deleteDailyFeeRow(id){
+  if(!confirm('ลบรายการนี้?')) return;
+  await idbDelete('daily_fees',id);
+  await renderDailyFeeList();
+  toast('ลบแล้ว','ok');
+}
+function resetDailyFeeForm(){
+  document.getElementById('df-edit-id').value='';
+  document.getElementById('df-date').value=todayISO();
+  document.getElementById('df-channel').value='Grab Food';
+  document.getElementById('df-commission').value=0;
+  document.getElementById('df-adfee').value=0;
+  document.getElementById('df-note').value='';
+  document.getElementById('df-cancel-btn').style.display='none';
+}
+async function renderDailyFeeList(){
+  await refreshDailyFeeCache();
+  const el=document.getElementById('dailyfee-list');
+  if(!dailyFeeCache.length){ el.className='emptystate'; el.textContent='ยังไม่มีข้อมูล'; return; }
+  el.className='';
+  el.innerHTML=dailyFeeCache.map(f=>`<div class="list-item">
+      <div><b>${escapeHtml(f.channel)}</b> — ${f.date}
+        <div class="meta">ค่าคอม ${fmtMoney(f.commission)} · ค่าโฆษณา ${fmtMoney(f.ad_fee)}${f.note?(' · '+escapeHtml(f.note)):''}</div>
+      </div>
+      <div style="display:flex;gap:4px;flex-shrink:0">
+        <button type="button" class="btn-ghost btn-sm" onclick="editDailyFeeRow('${f.id}')">แก้ไข</button>
+        <button type="button" class="btn-ghost btn-sm" onclick="deleteDailyFeeRow('${f.id}')">ลบ</button>
+      </div>
+    </div>`).join('');
 }
 
 /* ============ PURCHASE FORM ============ */
@@ -1410,9 +1551,11 @@ async function renderDashboard(){
   const allOrders=await idbAll('orders');
   const allItems=await idbAll('order_items');
   const allPur=await idbAll('purchases');
+  const allDailyFees=await idbAll('daily_fees');
   const orders=allOrders.filter(o=>o.date>=from && o.date<=to);
   const items=allItems.filter(i=>i.date>=from && i.date<=to);
   const pur=allPur.filter(p=>p.date>=from && p.date<=to);
+  const dailyFees=allDailyFees.filter(f=>f.date>=from && f.date<=to);
 
   if(!orders.length && !pur.length){
     document.getElementById('dash-empty').style.display='block';
@@ -1422,11 +1565,33 @@ async function renderDashboard(){
   document.getElementById('dash-empty').style.display='none';
   document.getElementById('dash-content').style.display='block';
 
+  // ค่าคอม/ค่าโฆษณา: รองรับทั้ง 2 แบบพร้อมกันโดยไม่นับซ้ำ
+  // - ถ้าช่องทาง+วันที่นั้นมีบันทึกรวมรายวันไว้ (daily_fees) ให้ใช้ยอดรวมนั้นแทน (เช่น LineMan ที่ดูรายออเดอร์ไม่สะดวก)
+  // - ถ้าช่องทาง+วันที่นั้นไม่มีบันทึกรวมรายวัน ให้ใช้ค่าคอม/ค่าโฆษณาที่กรอกไว้ต่อออเดอร์แทน (เช่น Grab ที่เช็ครายออเดอร์ได้)
+  const feeKey=(d,ch)=>d+'|'+ch;
+  const dailyFeeByKey={};
+  dailyFees.forEach(f=>{ const k=feeKey(f.date,f.channel); dailyFeeByKey[k]=(dailyFeeByKey[k]||0)+Number(f.commission||0)+Number(f.ad_fee||0); });
+  const dailyFeeKeys=new Set(Object.keys(dailyFeeByKey));
+  function orderFee(o){
+    return dailyFeeKeys.has(feeKey(o.date,o.channel)) ? 0 : (Number(o.commission||0)+Number(o.ad_fee||0));
+  }
+  function feeForDate(d){
+    // รวมค่าธรรมเนียมของวันนั้น (ทุกช่องทาง) — ใช้สำหรับกราฟรายวัน/รายเดือน
+    const ordersFee=orders.filter(o=>o.date===d).reduce((s,o)=>s+orderFee(o),0);
+    const dailyFee=dailyFees.filter(f=>f.date===d).reduce((s,f)=>s+Number(f.commission||0)+Number(f.ad_fee||0),0);
+    return ordersFee+dailyFee;
+  }
+  const byDateSaleAgg={}, byDateCostAgg={};
+  orders.forEach(o=>{
+    byDateSaleAgg[o.date]=(byDateSaleAgg[o.date]||0)+Number(o.total_sale||0);
+    byDateCostAgg[o.date]=(byDateCostAgg[o.date]||0)+Number(o.total_cost||0);
+  });
+
   const totalSale=orders.reduce((s,o)=>s+Number(o.total_sale||0),0);
   const totalCost=orders.reduce((s,o)=>s+Number(o.total_cost||0),0);
-  const totalComm=orders.reduce((s,o)=>s+Number(o.commission||0)+Number(o.ad_fee||0),0);
-  const totalNet=orders.reduce((s,o)=>s+Number(o.net_received||0),0);
-  const totalProfit=orders.reduce((s,o)=>s+Number(o.gross_profit||0),0);
+  const totalComm=orders.reduce((s,o)=>s+orderFee(o),0)+dailyFees.reduce((s,f)=>s+Number(f.commission||0)+Number(f.ad_fee||0),0);
+  const totalNet=totalSale-totalComm;
+  const totalProfit=totalNet-totalCost;
   const totalPurchases=pur.reduce((s,p)=>s+Number(p.total||0),0);
 
   document.getElementById('s-sales').textContent=fmtMoney(totalSale);
@@ -1470,7 +1635,7 @@ async function renderDashboard(){
       backgroundColor:channelColors[ch]
     }));
     const byDateProfit={};
-    orders.forEach(o=>{ byDateProfit[o.date]=(byDateProfit[o.date]||0)+Number(o.gross_profit||0); });
+    dates.forEach(d=>{ byDateProfit[d]=(byDateSaleAgg[d]||0)-(byDateCostAgg[d]||0)-feeForDate(d); });
     const profitLine={
       type:'line',
       order:0,
@@ -1486,9 +1651,14 @@ async function renderDashboard(){
     };
     drawStackedBar('chart-daily',dates,[...stackDatasets,profitLine]);
 
-    // monthly profit = net_received (orders) - total purchases, both in that month
+    // monthly profit = (ยอดขาย - ค่าคอม/ค่าโฆษณา ต่อวัน) รวมทั้งเดือน - ยอดซื้อของทั้งเดือน
+    // รวมที่ระดับวันก่อน (feeForDate คิดเป็นรายวัน ไม่ใช่รายออเดอร์) แล้วค่อยรวมขึ้นเป็นเดือน กันนับค่าธรรมเนียมซ้ำเวลาวันเดียวกันมีหลายออเดอร์
     const byMonthNet={};
-    orders.forEach(o=>{ const mo=o.date.slice(0,7); byMonthNet[mo]=(byMonthNet[mo]||0)+Number(o.net_received||0); });
+    Object.keys(byDateSaleAgg).forEach(d=>{
+      const mo=d.slice(0,7);
+      const dateNet=(byDateSaleAgg[d]||0)-feeForDate(d);
+      byMonthNet[mo]=(byMonthNet[mo]||0)+dateNet;
+    });
     const byMonthPurchase={};
     pur.forEach(p=>{ const mo=p.date.slice(0,7); byMonthPurchase[mo]=(byMonthPurchase[mo]||0)+Number(p.total||0); });
     const allMonths=[...new Set([...Object.keys(byMonthNet),...Object.keys(byMonthPurchase)])].sort();
@@ -1966,6 +2136,7 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   await refreshOptionCache();
   resetOrderForm();
   resetPurForm();
+  resetDailyFeeForm();
   document.getElementById('d-from').value='2000-01-01';
   document.getElementById('d-to').value=todayISO();
   document.getElementById('ro-from').value='2000-01-01';
@@ -1974,6 +2145,7 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   document.getElementById('rp-to').value=todayISO();
   renderRecentOrders();
   renderRecentPurchases();
+  renderDailyFeeList();
   refreshDbStats();
 });
 </script>
