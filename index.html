@@ -384,11 +384,11 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="pill" onclick="setMonthPreset(11,'ro',this)">Dec</div>
       </div>
       <div class="row">
-        <div><label>จากวันที่</label><input type="date" id="ro-from" onchange="renderRecentOrders()"></div>
-        <div><label>ถึงวันที่</label><input type="date" id="ro-to" onchange="renderRecentOrders()"></div>
+        <div><label>จากวันที่</label><input type="date" id="ro-from" onchange="roMonthSelected=false;renderRecentOrders()"></div>
+        <div><label>ถึงวันที่</label><input type="date" id="ro-to" onchange="roMonthSelected=false;renderRecentOrders()"></div>
       </div>
       <div class="pillrow" id="ro-channel-pillrow" style="margin-top:10px">
-        <div class="pill active" onclick="setChannelFilter('all',this)">ทุกช่องทาง</div>
+        <div class="pill active" onclick="setChannelFilter('all',this)">All</div>
         <div class="pill" onclick="setChannelFilter('Grab Food',this)">Grab Food</div>
         <div class="pill" onclick="setChannelFilter('Line Man',this)">Line Man</div>
         <div class="pill" onclick="setChannelFilter('คอนโด',this)">คอนโด</div>
@@ -674,7 +674,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div><label>ถึงวันที่</label><input type="date" id="fin-to" onchange="renderFinance()"></div>
       </div>
       <div class="pillrow" id="fin-channel-pillrow" style="margin-top:10px">
-        <div class="pill active" onclick="setFinChannelFilter('all',this)">ทุกช่องทาง</div>
+        <div class="pill active" onclick="setFinChannelFilter('all',this)">All</div>
         <div class="pill" onclick="setFinChannelFilter('Grab Food',this)">Grab Food</div>
         <div class="pill" onclick="setFinChannelFilter('Line Man',this)">Line Man</div>
         <div class="pill" onclick="setFinChannelFilter('คอนโด',this)">คอนโด</div>
@@ -1736,8 +1736,9 @@ async function renderRecentOrders(){
   el.className='';
 
   // ช่วงเวลาที่เลือกเกิน 7 วัน → จัดกลุ่มเป็นรายสัปดาห์อัตโนมัติ ไม่เกิน 7 วัน → แสดงแยกรายวัน
+  // ยกเว้น: ถ้าเลือกช่วงเวลาผ่านปุ่มชื่อเดือน (roMonthSelected) ให้แสดงแยกรายวันเสมอ ไม่ต้องแบ่งกลุ่มรายสัปดาห์
   const spanDays=Math.round((new Date(to+'T00:00:00')-new Date(from+'T00:00:00'))/86400000)+1;
-  const groupByWeek=spanDays>7;
+  const groupByWeek=roMonthSelected?false:(spanDays>7);
   function groupKey(o){ return groupByWeek ? getWeekStart(o.date) : o.date; }
   function groupLabel(key){
     if(groupByWeek){
@@ -2216,12 +2217,16 @@ async function renderQtyChart(items){
   const onBarClick = qtyDrilldownWeek ? null : (idx)=>{ qtyDrilldownWeek=groupKeys[idx]; renderQtyChart(dashQtyItemsCache); };
   drawStackedBar('chart-qty',groupLabels,qtyDatasets,onBarClick);
 }
+// เมื่อเลือกช่วงเวลาผ่านปุ่มชื่อเดือน (Jan-Dec) ในการ์ด Orders ให้แสดงลิสต์แบบไม่แบ่งกลุ่มเป็นรายสัปดาห์ (แสดงแยกรายวันแทน แม้ช่วงจะเกิน 7 วัน)
+// ค่านี้จะถูกล้างกลับเป็น false ทันทีที่มีการเลือกช่วงเวลาแบบอื่น (พรีเซ็ต/กรอกวันที่เอง) เพื่อกลับไปใช้กฎอัตโนมัติปกติ
+let roMonthSelected=false;
 function setRangePreset(preset,prefix,el){
   const row=el.closest('.pillrow');
   if(row) row.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
   const monthRow=document.getElementById(prefix+'-month-pillrow');
   if(monthRow) monthRow.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  if(prefix==='ro') roMonthSelected=false;
   const {from,to}=computeRangeBounds(preset);
   document.getElementById(prefix+'-from').value=from;
   document.getElementById(prefix+'-to').value=to;
@@ -2237,6 +2242,7 @@ function setMonthPreset(monthIndex,prefix,el){
   el.classList.add('active');
   const presetRow=document.getElementById(prefix+'-preset-pillrow');
   if(presetRow) presetRow.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  if(prefix==='ro') roMonthSelected=true;
   const year=new Date().getFullYear();
   const from=toLocalISO(new Date(year,monthIndex,1));
   const to=toLocalISO(new Date(year,monthIndex+1,0));
