@@ -57,7 +57,9 @@ button:disabled{opacity:.5;cursor:not-allowed;}
 nav.bottomnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;z-index:20;box-shadow:0 -2px 8px rgba(0,0,0,.06);}
 nav.bottomnav button{flex:1;background:none;border:none;padding:9px 4px;font-size:11px;color:var(--muted);border-radius:0;display:flex;flex-direction:column;align-items:center;gap:2px;}
 nav.bottomnav button.active{color:var(--pink-dark);font-weight:700;}
-nav.bottomnav button .ic{font-size:19px;}
+nav.bottomnav button .ic{font-size:19px;display:flex;align-items:center;justify-content:center;}
+nav.bottomnav button .ic svg{width:21px;height:21px;stroke:var(--muted);transition:stroke .15s;}
+nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .imgdrop{border:2px dashed var(--terracotta);border-radius:12px;padding:22px;text-align:center;color:var(--pink-dark);background:#fbf6ec;cursor:pointer;font-size:13px;}
 .imgdrop.small{padding:12px;}
 .preview{max-width:100%;max-height:260px;border-radius:10px;margin-top:10px;display:block;}
@@ -71,9 +73,22 @@ nav.bottomnav button .ic{font-size:19px;}
 .pending-card .pc-info{flex:1;min-width:0;}
 .pending-card .pc-info b{display:block;font-size:13px;}
 .pending-card .pc-btns{display:flex;gap:4px;flex-shrink:0;}
-.itemrow{display:flex;gap:6px;align-items:center;margin-bottom:6px;background:#fdf6f4;padding:8px;border-radius:9px;}
-.itemrow input{flex:1;min-width:0;}
+.home-nav-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.home-nav-btn{display:flex;flex-direction:column;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px 8px;cursor:pointer;text-align:center;transition:transform .12s;}
+.home-nav-btn:active{transform:scale(.96);}
+.home-nav-btn span{font-size:13px;font-weight:700;color:var(--text);}
+.icon-circle{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.icon-circle svg{width:24px;height:24px;}
+.itemrow{display:flex;gap:6px;align-items:center;margin-bottom:6px;background:#fdf6f4;padding:8px;border-radius:9px;flex-wrap:wrap;}
+.itemrow input,.itemrow select{flex:1;min-width:0;}
 .itemrow input.qty,.itemrow input.price{flex:0 0 68px;}
+@media(max-width:520px){
+  .itemrow .name{flex:1 1 100%;order:-1;}
+  .itemrow .closebtn{flex:0 0 32px;}
+  #o-items .itemrow input.qty,#o-items .itemrow input.price{flex:1 1 calc(50% - 20px);}
+  #p-items .itemrow select.cat{flex:1 1 100%;}
+  #p-items .itemrow input.qty,#p-items .itemrow input.unit,#p-items .itemrow input.price{flex:1 1 calc(33.33% - 14px);}
+}
 .itemblock{border:1px solid var(--border);border-radius:11px;padding:8px;margin-bottom:8px;background:#fffdfc;}
 .itemblock .itemrow{background:transparent;padding:0;margin-bottom:6px;}
 .opt-list{margin:0 0 6px 14px;}
@@ -166,18 +181,51 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
 <div class="container">
 
-  <!-- ORDERS TAB -->
-  <div class="tabpage active" id="tab-orders">
+  <!-- HOME TAB -->
+  <div class="tabpage active" id="tab-home">
     <div class="card">
-      <h2>📋 นำเข้าจาก Claude Chat <button type="button" class="info-btn" onclick="toggleEl('hint-claude-import')">i</button></h2>
+      <h2>📤 Upload <button type="button" class="info-btn" onclick="toggleEl('hint-claude-import')">i</button></h2>
       <p class="hint" id="hint-claude-import" style="display:none">ส่งรูปแคปออเดอร์/ใบเสร็จไปให้ Claude อ่านในแชทปกติ (ไม่มีค่าใช้จ่ายเพิ่ม) แล้วก็อปโค้ด JSON ที่ได้มาวางตรงนี้ กด "นำเข้าข้อมูล" — ระบบจะพักข้อมูลไว้ให้ตรวจสอบทีละรายการก่อนบันทึกจริง (รองรับทั้งออเดอร์และรายการซื้อของในโค้ดเดียวกัน)</p>
       <textarea id="claude-import-json" placeholder='วางโค้ด JSON ที่ Claude ให้มาตรงนี้ เช่น {"orders":[...],"purchases":[...]}' style="min-height:100px;font-family:monospace;font-size:11.5px"></textarea>
       <div class="btn-row"><button class="btn-primary" onclick="importFromClaudeJSON()">📥 นำเข้าข้อมูล</button></div>
-      <div id="order-pending-list" class="pending-list" style="display:none"></div>
     </div>
 
     <div class="card">
+      <h2>เมนูลัด</h2>
+      <div class="home-nav-grid">
+        <div class="home-nav-btn" onclick="goToTab('orders')">
+          <div class="icon-circle" style="background:var(--terracotta)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg>
+          </div>
+          <span>ออเดอร์</span>
+        </div>
+        <div class="home-nav-btn" onclick="goToTab('purchases')">
+          <div class="icon-circle" style="background:var(--olive)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
+          </div>
+          <span>ซื้อของ</span>
+        </div>
+        <div class="home-nav-btn" onclick="goToTab('dashboard')">
+          <div class="icon-circle" style="background:var(--blue)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg>
+          </div>
+          <span>แดชบอร์ด</span>
+        </div>
+        <div class="home-nav-btn" onclick="goToTab('settings')">
+          <div class="icon-circle" style="background:var(--pink-dark)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.9 7.9 0 0 0 0-2l1.6-1.3-1.6-2.8-1.9.7a8 8 0 0 0-1.7-1L15.2 4h-3.2l-.3 2.6a8 8 0 0 0-1.7 1l-1.9-.7-1.6 2.8L8.1 11a7.9 7.9 0 0 0 0 2l-1.6 1.3 1.6 2.8 1.9-.7a8 8 0 0 0 1.7 1l.3 2.6h3.2l.3-2.6a8 8 0 0 0 1.7-1l1.9.7 1.6-2.8z"/></svg>
+          </div>
+          <span>ตั้งค่า</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDERS TAB -->
+  <div class="tabpage" id="tab-orders">
+    <div class="card">
       <h2>บันทึกออเดอร์ใหม่</h2>
+      <div id="order-pending-list" class="pending-list" style="display:none"></div>
       <form id="order-form" onsubmit="return false">
         <div class="row">
           <div><label>วันที่</label><input type="date" id="o-date"></div>
@@ -481,10 +529,11 @@ service cloud.firestore {
 </div>
 
 <nav class="bottomnav">
-  <button class="active" onclick="switchTab('orders',this)"><span class="ic">🧾</span>ออเดอร์</button>
-  <button onclick="switchTab('purchases',this)"><span class="ic">🛒</span>ซื้อของ</button>
-  <button onclick="switchTab('dashboard',this)"><span class="ic">📊</span>แดชบอร์ด</button>
-  <button onclick="switchTab('settings',this)"><span class="ic">⚙️</span>ตั้งค่า</button>
+  <button class="active" onclick="switchTab('home',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span>หน้าแรก</button>
+  <button onclick="switchTab('orders',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg></span>ออเดอร์</button>
+  <button onclick="switchTab('purchases',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span>ซื้อของ</button>
+  <button onclick="switchTab('dashboard',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg></span>แดชบอร์ด</button>
+  <button onclick="switchTab('settings',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.9 7.9 0 0 0 0-2l1.6-1.3-1.6-2.8-1.9.7a8 8 0 0 0-1.7-1L15.2 4h-3.2l-.3 2.6a8 8 0 0 0-1.7 1l-1.9-.7-1.6 2.8L8.1 11a7.9 7.9 0 0 0 0 2l-1.6 1.3 1.6 2.8 1.9-.7a8 8 0 0 0 1.7 1l.3 2.6h3.2l.3-2.6a8 8 0 0 0 1.7-1l1.9.7 1.6-2.8z"/></svg></span>ตั้งค่า</button>
 </nav>
 
 <script>
@@ -625,7 +674,7 @@ async function idbClear(storeName){
 
 /* ============ SETTINGS ============ */
 function goToTab(name){
-  const idx={orders:0,purchases:1,dashboard:2,settings:3}[name];
+  const idx={home:0,orders:1,purchases:2,dashboard:3,settings:4}[name];
   const btn=document.querySelectorAll('nav.bottomnav button')[idx];
   if(btn) switchTab(name,btn);
 }
@@ -881,7 +930,8 @@ function buildMenuOptionsHtml(selected){
     if(!items.length) return;
     html+=`<optgroup label="${escapeHtml(cat)}">`;
     items.forEach(m=>{
-      html+=`<option value="${escapeHtml(m.name)}" ${m.name===selected?'selected':''}>${escapeHtml(m.name)}</option>`;
+      const label=m.short_name?m.short_name:m.name;
+      html+=`<option value="${escapeHtml(m.name)}" title="${escapeHtml(m.name)}" ${m.name===selected?'selected':''}>${escapeHtml(label)}</option>`;
     });
     html+='</optgroup>';
   });
