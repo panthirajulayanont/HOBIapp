@@ -751,7 +751,18 @@ async function migrateLocalToCloud(){
 
 /* ============ MENU LOOKUP ============ */
 let menuCache=[];
-async function refreshMenuCache(){ menuCache=await idbAll('menu'); }
+async function refreshMenuCache(){
+  menuCache=await idbAll('menu');
+  refreshOrderItemNameDropdowns();
+}
+function refreshOrderItemNameDropdowns(){
+  // เมนูอาจถูกเพิ่ม/แก้ไข/นำเข้าใหม่หลังจากที่ช่องเลือกเมนูในฟอร์มออเดอร์ถูกสร้างไปแล้ว
+  // (เช่น import Excel ระหว่างที่แท็บออเดอร์เปิดค้างอยู่) ต้องรีเฟรช dropdown ที่มีอยู่ให้ทันข้อมูลล่าสุด
+  document.querySelectorAll('#o-items .itemrow .name').forEach(sel=>{
+    const current=sel.value;
+    sel.innerHTML=buildMenuOptionsHtml(current);
+  });
+}
 function findMenuCost(name){
   if(!name) return 0;
   const n=name.trim().toLowerCase();
