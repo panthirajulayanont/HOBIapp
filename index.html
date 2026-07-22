@@ -275,14 +275,14 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <div class="icon-circle-sm" style="background:var(--olive)">
             <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg>
           </div>
-          <span class="lbl">ซื้อของ</span>
+          <span class="lbl">Purchases</span>
           <span class="arrow">›</span>
         </div>
         <div class="home-strip-btn" onclick="goToTab('finance')">
           <div class="icon-circle-sm" style="background:var(--green)">
             <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.4"/></svg>
           </div>
-          <span class="lbl">การเงิน</span>
+          <span class="lbl">Finance</span>
           <span class="arrow">›</span>
         </div>
       </div>
@@ -606,7 +606,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- FINANCE TAB -->
   <div class="tabpage" id="tab-finance">
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'dailyfee-form-body')">📝 บันทึกค่าธรรมเนียมแพลตฟอร์มรายวัน <span class="chevron">▾</span></h2>
+      <h2 class="collapsible-head" onclick="toggleSection(this,'dailyfee-form-body')">📝 Add Daily Fee <span class="chevron">▾</span></h2>
       <div id="dailyfee-form-body" style="display:none">
       <p class="hint" id="hint-dailyfee">แคปหน้า "การเงิน/Finance" สรุปรายวันจาก Grab/LineMan แล้วกรอกค่าคอมมิชชั่นกับค่าโฆษณารวมของวันนั้นต่อช่องทางที่นี่ (ไม่ต้องกรอกต่อออเดอร์ เพราะตัวเลขจริงในหน้าการเงินเป็นยอดรวมทั้งวัน) ระบบจะเอาไปหักออกจากยอดขายรวมของวันนั้นในแดชบอร์ด/รายงานให้อัตโนมัติ</p>
       <input type="hidden" id="df-edit-id">
@@ -638,26 +638,40 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     </div>
 
     <div class="card">
-      <h3 style="margin-top:0">รายการค่าธรรมเนียมที่บันทึกไว้</h3>
-      <div id="dailyfee-list" class="emptystate">ยังไม่มีข้อมูล</div>
-    </div>
-
-    <div class="card">
-      <h2>เลือกช่วงเวลา</h2>
-      <div class="pillrow">
-        <div class="pill active" onclick="setRangePreset('today','fin',this)">วันนี้</div>
+      <h2>Finance</h2>
+      <div class="pillrow" id="fin-preset-pillrow">
+        <div class="pill" onclick="setRangePreset('today','fin',this)">วันนี้</div>
         <div class="pill" onclick="setRangePreset('yesterday','fin',this)">เมื่อวาน</div>
         <div class="pill" onclick="setRangePreset('thisweek','fin',this)">สัปดาห์นี้</div>
+        <div class="pill" onclick="setRangePreset('lastweek','fin',this)">สัปดาห์ที่แล้ว</div>
         <div class="pill" onclick="setRangePreset('month','fin',this)">เดือนนี้</div>
-        <div class="pill" onclick="setRangePreset('thisquarter','fin',this)">ไตรมาสนี้</div>
-        <div class="pill" onclick="setRangePreset('year','fin',this)">ปีนี้</div>
-        <div class="pill" onclick="setRangePreset('all','fin',this)">ทั้งหมด</div>
+        <div class="pill active" onclick="setRangePreset('all','fin',this)">ทั้งหมด</div>
+      </div>
+      <div class="pillrow" id="fin-month-pillrow">
+        <div class="pill" onclick="setMonthPreset(0,'fin',this)">Jan</div>
+        <div class="pill" onclick="setMonthPreset(1,'fin',this)">Feb</div>
+        <div class="pill" onclick="setMonthPreset(2,'fin',this)">Mar</div>
+        <div class="pill" onclick="setMonthPreset(3,'fin',this)">Apr</div>
+        <div class="pill" onclick="setMonthPreset(4,'fin',this)">May</div>
+        <div class="pill" onclick="setMonthPreset(5,'fin',this)">Jun</div>
+        <div class="pill" onclick="setMonthPreset(6,'fin',this)">Jul</div>
+        <div class="pill" onclick="setMonthPreset(7,'fin',this)">Aug</div>
+        <div class="pill" onclick="setMonthPreset(8,'fin',this)">Sep</div>
+        <div class="pill" onclick="setMonthPreset(9,'fin',this)">Oct</div>
+        <div class="pill" onclick="setMonthPreset(10,'fin',this)">Nov</div>
+        <div class="pill" onclick="setMonthPreset(11,'fin',this)">Dec</div>
       </div>
       <div class="row">
         <div><label>จากวันที่</label><input type="date" id="fin-from" onchange="renderFinance()"></div>
         <div><label>ถึงวันที่</label><input type="date" id="fin-to" onchange="renderFinance()"></div>
       </div>
-      <button class="btn-primary" style="margin-top:10px" onclick="renderFinance()">🔍 แสดงผล</button>
+      <div class="pillrow" id="fin-channel-pillrow" style="margin-top:10px">
+        <div class="pill active" onclick="setFinChannelFilter('all',this)">ทุกช่องทาง</div>
+        <div class="pill" onclick="setFinChannelFilter('Grab Food',this)">Grab Food</div>
+        <div class="pill" onclick="setFinChannelFilter('Line Man',this)">Line Man</div>
+        <div class="pill" onclick="setFinChannelFilter('คอนโด',this)">คอนโด</div>
+        <div class="pill" onclick="setFinChannelFilter('อื่นๆ',this)">อื่นๆ</div>
+      </div>
     </div>
 
     <div id="fin-empty" class="card emptystate">ยังไม่มีข้อมูลในช่วงที่เลือก</div>
@@ -707,7 +721,12 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       </div>
 
       <div class="card">
-        <h3 style="margin-top:0">รายละเอียดรายวัน แยกตามแอพ</h3>
+        <h3 style="margin-top:0">Daily Fee Entries</h3>
+        <div id="dailyfee-list" class="emptystate">ยังไม่มีข้อมูล</div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">Daily Revenue Breakdown</h3>
         <div id="fin-list" class="emptystate">ยังไม่มีข้อมูล</div>
       </div>
     </div>
@@ -831,12 +850,12 @@ service cloud.firestore {
 </div>
 
 <nav class="bottomnav">
-  <button class="active" onclick="switchTab('home',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span>หน้าแรก</button>
+  <button class="active" onclick="switchTab('home',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></svg></span>Home</button>
   <button onclick="switchTab('orders',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-2.5-1.5L13 21l-2.5-1.5L8 21l-2-1.5V3z"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/></svg></span>Orders</button>
-  <button onclick="switchTab('purchases',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span>ซื้อของ</button>
-  <button onclick="switchTab('finance',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.4"/></svg></span>การเงิน</button>
-  <button onclick="switchTab('dashboard',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg></span>แดชบอร์ด</button>
-  <button onclick="switchTab('settings',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.9 7.9 0 0 0 0-2l1.6-1.3-1.6-2.8-1.9.7a8 8 0 0 0-1.7-1L15.2 4h-3.2l-.3 2.6a8 8 0 0 0-1.7 1l-1.9-.7-1.6 2.8L8.1 11a7.9 7.9 0 0 0 0 2l-1.6 1.3 1.6 2.8 1.9-.7a8 8 0 0 0 1.7 1l.3 2.6h3.2l.3-2.6a8 8 0 0 0 1.7-1l1.9.7 1.6-2.8z"/></svg></span>ตั้งค่า</button>
+  <button onclick="switchTab('purchases',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/></svg></span>Purchases</button>
+  <button onclick="switchTab('finance',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.4"/></svg></span>Finance</button>
+  <button onclick="switchTab('dashboard',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="20" x2="5" y2="12"/><line x1="12" y1="20" x2="12" y2="6"/><line x1="19" y1="20" x2="19" y2="15"/></svg></span>Dashboard</button>
+  <button onclick="switchTab('settings',this)"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 13a7.9 7.9 0 0 0 0-2l1.6-1.3-1.6-2.8-1.9.7a8 8 0 0 0-1.7-1L15.2 4h-3.2l-.3 2.6a8 8 0 0 0-1.7 1l-1.9-.7-1.6 2.8L8.1 11a7.9 7.9 0 0 0 0 2l-1.6 1.3 1.6 2.8 1.9-.7a8 8 0 0 0 1.7 1l.3 2.6h3.2l.3-2.6a8 8 0 0 0 1.7-1l1.9.7 1.6-2.8z"/></svg></span>Settings</button>
 </nav>
 
 <script>
@@ -877,7 +896,7 @@ function switchTab(name,btn){
   document.querySelectorAll('nav.bottomnav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
   if(name==='dashboard') renderDashboard();
-  if(name==='finance'){ renderFinance(); renderDailyFeeList(); }
+  if(name==='finance'){ renderDailyFeeList(); }
   if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); updateSyncStatusUI(); }
 }
 
@@ -1871,19 +1890,10 @@ function resetDailyFeeForm(){
   document.getElementById('df-cancel-btn').style.display='none';
 }
 async function renderDailyFeeList(){
+  // ดึงข้อมูลรายการค่าธรรมเนียมล่าสุด แล้วให้ renderFinance() เป็นคนวาด UI จริง
+  // (การ์ด "Daily Fee Entries" ตอนนี้อยู่ในหน้า Finance เดียวกัน ใช้ตัวกรองช่วงเวลา/ช่องทางร่วมกัน)
   await refreshDailyFeeCache();
-  const el=document.getElementById('dailyfee-list');
-  if(!dailyFeeCache.length){ el.className='emptystate'; el.textContent='ยังไม่มีข้อมูล'; return; }
-  el.className='';
-  el.innerHTML=dailyFeeCache.map(f=>`<div class="list-item">
-      <div><b>${escapeHtml(f.channel)}</b> — ${f.date}
-        <div class="meta">ค่าคอม ${fmtMoney(f.commission)} · ค่าโฆษณา ${fmtMoney(f.ad_fee)}${f.note?(' · '+escapeHtml(f.note)):''}</div>
-      </div>
-      <div style="display:flex;gap:4px;flex-shrink:0">
-        <button type="button" class="btn-ghost btn-sm" onclick="editDailyFeeRow('${f.id}')">แก้ไข</button>
-        <button type="button" class="btn-ghost btn-sm" onclick="deleteDailyFeeRow('${f.id}')">ลบ</button>
-      </div>
-    </div>`).join('');
+  await renderFinance();
 }
 
 /* ============ PURCHASE FORM ============ */
@@ -2163,10 +2173,8 @@ function setRangePreset(preset,prefix,el){
   const row=el.closest('.pillrow');
   if(row) row.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
-  if(prefix==='ro'){
-    const monthRow=document.getElementById('ro-month-pillrow');
-    if(monthRow) monthRow.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-  }
+  const monthRow=document.getElementById(prefix+'-month-pillrow');
+  if(monthRow) monthRow.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
   const {from,to}=computeRangeBounds(preset);
   document.getElementById(prefix+'-from').value=from;
   document.getElementById(prefix+'-to').value=to;
@@ -2175,21 +2183,20 @@ function setRangePreset(preset,prefix,el){
   else if(prefix==='rp') renderRecentPurchases();
   else if(prefix==='fin') renderFinance();
 }
-// ปุ่มเลือกเดือนตามชื่อ (Jan-Dec) ของปีปัจจุบัน — ใช้ในการ์ด Orders เพื่อกระโดดไปดูเดือนไหนก็ได้เร็วๆ
+// ปุ่มเลือกเดือนตามชื่อ (Jan-Dec) ของปีปัจจุบัน — ใช้ในการ์ด Orders/Finance เพื่อกระโดดไปดูเดือนไหนก็ได้เร็วๆ
 function setMonthPreset(monthIndex,prefix,el){
   const row=el.closest('.pillrow');
   if(row) row.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
-  if(prefix==='ro'){
-    const presetRow=document.getElementById('ro-preset-pillrow');
-    if(presetRow) presetRow.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
-  }
+  const presetRow=document.getElementById(prefix+'-preset-pillrow');
+  if(presetRow) presetRow.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
   const year=new Date().getFullYear();
   const from=toLocalISO(new Date(year,monthIndex,1));
   const to=toLocalISO(new Date(year,monthIndex+1,0));
   document.getElementById(prefix+'-from').value=from;
   document.getElementById(prefix+'-to').value=to;
   if(prefix==='ro') renderRecentOrders();
+  else if(prefix==='fin') renderFinance();
 }
 let roChannelFilter='all';
 function setChannelFilter(value,el){
@@ -2199,10 +2206,21 @@ function setChannelFilter(value,el){
   roChannelFilter=value;
   renderRecentOrders();
 }
+let finChannelFilter='all';
+function setFinChannelFilter(value,el){
+  const row=el.closest('.pillrow');
+  if(row) row.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  finChannelFilter=value;
+  renderFinance();
+}
 function shortChannelLabel(ch){
   if(ch==='Grab Food') return 'Grab';
   if(ch==='Line Man') return 'Line';
   return ch||'-';
+}
+function channelBadgeClass(ch){
+  return ch==='Grab Food'?'grab':ch==='Line Man'?'line':ch==='คอนโด'?'condo':'other';
 }
 async function renderDashboard(){
   const from=document.getElementById('d-from').value||'2000-01-01';
@@ -2537,6 +2555,7 @@ function drawProfitBar(canvasId,labels,data){
 async function renderFinance(){
   const from=document.getElementById('fin-from').value||todayISO();
   const to=document.getElementById('fin-to').value||todayISO();
+  const chFilter=finChannelFilter||'all';
   const allOrders=await idbAll('orders');
   const allDailyFees=await idbAll('daily_fees');
   const orders=allOrders.filter(o=>o.date>=from && o.date<=to);
@@ -2560,7 +2579,7 @@ async function renderFinance(){
   });
   const dailyFeeKeys=new Set([...Object.keys(dailyCommByKey),...Object.keys(dailyAdByKey)]);
 
-  // รวมเป็นแถวต่อ (วันที่, ช่องทาง)
+  // รวมเป็นแถวต่อ (วันที่, ช่องทาง) — เก็บทุกช่องทางไว้ก่อน (ใช้เทียบช่องทางในกราฟ/สรุปตามแอพ)
   const rowMap={};
   orders.forEach(o=>{
     const k=feeKey(o.date,o.channel);
@@ -2578,10 +2597,12 @@ async function renderFinance(){
     rowMap[k].ad_fee+=Number(f.ad_fee||0);
   });
   const rows=Object.values(rowMap).sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:(a.channel<b.channel?-1:1)));
+  // rowsFiltered: เฉพาะช่องทางที่เลือก (ถ้าเลือก "ทุกช่องทาง" จะเหมือนกับ rows) — ใช้กับ KPI/กราฟรายวัน/ลิสต์รายละเอียด
+  const rowsFiltered=chFilter==='all'?rows:rows.filter(r=>r.channel===chFilter);
 
-  const totalRevenue=rows.reduce((s,r)=>s+r.revenue,0);
-  const totalCommission=rows.reduce((s,r)=>s+r.commission,0);
-  const totalAdFee=rows.reduce((s,r)=>s+r.ad_fee,0);
+  const totalRevenue=rowsFiltered.reduce((s,r)=>s+r.revenue,0);
+  const totalCommission=rowsFiltered.reduce((s,r)=>s+r.commission,0);
+  const totalAdFee=rowsFiltered.reduce((s,r)=>s+r.ad_fee,0);
   const totalNet=totalRevenue-totalCommission-totalAdFee;
 
   document.getElementById('fin-revenue').textContent=fmtMoney(totalRevenue);
@@ -2589,11 +2610,48 @@ async function renderFinance(){
   document.getElementById('fin-adfee').textContent=fmtMoney(totalAdFee);
   document.getElementById('fin-net').textContent=fmtMoney(totalNet);
 
+  // ============ Daily Fee Entries: รายการดิบที่บันทึกไว้ (แก้ไข/ลบได้) กรองตามช่วงเวลา+ช่องทางเดียวกับด้านบน ============
+  const spanDays=Math.round((new Date(to+'T00:00:00')-new Date(from+'T00:00:00'))/86400000)+1;
+  const groupByWeek=spanDays>7;
+  const dfEntries=(chFilter==='all'?dailyFees:dailyFees.filter(f=>f.channel===chFilter))
+    .slice().sort((a,b)=>(b.date+b.channel).localeCompare(a.date+a.channel));
+  const dfListEl=document.getElementById('dailyfee-list');
+  if(!dfEntries.length){ dfListEl.className='emptystate'; dfListEl.textContent='ยังไม่มีข้อมูล'; }
+  else{
+    dfListEl.className='';
+    function dfGroupKey(f){ return groupByWeek ? getWeekStart(f.date) : f.date; }
+    function dfGroupLabel(key){
+      if(groupByWeek){
+        const endD=new Date(key+'T00:00:00'); endD.setDate(endD.getDate()+6);
+        return 'สัปดาห์ '+formatThaiDateShort(key)+' - '+formatThaiDateShort(toLocalISO(endD));
+      }
+      return formatThaiDateShort(key);
+    }
+    const dfGroups={};
+    dfEntries.forEach(f=>{ const k=dfGroupKey(f); (dfGroups[k]=dfGroups[k]||[]).push(f); });
+    const dfSortedKeys=Object.keys(dfGroups).sort((a,b)=>b.localeCompare(a));
+    dfListEl.innerHTML=dfSortedKeys.map(k=>{
+      const grp=dfGroups[k];
+      const feeSum=grp.reduce((s,f)=>s+Number(f.commission||0)+Number(f.ad_fee||0),0);
+      const rowsHtml=grp.map(f=>{
+        const cls=channelBadgeClass(f.channel);
+        return `<div class="order-row clickable" onclick="editDailyFeeRow('${f.id}')">
+          <span class="badge ${cls}">${escapeHtml(shortChannelLabel(f.channel))}</span>
+          <span class="or-date">${formatThaiDateShort(f.date)}</span>
+          <span class="or-no">คอม ${fmtMoney(f.commission)} · โฆษณา ${fmtMoney(f.ad_fee)}${f.note?(' · '+escapeHtml(f.note)):''}</span>
+          <b class="or-total">${fmtMoney(Number(f.commission||0)+Number(f.ad_fee||0))}</b>
+          <button type="button" class="btn-ghost btn-sm or-del" onclick="event.stopPropagation();deleteDailyFeeRow('${f.id}')">ลบ</button>
+        </div>`;
+      }).join('');
+      return `<div class="group-header">${escapeHtml(dfGroupLabel(k))} · ${grp.length} รายการ · รวม ${fmtMoney(feeSum)}</div>${rowsHtml}`;
+    }).join('');
+  }
+
   if(typeof Chart==='undefined') return;
 
-  // กราฟ 1: รายรับรายวัน แยกยอดสุทธิ/ค่าคอม/ค่าโฆษณา (แท่งซ้อน) — เห็นแนวโน้มว่าแต่ละวันถูกหักไปเท่าไหร่เทียบกับที่ร้านได้จริง
+  // กราฟ 1: รายรับรายวัน แยกยอดสุทธิ/ค่าคอม/ค่าโฆษณา (แท่งซ้อน) — เห็นแนวโน้มว่าแต่ละวันถูกหักไปเท่าไหร่เทียบกับที่ร้านได้จริง (ตามช่องทางที่เลือก)
   const byDate={};
-  rows.forEach(r=>{
+  rowsFiltered.forEach(r=>{
     byDate[r.date]=byDate[r.date]||{revenue:0,commission:0,ad_fee:0};
     byDate[r.date].revenue+=r.revenue;
     byDate[r.date].commission+=r.commission;
@@ -2606,7 +2664,7 @@ async function renderFinance(){
     {type:'bar',label:'ค่าโฆษณา',data:dates.map(d=>byDate[d].ad_fee),backgroundColor:'#e8b876'}
   ]);
 
-  // กราฟ 2: ค่าธรรมเนียมคิดเป็น % ของยอดขาย แยกตามแอพ — เทียบกันได้แม้ยอดขายแต่ละแอพไม่เท่ากัน ช่วยตัดสินใจว่าจะเน้นแอพไหน
+  // กราฟ 2: ค่าธรรมเนียมคิดเป็น % ของยอดขาย แยกตามแอพ — เทียบทุกช่องทางเสมอ (ไม่ผูกกับตัวกรองช่องทาง เพื่อไว้เทียบกัน)
   const channelOrder=['Grab Food','Line Man','คอนโด','อื่นๆ'];
   const byChannel={};
   rows.forEach(r=>{
@@ -2623,7 +2681,7 @@ async function renderFinance(){
     {label:'ค่าโฆษณา (% ของยอดขาย)',data:adPct,backgroundColor:'#e8b876'}
   ],false,true);
 
-  // สรุปตามแอพ
+  // สรุปตามแอพ (แสดงทุกช่องทางเสมอ)
   const chEl=document.getElementById('fin-channel-summary');
   if(!channelsPresent.length){ chEl.className='emptystate'; chEl.textContent='ยังไม่มีข้อมูล'; }
   else{
@@ -2641,17 +2699,19 @@ async function renderFinance(){
     }).join('');
   }
 
-  // รายละเอียดรายวันแยกตามแอพ
+  // Daily Revenue Breakdown: รายละเอียดรายวันแยกตามแอพ (อ่านอย่างเดียว, ตามช่องทางที่เลือก)
   const listEl=document.getElementById('fin-list');
-  if(!rows.length){ listEl.className='emptystate'; listEl.textContent='ยังไม่มีข้อมูล'; }
+  if(!rowsFiltered.length){ listEl.className='emptystate'; listEl.textContent='ยังไม่มีข้อมูล'; }
   else{
     listEl.className='';
-    listEl.innerHTML=rows.map(r=>{
+    listEl.innerHTML=rowsFiltered.map(r=>{
       const net=r.revenue-r.commission-r.ad_fee;
-      return `<div class="list-item">
-        <div><b>${r.date}</b> — ${escapeHtml(r.channel)}
-          <div class="meta">ยอดขาย ${fmtMoney(r.revenue)} · ค่าคอม ${fmtMoney(r.commission)} · ค่าโฆษณา ${fmtMoney(r.ad_fee)} · สุทธิ ${fmtMoney(net)}</div>
-        </div>
+      const cls=channelBadgeClass(r.channel);
+      return `<div class="order-row" style="cursor:default">
+        <span class="badge ${cls}">${escapeHtml(shortChannelLabel(r.channel))}</span>
+        <span class="or-date">${formatThaiDateShort(r.date)}</span>
+        <span class="or-no">ขาย ${fmtMoney(r.revenue)} · หัก ${fmtMoney(r.commission+r.ad_fee)}</span>
+        <b class="or-total">${fmtMoney(net)}</b>
       </div>`;
     }).join('');
   }
