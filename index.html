@@ -126,6 +126,13 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .hint{font-size:11.5px;color:var(--muted);margin-top:4px;line-height:1.5;}
 .info-btn{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--border);color:var(--pink-dark);font-size:11.5px;font-weight:700;font-style:normal;border:none;cursor:pointer;margin-left:6px;vertical-align:middle;padding:0;line-height:1;}
 .info-btn:hover{background:var(--tan);}
+.collapsible-head{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.collapsible-head .chevron{font-size:13px;color:var(--muted);flex-shrink:0;}
+.cat-group{border-bottom:1px solid var(--border);}
+.cat-group:last-child{border-bottom:none;}
+.cat-head{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 0;font-weight:600;color:var(--pink-dark);}
+.cat-head .chevron{font-size:12px;color:var(--muted);flex-shrink:0;}
+.cat-body{padding-bottom:6px;}
 .warn-box{background:#fff8e1;border:1px solid #f0d896;border-radius:10px;padding:10px 12px;font-size:12.5px;color:#8a6d00;margin-bottom:10px;}
 .pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
 .pill{padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12.5px;cursor:pointer;color:var(--muted);}
@@ -219,18 +226,19 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
     <div class="card">
       <h2>ออเดอร์ล่าสุด</h2>
+      <div class="pillrow">
+        <div class="pill" onclick="setRangePreset('today','ro',this)">วันนี้</div>
+        <div class="pill" onclick="setRangePreset('thisweek','ro',this)">สัปดาห์นี้</div>
+        <div class="pill" onclick="setRangePreset('month','ro',this)">เดือนนี้</div>
+        <div class="pill" onclick="setRangePreset('lastweek','ro',this)">สัปดาห์ก่อน</div>
+        <div class="pill" onclick="setRangePreset('lastmonth','ro',this)">เดือนก่อน</div>
+        <div class="pill active" onclick="setRangePreset('all','ro',this)">ทั้งหมด</div>
+      </div>
       <div class="row">
-        <div><label>ช่วงเวลา</label>
-          <select id="ro-range" onchange="renderRecentOrders()">
-            <option value="today">วันนี้</option>
-            <option value="7d">7 วันล่าสุด</option>
-            <option value="30d">30 วันล่าสุด</option>
-            <option value="month">เดือนนี้</option>
-            <option value="3m">3 เดือนล่าสุด</option>
-            <option value="year">ปีนี้</option>
-            <option value="all" selected>ทั้งหมด</option>
-          </select>
-        </div>
+        <div><label>จากวันที่</label><input type="date" id="ro-from" onchange="renderRecentOrders()"></div>
+        <div><label>ถึงวันที่</label><input type="date" id="ro-to" onchange="renderRecentOrders()"></div>
+      </div>
+      <div class="row">
         <div><label>จัดกลุ่ม</label>
           <select id="ro-group" onchange="renderRecentOrders()">
             <option value="day">รายวัน</option>
@@ -276,18 +284,19 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
     <div class="card">
       <h2>รายการซื้อล่าสุด</h2>
+      <div class="pillrow">
+        <div class="pill" onclick="setRangePreset('today','rp',this)">วันนี้</div>
+        <div class="pill" onclick="setRangePreset('thisweek','rp',this)">สัปดาห์นี้</div>
+        <div class="pill" onclick="setRangePreset('month','rp',this)">เดือนนี้</div>
+        <div class="pill" onclick="setRangePreset('lastweek','rp',this)">สัปดาห์ก่อน</div>
+        <div class="pill" onclick="setRangePreset('lastmonth','rp',this)">เดือนก่อน</div>
+        <div class="pill active" onclick="setRangePreset('all','rp',this)">ทั้งหมด</div>
+      </div>
       <div class="row">
-        <div><label>ช่วงเวลา</label>
-          <select id="rp-range" onchange="renderRecentPurchases()">
-            <option value="today">วันนี้</option>
-            <option value="7d">7 วันล่าสุด</option>
-            <option value="30d">30 วันล่าสุด</option>
-            <option value="month">เดือนนี้</option>
-            <option value="3m">3 เดือนล่าสุด</option>
-            <option value="year">ปีนี้</option>
-            <option value="all" selected>ทั้งหมด</option>
-          </select>
-        </div>
+        <div><label>จากวันที่</label><input type="date" id="rp-from" onchange="renderRecentPurchases()"></div>
+        <div><label>ถึงวันที่</label><input type="date" id="rp-to" onchange="renderRecentPurchases()"></div>
+      </div>
+      <div class="row">
         <div><label>หมวดหมู่</label>
           <select id="rp-category" onchange="renderRecentPurchases()">
             <option value="all">ทุกหมวดหมู่</option>
@@ -307,16 +316,16 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     <div class="card">
       <h2>เลือกช่วงเวลา</h2>
       <div class="pillrow">
-        <div class="pill" onclick="setRangePreset('today',this)">วันนี้</div>
-        <div class="pill" onclick="setRangePreset('7d',this)">7 วัน</div>
-        <div class="pill" onclick="setRangePreset('30d',this)">30 วัน</div>
-        <div class="pill" onclick="setRangePreset('month',this)">เดือนนี้</div>
-        <div class="pill" onclick="setRangePreset('year',this)">ปีนี้</div>
-        <div class="pill active" onclick="setRangePreset('all',this)">ทั้งหมด</div>
+        <div class="pill" onclick="setRangePreset('today','d',this)">วันนี้</div>
+        <div class="pill" onclick="setRangePreset('thisweek','d',this)">สัปดาห์นี้</div>
+        <div class="pill" onclick="setRangePreset('month','d',this)">เดือนนี้</div>
+        <div class="pill" onclick="setRangePreset('lastweek','d',this)">สัปดาห์ก่อน</div>
+        <div class="pill" onclick="setRangePreset('lastmonth','d',this)">เดือนก่อน</div>
+        <div class="pill active" onclick="setRangePreset('all','d',this)">ทั้งหมด</div>
       </div>
       <div class="row">
-        <div><label>จากวันที่</label><input type="date" id="d-from"></div>
-        <div><label>ถึงวันที่</label><input type="date" id="d-to"></div>
+        <div><label>จากวันที่</label><input type="date" id="d-from" onchange="renderDashboard()"></div>
+        <div><label>ถึงวันที่</label><input type="date" id="d-to" onchange="renderDashboard()"></div>
       </div>
       <button class="btn-primary" style="margin-top:10px" onclick="renderDashboard()">🔍 แสดงผล</button>
     </div>
@@ -357,7 +366,8 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- SETTINGS TAB -->
   <div class="tabpage" id="tab-settings">
     <div class="card">
-      <h2>ข้อมูล / ฐานข้อมูล</h2>
+      <h2 class="collapsible-head" onclick="toggleSection(this,'settings-datacloud-body')">🗄️ ข้อมูล / ฐานข้อมูล &amp; Cloud Sync <span class="chevron">▾</span></h2>
+      <div id="settings-datacloud-body" style="display:none">
       <div id="db-stats" class="hint">กำลังโหลด...</div>
       <h3>นำเข้าจากไฟล์ Excel เดิม <button type="button" class="info-btn" onclick="toggleEl('hint-import-excel')">i</button></h3>
       <p class="hint" id="hint-import-excel" style="display:none">เลือกไฟล์ HOBI_ระบบบัญชีร้าน.xlsx เพื่อดึงข้อมูล Orders / Order_Items / Purchases / Menu เข้ามาในแอพ (ข้อมูลจะถูกเพิ่มเข้าไป ไม่ลบของเดิมในแอพ)</p>
@@ -373,10 +383,8 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <label>พิมพ์คำว่า <b>ลบทั้งหมด</b> เพื่อยืนยัน</label>
       <input type="text" id="confirm-delete-text" placeholder="ลบทั้งหมด" oninput="checkDeleteConfirm()" autocomplete="off">
       <div class="btn-row"><button class="btn-danger" id="confirm-delete-btn" onclick="clearAllData()" disabled>🗑️ ลบข้อมูลทั้งหมดในแอพ (สำรองอัตโนมัติก่อนลบ)</button></div>
-    </div>
 
-    <div class="card">
-      <h2>☁️ ซิงค์ข้อมูลข้ามเครื่อง (Cloud Sync) <button type="button" class="info-btn" onclick="toggleEl('hint-cloud-sync')">i</button></h2>
+      <h3>☁️ ซิงค์ข้อมูลข้ามเครื่อง (Cloud Sync) <button type="button" class="info-btn" onclick="toggleEl('hint-cloud-sync')">i</button></h3>
       <div id="hint-cloud-sync" style="display:none">
       <p class="hint">เชื่อมต่อ Firebase (ฟรี) เพื่อให้กรอกข้อมูลจากมือถือหรือคอมก็ได้ ข้อมูล sync กันอัตโนมัติแบบเรียลไทม์ ต้องตั้งค่าโปรเจกต์ Firebase ก่อนครั้งเดียว:</p>
       <p class="hint">
@@ -408,6 +416,7 @@ service cloud.firestore {
       </div>
       <div class="warn-box" style="margin-top:10px">💡 ครั้งแรกหลัง sign in แล้ว ถ้ามีข้อมูลเดิมอยู่ในเครื่องนี้ (จากก่อนเปิด Cloud Sync) ให้กดปุ่มด้านล่างเพื่ออัพโหลดข้อมูลเดิมขึ้นคลาวด์ครั้งเดียว</div>
       <div class="btn-row"><button class="btn-secondary" onclick="migrateLocalToCloud()">📤 อัพโหลดข้อมูลในเครื่องนี้ขึ้นคลาวด์</button></div>
+      </div>
     </div>
 
     <div class="card">
@@ -455,7 +464,11 @@ service cloud.firestore {
       </div>
       <label>เมนูที่ผูกด้วย (ถ้ามี)</label>
       <input type="text" id="og-linked" placeholder="เช่น Black cold brew, Milky cold brew">
-      <div class="btn-row"><button class="btn-secondary" onclick="addOptionGroupManual()">+ เพิ่มตัวเลือก</button></div>
+      <input type="hidden" id="og-edit-id">
+      <div class="btn-row">
+        <button class="btn-secondary" onclick="addOptionGroupManual()">+ เพิ่มตัวเลือก</button>
+        <button class="btn-ghost" id="og-cancel-btn" onclick="resetOptionForm()" style="display:none">ยกเลิกแก้ไข</button>
+      </div>
     </div>
 
     <div class="card">
@@ -485,6 +498,14 @@ function fmtMoney(n){ n=Number(n)||0; return '฿'+n.toLocaleString('th-TH',{max
 function toggleEl(id){
   const el=document.getElementById(id);
   if(el) el.style.display = (el.style.display==='none'||!el.style.display) ? 'block' : 'none';
+}
+function toggleSection(headerEl,bodyId){
+  const body=document.getElementById(bodyId);
+  if(!body) return;
+  const opening = body.style.display==='none' || !body.style.display;
+  body.style.display = opening ? 'block' : 'none';
+  const chevron=headerEl.querySelector('.chevron');
+  if(chevron) chevron.textContent = opening ? '▴' : '▾';
 }
 function toLocalISO(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function todayISO(){ return toLocalISO(new Date()); }
@@ -1072,6 +1093,18 @@ function computeRangeBounds(preset){
   else if(preset==='month'){ from=toLocalISO(now).slice(0,8)+'01'; }
   else if(preset==='3m'){ const d=new Date(now); d.setMonth(d.getMonth()-3); from=toLocalISO(d); }
   else if(preset==='year'){ from=now.getFullYear()+'-01-01'; }
+  else if(preset==='thisweek'){ from=getWeekStart(todayISO()); }
+  else if(preset==='lastweek'){
+    const thisWeekStart=new Date(getWeekStart(todayISO())+'T00:00:00');
+    const lastWeekStart=new Date(thisWeekStart); lastWeekStart.setDate(lastWeekStart.getDate()-7);
+    const lastWeekEnd=new Date(lastWeekStart); lastWeekEnd.setDate(lastWeekEnd.getDate()+6);
+    from=toLocalISO(lastWeekStart); to=toLocalISO(lastWeekEnd);
+  }
+  else if(preset==='lastmonth'){
+    const firstOfPrevMonth=new Date(now.getFullYear(),now.getMonth()-1,1);
+    const lastOfPrevMonth=new Date(now.getFullYear(),now.getMonth(),0);
+    from=toLocalISO(firstOfPrevMonth); to=toLocalISO(lastOfPrevMonth);
+  }
   else if(preset==='all'){ from='2000-01-01'; }
   return {from,to};
 }
@@ -1087,13 +1120,14 @@ function formatThaiDateShort(iso){
   return Number(d)+' '+THAI_MONTHS[Number(m)-1];
 }
 async function renderRecentOrders(){
-  const rangeSel=document.getElementById('ro-range');
+  const fromEl=document.getElementById('ro-from');
+  const toEl=document.getElementById('ro-to');
   const groupSel=document.getElementById('ro-group');
   const channelSel=document.getElementById('ro-channel');
-  const rangeVal=rangeSel?rangeSel.value:'all';
+  const from=fromEl&&fromEl.value?fromEl.value:'2000-01-01';
+  const to=toEl&&toEl.value?toEl.value:todayISO();
   const groupVal=groupSel?groupSel.value:'day';
   const channelVal=channelSel?channelSel.value:'all';
-  const {from,to}=computeRangeBounds(rangeVal);
 
   let orders=(await idbAll('orders')).filter(o=>o.date>=from && o.date<=to);
   if(channelVal!=='all') orders=orders.filter(o=>o.channel===channelVal);
@@ -1283,11 +1317,12 @@ async function deletePurchaseById(id){
   toast('ลบแล้ว','ok');
 }
 async function renderRecentPurchases(){
-  const rangeSel=document.getElementById('rp-range');
+  const fromEl=document.getElementById('rp-from');
+  const toEl=document.getElementById('rp-to');
   const catSel=document.getElementById('rp-category');
-  const rangeVal=rangeSel?rangeSel.value:'all';
+  const from=fromEl&&fromEl.value?fromEl.value:'2000-01-01';
+  const to=toEl&&toEl.value?toEl.value:todayISO();
   const catVal=catSel?catSel.value:'all';
-  const {from,to}=computeRangeBounds(rangeVal);
 
   let rows=(await idbAll('purchases')).filter(p=>p.date>=from && p.date<=to);
   if(catVal!=='all') rows=rows.filter(p=>p.category===catVal);
@@ -1308,19 +1343,16 @@ async function renderRecentPurchases(){
 
 /* ============ DASHBOARD ============ */
 let charts={};
-function setRangePreset(preset,el){
-  document.querySelectorAll('.pillrow .pill').forEach(p=>p.classList.remove('active'));
+function setRangePreset(preset,prefix,el){
+  const row=el.closest('.pillrow');
+  if(row) row.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
   el.classList.add('active');
-  const now=new Date(); let from,to=todayISO();
-  if(preset==='today'){ from=todayISO(); }
-  else if(preset==='7d'){ const d=new Date(now); d.setDate(d.getDate()-6); from=toLocalISO(d); }
-  else if(preset==='30d'){ const d=new Date(now); d.setDate(d.getDate()-29); from=toLocalISO(d); }
-  else if(preset==='month'){ from=toLocalISO(now).slice(0,8)+'01'; }
-  else if(preset==='year'){ from=now.getFullYear()+'-01-01'; }
-  else if(preset==='all'){ from='2000-01-01'; }
-  document.getElementById('d-from').value=from;
-  document.getElementById('d-to').value=to;
-  renderDashboard();
+  const {from,to}=computeRangeBounds(preset);
+  document.getElementById(prefix+'-from').value=from;
+  document.getElementById(prefix+'-to').value=to;
+  if(prefix==='d') renderDashboard();
+  else if(prefix==='ro') renderRecentOrders();
+  else if(prefix==='rp') renderRecentPurchases();
 }
 async function renderDashboard(){
   const from=document.getElementById('d-from').value||'2000-01-01';
@@ -1708,10 +1740,10 @@ function renderMenuManage(){
     el.innerHTML='<div class="emptystate">ยังไม่มีเมนู — เพิ่มด้านล่าง หรือนำเข้าจาก Excel</div>';
   }else{
     const cats=[...new Set(menuCache.map(m=>m.category||'ไม่มีหมวดหมู่'))].sort((a,b)=>a.localeCompare(b));
-    el.innerHTML=cats.map(cat=>{
-      const rows=menuCache.filter(m=>(m.category||'ไม่มีหมวดหมู่')===cat)
-        .sort((a,b)=>(a.name||'').localeCompare(b.name||''))
-        .map(m=>`
+    el.innerHTML=cats.map((cat,idx)=>{
+      const items=menuCache.filter(m=>(m.category||'ไม่มีหมวดหมู่')===cat)
+        .sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+      const rows=items.map(m=>`
           <div class="list-item">
             <div><b>${escapeHtml(m.name)}</b>${m.short_name?' <span class="meta">('+escapeHtml(m.short_name)+')</span>':''}
               <div class="meta">ราคา ${fmtMoney(m.price)} · ต้นทุน ${fmtMoney(m.cost)}</div>
@@ -1721,7 +1753,11 @@ function renderMenuManage(){
               <button type="button" class="btn-ghost btn-sm" onclick="deleteMenuItem('${m.id}')">ลบ</button>
             </div>
           </div>`).join('');
-      return `<h3>${escapeHtml(cat)}</h3>${rows}`;
+      const bodyId=`mn-cat-body-${idx}`;
+      return `<div class="cat-group">
+        <div class="cat-head" onclick="toggleSection(this,'${bodyId}')"><span>${escapeHtml(cat)} <span class="meta">(${items.length})</span></span><span class="chevron">▾</span></div>
+        <div id="${bodyId}" class="cat-body" style="display:none">${rows}</div>
+      </div>`;
     }).join('');
   }
   const dl=document.getElementById('mn-cat-list');
@@ -1793,7 +1829,10 @@ async function renderOptionManage(){
           <div>${escapeHtml(o.name)} ${o.extra_price?('+ '+fmtMoney(o.extra_price)):''}
             <span class="stockbadge ${oos?'out':'ok'}" style="margin-left:6px;cursor:pointer" onclick="toggleOptionStock('${o.id}')">${oos?'หมดสต็อก':'มีสต็อก'}</span>
           </div>
-          <button class="btn-ghost btn-sm" onclick="deleteOptionGroupRow('${o.id}')">ลบ</button>
+          <div style="display:flex;gap:4px;flex-shrink:0">
+            <button class="btn-ghost btn-sm" onclick="editOptionGroupRow('${o.id}')">แก้ไข</button>
+            <button class="btn-ghost btn-sm" onclick="deleteOptionGroupRow('${o.id}')">ลบ</button>
+          </div>
         </div>`;
       }).join('');
       return `<h3>${escapeHtml(g)}</h3>${rows}`;
@@ -1818,18 +1857,36 @@ async function addOptionGroupManual(){
   const group=document.getElementById('og-group').value.trim();
   const name=document.getElementById('og-name').value.trim();
   if(!group||!name){ toast('กรุณากรอกกลุ่มและชื่อออปชั่น','err'); return; }
+  const editId=document.getElementById('og-edit-id').value;
   await idbPut('option_groups',{
-    id:uid(), group, name,
+    id: editId || uid(), group, name,
     extra_price:Number(document.getElementById('og-price').value)||0,
     stock_status:document.getElementById('og-stock').value,
     linked_menu:document.getElementById('og-linked').value.trim()
   });
+  resetOptionForm();
+  await renderOptionManage();
+  toast(editId?'แก้ไขตัวเลือกแล้ว':'เพิ่มตัวเลือกแล้ว','ok');
+}
+function editOptionGroupRow(id){
+  const o=optionCache.find(x=>x.id===id); if(!o) return;
+  document.getElementById('og-edit-id').value=o.id;
+  document.getElementById('og-group').value=o.group||'';
+  document.getElementById('og-name').value=o.name||'';
+  document.getElementById('og-price').value=o.extra_price||0;
+  document.getElementById('og-stock').value=o.stock_status||'มีสต็อก';
+  document.getElementById('og-linked').value=o.linked_menu||'';
+  document.getElementById('og-cancel-btn').style.display='inline-block';
+  document.getElementById('og-group').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function resetOptionForm(){
+  document.getElementById('og-edit-id').value='';
   document.getElementById('og-group').value='';
   document.getElementById('og-name').value='';
   document.getElementById('og-price').value='0';
+  document.getElementById('og-stock').value='มีสต็อก';
   document.getElementById('og-linked').value='';
-  await renderOptionManage();
-  toast('เพิ่มตัวเลือกแล้ว','ok');
+  document.getElementById('og-cancel-btn').style.display='none';
 }
 async function renderStockUsage(){
   const rows=await idbAll('order_item_options');
@@ -1861,6 +1918,10 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   resetPurForm();
   document.getElementById('d-from').value='2000-01-01';
   document.getElementById('d-to').value=todayISO();
+  document.getElementById('ro-from').value='2000-01-01';
+  document.getElementById('ro-to').value=todayISO();
+  document.getElementById('rp-from').value='2000-01-01';
+  document.getElementById('rp-to').value=todayISO();
   renderRecentOrders();
   renderRecentPurchases();
   refreshDbStats();
