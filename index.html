@@ -88,6 +88,8 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .form-section-label:first-child{border-top:none;padding-top:0;margin-top:0;}
 .soft-box{background:#faf7f0;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;}
 .soft-box-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;}
+.subcard{border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-top:14px;background:#fdfbf7;}
+.subcard .collapsible-head{margin:0;font-size:14px;}
 .icon-circle{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .icon-circle svg{width:24px;height:24px;}
 .itemrow{display:flex;gap:6px;align-items:center;margin-bottom:6px;background:#fdf6f4;padding:8px;border-radius:9px;flex-wrap:wrap;}
@@ -546,6 +548,13 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       </div>
       <div class="chart-card">
         <div class="chart-card-head">
+          <div class="cc-icon" style="background:var(--pink-dark)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41 12 4.83A2 2 0 0 0 10.59 4.24L4 4a1 1 0 0 0-1 1l.24 6.59a2 2 0 0 0 .59 1.41l8.59 8.59a2 2 0 0 0 2.82 0l5.35-5.35a2 2 0 0 0 0-2.83z"/><circle cx="8.5" cy="8.5" r="1.2" fill="#fff" stroke="none"/></svg></div>
+          <div class="cc-title">ยอดใช้ตัวเลือกเสริมสะสม (Options)</div>
+        </div>
+        <canvas id="chart-optusage"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-card-head">
           <div class="cc-icon" style="background:var(--blue)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
           <div class="cc-title">จำนวนไอเทมที่ขายได้รายวัน (ชิ้น)</div>
         </div>
@@ -725,61 +734,61 @@ service cloud.firestore {
     </div>
 
     <div class="card">
-      <h2>เมนูทั้งหมด <button type="button" class="info-btn" onclick="toggleEl('hint-menu-manage')">i</button></h2>
+      <h2>Main Menu <button type="button" class="info-btn" onclick="toggleEl('hint-menu-manage')">i</button></h2>
       <p class="hint" id="hint-menu-manage" style="display:none">รายชื่อเมนูที่ร้านขาย ใช้เป็นตัวเลือก dropdown (แบ่งตามหมวดหมู่) ตอนกรอกออเดอร์ในหน้าแรก ตั้งราคาขาย/ต้นทุนไว้ที่นี่เพื่อให้ระบบคำนวณกำไรอัตโนมัติ</p>
       <div id="menu-manage-list"></div>
-      <h3>เพิ่ม/แก้ไขเมนู</h3>
-      <div class="row">
-        <div><label>ชื่อเมนู</label><input type="text" id="mn-name" placeholder="เช่น Honey cheesecake"></div>
-        <div><label>ตัวย่อ</label><input type="text" id="mn-short" placeholder="เช่น Honey"></div>
-      </div>
-      <div class="row">
-        <div><label>หมวดหมู่</label><input type="text" id="mn-category" placeholder="เช่น ชีสเค้ก" list="mn-cat-list">
-          <datalist id="mn-cat-list"></datalist>
+      <div class="subcard">
+        <h3 class="collapsible-head" onclick="toggleSection(this,'menu-add-form-body')">เพิ่ม/แก้ไขเมนู <span class="chevron">▾</span></h3>
+        <div id="menu-add-form-body" style="display:none">
+        <div class="row">
+          <div><label>ชื่อเมนู</label><input type="text" id="mn-name" placeholder="เช่น Honey cheesecake"></div>
+          <div><label>ตัวย่อ</label><input type="text" id="mn-short" placeholder="เช่น Honey"></div>
         </div>
-        <div></div>
-      </div>
-      <div class="row">
-        <div><label>ราคาขาย (฿)</label><input type="number" id="mn-price" value="0" step="0.01"></div>
-        <div><label>ต้นทุน (฿)</label><input type="number" id="mn-cost" value="0" step="0.01"></div>
-      </div>
-      <input type="hidden" id="mn-edit-id">
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="saveMenuItem()">+ บันทึกเมนู</button>
-        <button class="btn-ghost" id="mn-cancel-btn" onclick="resetMenuForm()" style="display:none">ยกเลิกแก้ไข</button>
+        <div class="row">
+          <div><label>หมวดหมู่</label><input type="text" id="mn-category" placeholder="เช่น ชีสเค้ก" list="mn-cat-list">
+            <datalist id="mn-cat-list"></datalist>
+          </div>
+          <div></div>
+        </div>
+        <div class="row">
+          <div><label>ราคาขาย (฿)</label><input type="number" id="mn-price" value="0" step="0.01"></div>
+          <div><label>ต้นทุน (฿)</label><input type="number" id="mn-cost" value="0" step="0.01"></div>
+        </div>
+        <input type="hidden" id="mn-edit-id">
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="saveMenuItem()">+ บันทึกเมนู</button>
+          <button class="btn-ghost" id="mn-cancel-btn" onclick="resetMenuForm()" style="display:none">ยกเลิกแก้ไข</button>
+        </div>
+        </div>
       </div>
     </div>
 
     <div class="card">
-      <h2>ตัวเลือกเมนู & สต็อก (Option Groups) <button type="button" class="info-btn" onclick="toggleEl('hint-option-groups')">i</button></h2>
-      <p class="hint" id="hint-option-groups" style="display:none">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน แก้สถานะสต็อกได้ทันทีที่นี่</p>
+      <h2>Options Menu <button type="button" class="info-btn" onclick="toggleEl('hint-option-groups')">i</button></h2>
+      <p class="hint" id="hint-option-groups" style="display:none">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน</p>
       <div id="opt-manage-list"></div>
-      <h3>เพิ่มตัวเลือกใหม่</h3>
-      <div class="row">
-        <div><label>กลุ่มตัวเลือก</label><input type="text" id="og-group" placeholder="เช่น Taste Note" list="og-group-list">
-          <datalist id="og-group-list"></datalist>
+      <div class="subcard">
+        <h3 class="collapsible-head" onclick="toggleSection(this,'opt-add-form-body')">เพิ่มตัวเลือก <span class="chevron">▾</span></h3>
+        <div id="opt-add-form-body" style="display:none">
+        <div class="row">
+          <div><label>กลุ่มตัวเลือก</label><input type="text" id="og-group" placeholder="เช่น Taste Note" list="og-group-list">
+            <datalist id="og-group-list"></datalist>
+          </div>
+          <div><label>ชื่อออปชั่น</label><input type="text" id="og-name" placeholder="เช่น vanilla choco"></div>
         </div>
-        <div><label>ชื่อออปชั่น</label><input type="text" id="og-name" placeholder="เช่น vanilla choco"></div>
-      </div>
-      <div class="row">
-        <div><label>ราคาเพิ่ม (฿)</label><input type="number" id="og-price" value="0" step="0.01"></div>
-        <div><label>สถานะสต็อก</label>
-          <select id="og-stock"><option>มีสต็อก</option><option>หมดสต็อกไม่มีกำหนด</option></select>
+        <div class="row">
+          <div><label>ราคาเพิ่ม (฿)</label><input type="number" id="og-price" value="0" step="0.01"></div>
+          <div></div>
+        </div>
+        <label>เมนูที่ผูกด้วย (ถ้ามี)</label>
+        <input type="text" id="og-linked" placeholder="เช่น Black cold brew, Milky cold brew">
+        <input type="hidden" id="og-edit-id">
+        <div class="btn-row">
+          <button class="btn-secondary" onclick="addOptionGroupManual()">+ เพิ่มตัวเลือก</button>
+          <button class="btn-ghost" id="og-cancel-btn" onclick="resetOptionForm()" style="display:none">ยกเลิกแก้ไข</button>
+        </div>
         </div>
       </div>
-      <label>เมนูที่ผูกด้วย (ถ้ามี)</label>
-      <input type="text" id="og-linked" placeholder="เช่น Black cold brew, Milky cold brew">
-      <input type="hidden" id="og-edit-id">
-      <div class="btn-row">
-        <button class="btn-secondary" onclick="addOptionGroupManual()">+ เพิ่มตัวเลือก</button>
-        <button class="btn-ghost" id="og-cancel-btn" onclick="resetOptionForm()" style="display:none">ยกเลิกแก้ไข</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>ยอดใช้สะสมต่อออปชั่น (Stock Usage) <button type="button" class="info-btn" onclick="toggleEl('hint-stock-usage')">i</button></h2>
-      <p class="hint" id="hint-stock-usage" style="display:none">นับยอดใช้สะสมจากออเดอร์ที่บันทึกไว้ทั้งหมด (ยังไม่ใช่สต็อกคงเหลือจริง เพราะไม่มีสต็อกตั้งต้น)</p>
-      <div id="stock-usage-list" class="emptystate">ยังไม่มีข้อมูล</div>
     </div>
   </div>
 
@@ -833,7 +842,7 @@ function switchTab(name,btn){
   btn.classList.add('active');
   if(name==='dashboard') renderDashboard();
   if(name==='finance'){ renderFinance(); renderDailyFeeList(); }
-  if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); renderStockUsage(); updateSyncStatusUI(); }
+  if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); updateSyncStatusUI(); }
 }
 
 /* ============ INDEXEDDB ============ */
@@ -1066,7 +1075,6 @@ async function refreshAllViews(){
   await renderRecentPurchases();
   renderMenuManage();
   await renderOptionManage();
-  await renderStockUsage();
   await refreshDbStats();
   if(document.getElementById('tab-dashboard').classList.contains('active')) await renderDashboard();
 }
@@ -2035,10 +2043,12 @@ async function renderDashboard(){
   const allItems=await idbAll('order_items');
   const allPur=await idbAll('purchases');
   const allDailyFees=await idbAll('daily_fees');
+  const allItemOpts=await idbAll('order_item_options');
   const orders=allOrders.filter(o=>o.date>=from && o.date<=to);
   const items=allItems.filter(i=>i.date>=from && i.date<=to);
   const pur=allPur.filter(p=>p.date>=from && p.date<=to);
   const dailyFees=allDailyFees.filter(f=>f.date>=from && f.date<=to);
+  const itemOpts=allItemOpts.filter(o=>o.date>=from && o.date<=to);
 
   if(!orders.length && !pur.length){
     document.getElementById('dash-empty').style.display='block';
@@ -2179,6 +2189,15 @@ async function renderDashboard(){
     const topMenuColors=topMenu.map(x=>catColorMap[findMenuCategory(x[0])||'ไม่ระบุหมวดหมู่']||'#8c5c46');
     drawTopMenuChart('chart-topmenu',topMenuLabels,topMenuSales,topMenuQtys,topMenuColors);
 
+    // ยอดใช้ตัวเลือกเสริมสะสม (ย้ายมาจากหน้าตั้งค่า — นับตามช่วงเวลาที่เลือกเหมือนกราฟอื่นๆ ในหน้านี้)
+    const byOptUsage={};
+    itemOpts.forEach(o=>{
+      const key=(o.group||'')+' · '+(o.option||'');
+      byOptUsage[key]=(byOptUsage[key]||0)+Number(o.qty||0);
+    });
+    const topOptUsage=Object.entries(byOptUsage).sort((a,b)=>b[1]-a[1]).slice(0,10);
+    drawOptionUsageChart('chart-optusage',topOptUsage.map(x=>x[0]),topOptUsage.map(x=>x[1]));
+
     // daily quantity of items sold — stacked by menu category, ordered: cheesecake slice > set menu > drinks > toppings > whole cake > อื่นๆ
     await renderQtyChart(items);
   }catch(err){
@@ -2255,6 +2274,23 @@ function drawTopMenuChart(canvasId,labels,sales,qtys,colors){
           font:{size:10.5,weight:'700'},
           formatter:(val,ctx)=>fmtMoney(val)+' ('+(qtys[ctx.dataIndex]||0)+' ชิ้น)'
         }
+      },
+      scales:{x:{beginAtZero:true,grid:{color:GRID_COLOR}},y:{grid:{display:false}}}
+    }
+  });
+}
+function drawOptionUsageChart(canvasId,labels,qtys){
+  if(charts[canvasId]) charts[canvasId].destroy();
+  const ctx=document.getElementById(canvasId).getContext('2d');
+  charts[canvasId]=new Chart(ctx,{
+    type:'bar',
+    data:{labels,datasets:[{label:'ยอดใช้ (ชิ้น)',data:qtys,backgroundColor:'#8c5c46',borderRadius:5,borderSkipped:false,maxBarThickness:26}]},
+    options:{
+      indexAxis:'y',
+      layout:{padding:{right:40}},
+      plugins:{
+        legend:{display:false},
+        datalabels:{display:true,clip:false,color:'#2e2b28',anchor:'end',align:'end',font:{size:10.5,weight:'700'},formatter:v=>v+' ชิ้น'}
       },
       scales:{x:{beginAtZero:true,grid:{color:GRID_COLOR}},y:{grid:{display:false}}}
     }
@@ -2515,7 +2551,7 @@ async function importExcel(){
     await refreshMenuCache();
     await refreshOptionCache();
     toast(`นำเข้าสำเร็จ: เมนู ${counts.menu}, ออเดอร์ ${counts.orders}, รายการเมนูในออเดอร์ ${counts.items}, รายการซื้อ ${counts.purchases}, ตัวเลือก ${counts.options}, ออปชั่นในออเดอร์ ${counts.itemOptions}`,'ok');
-    refreshDbStats(); renderRecentOrders(); renderRecentPurchases(); renderMenuManage(); renderOptionManage(); renderStockUsage();
+    refreshDbStats(); renderRecentOrders(); renderRecentPurchases(); renderMenuManage(); renderOptionManage();
   }catch(err){
     console.error(err); toast('นำเข้าไม่สำเร็จ: '+err.message,'err');
   }
@@ -2584,7 +2620,7 @@ async function clearAllData(){
   document.getElementById('confirm-delete-text').value='';
   document.getElementById('confirm-delete-btn').disabled=true;
   toast('สำรองไฟล์แล้วและลบข้อมูลทั้งหมดแล้ว','ok');
-  refreshDbStats(); renderRecentOrders(); renderRecentPurchases(); renderMenuManage(); renderOptionManage(); renderStockUsage();
+  refreshDbStats(); renderRecentOrders(); renderRecentPurchases(); renderMenuManage(); renderOptionManage();
 }
 async function refreshDbStats(){
   const orders=await idbAll('orders'); const pur=await idbAll('purchases'); const menu=await idbAll('menu');
@@ -2655,6 +2691,7 @@ function editMenuItem(id){
   document.getElementById('mn-price').value=m.price||0;
   document.getElementById('mn-cost').value=m.cost||0;
   document.getElementById('mn-cancel-btn').style.display='inline-block';
+  openCollapsible('menu-add-form-body');
   document.getElementById('mn-name').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function resetMenuForm(){
@@ -2682,31 +2719,26 @@ async function renderOptionManage(){
   if(!optionCache.length){ el.innerHTML='<div class="emptystate">ยังไม่มีข้อมูลตัวเลือก — นำเข้าจาก Excel หรือเพิ่มด้านล่าง</div>'; }
   else{
     const groups=getOptionGroupNames();
-    el.innerHTML=groups.map(g=>{
-      const rows=getOptionsForGroup(g).map(o=>{
-        const oos=isOutOfStock(o.stock_status);
+    el.innerHTML=groups.map((g,idx)=>{
+      const optsInGroup=getOptionsForGroup(g);
+      const rows=optsInGroup.map(o=>{
         return `<div class="list-item">
-          <div>${escapeHtml(o.name)} ${o.extra_price?('+ '+fmtMoney(o.extra_price)):''}
-            <span class="stockbadge ${oos?'out':'ok'}" style="margin-left:6px;cursor:pointer" onclick="toggleOptionStock('${o.id}')">${oos?'หมดสต็อก':'มีสต็อก'}</span>
-          </div>
+          <div>${escapeHtml(o.name)} ${o.extra_price?('+ '+fmtMoney(o.extra_price)):''}</div>
           <div style="display:flex;gap:4px;flex-shrink:0">
             <button class="btn-ghost btn-sm" onclick="editOptionGroupRow('${o.id}')">แก้ไข</button>
             <button class="btn-ghost btn-sm" onclick="deleteOptionGroupRow('${o.id}')">ลบ</button>
           </div>
         </div>`;
       }).join('');
-      return `<h3>${escapeHtml(g)}</h3>${rows}`;
+      const bodyId=`og-group-body-${idx}`;
+      return `<div class="cat-group">
+        <div class="cat-head" onclick="toggleSection(this,'${bodyId}')"><span>${escapeHtml(g)} <span class="meta">(${optsInGroup.length})</span></span><span class="chevron">▾</span></div>
+        <div id="${bodyId}" class="cat-body" style="display:none">${rows}</div>
+      </div>`;
     }).join('');
   }
   const dl=document.getElementById('og-group-list');
   if(dl) dl.innerHTML=getOptionGroupNames().map(g=>`<option value="${escapeHtml(g)}">`).join('');
-}
-async function toggleOptionStock(id){
-  const o=optionCache.find(x=>x.id===id); if(!o) return;
-  o.stock_status = isOutOfStock(o.stock_status) ? 'มีสต็อก' : 'หมดสต็อกไม่มีกำหนด';
-  await idbPut('option_groups',o);
-  await renderOptionManage();
-  toast('อัปเดตสต็อกแล้ว','ok');
 }
 async function deleteOptionGroupRow(id){
   if(!confirm('ลบตัวเลือกนี้?')) return;
@@ -2718,10 +2750,11 @@ async function addOptionGroupManual(){
   const name=document.getElementById('og-name').value.trim();
   if(!group||!name){ toast('กรุณากรอกกลุ่มและชื่อออปชั่น','err'); return; }
   const editId=document.getElementById('og-edit-id').value;
+  const existing=editId ? optionCache.find(x=>x.id===editId) : null;
   await idbPut('option_groups',{
     id: editId || uid(), group, name,
     extra_price:Number(document.getElementById('og-price').value)||0,
-    stock_status:document.getElementById('og-stock').value,
+    stock_status: existing ? (existing.stock_status||'มีสต็อก') : 'มีสต็อก',
     linked_menu:document.getElementById('og-linked').value.trim()
   });
   resetOptionForm();
@@ -2734,9 +2767,9 @@ function editOptionGroupRow(id){
   document.getElementById('og-group').value=o.group||'';
   document.getElementById('og-name').value=o.name||'';
   document.getElementById('og-price').value=o.extra_price||0;
-  document.getElementById('og-stock').value=o.stock_status||'มีสต็อก';
   document.getElementById('og-linked').value=o.linked_menu||'';
   document.getElementById('og-cancel-btn').style.display='inline-block';
+  openCollapsible('opt-add-form-body');
   document.getElementById('og-group').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function resetOptionForm(){
@@ -2744,25 +2777,9 @@ function resetOptionForm(){
   document.getElementById('og-group').value='';
   document.getElementById('og-name').value='';
   document.getElementById('og-price').value='0';
-  document.getElementById('og-stock').value='มีสต็อก';
   document.getElementById('og-linked').value='';
   document.getElementById('og-cancel-btn').style.display='none';
 }
-async function renderStockUsage(){
-  const rows=await idbAll('order_item_options');
-  const el=document.getElementById('stock-usage-list');
-  if(!rows.length){ el.className='emptystate'; el.textContent='ยังไม่มีข้อมูล'; return; }
-  const usage={};
-  rows.forEach(r=>{
-    const key=r.group+' / '+r.option;
-    usage[key]=(usage[key]||0)+Number(r.qty||0);
-  });
-  const sorted=Object.entries(usage).sort((a,b)=>b[1]-a[1]);
-  el.className='';
-  el.innerHTML='<table><tr><th>ตัวเลือก</th><th>ยอดใช้สะสม</th></tr>'+
-    sorted.map(([k,v])=>`<tr><td>${escapeHtml(k)}</td><td>${v}</td></tr>`).join('')+'</table>';
-}
-
 /* ============ INIT ============ */
 window.addEventListener('DOMContentLoaded',async ()=>{
   await openDB();
