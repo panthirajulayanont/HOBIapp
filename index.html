@@ -1735,10 +1735,29 @@ async function renderRecentOrders(){
   if(!orders.length){ el.className='emptystate'; el.textContent='ไม่มีออเดอร์ในช่วง/เงื่อนไขที่เลือก'; return; }
   el.className='';
 
-  // ช่วงเวลาที่เลือกเกิน 7 วัน → จัดกลุ่มเป็นรายสัปดาห์อัตโนมัติ ไม่เกิน 7 วัน → แสดงแยกรายวัน
-  // ยกเว้น: ถ้าเลือกช่วงเวลาผ่านปุ่มชื่อเดือน (roMonthSelected) ให้แสดงแยกรายวันเสมอ ไม่ต้องแบ่งกลุ่มรายสัปดาห์
+  function orderRowHtml(o){
+    const cls=o.channel==='Grab Food'?'grab':o.channel==='Line Man'?'line':o.channel==='คอนโด'?'condo':'other';
+    const profit=Number(o.gross_profit)||0;
+    return `<div class="order-row clickable" onclick="showOrderDetail('${o.id}')">
+      <span class="badge ${cls}">${escapeHtml(shortChannelLabel(o.channel))}</span>
+      ${o.thai_plus?'<span class="badge other" style="font-size:10px">60/40</span>':''}
+      <span class="or-date">${formatThaiDateShort(o.date)}</span>
+      <span class="or-no">#${escapeHtml(o.order_no||'-')}</span>
+      <b class="or-total">${fmtMoney(o.total_sale)}</b>
+      <span class="or-profit ${profit>=0?'pos':'neg'}">${fmtMoney(profit)}</span>
+      <button class="btn-ghost btn-sm or-del" onclick="event.stopPropagation();deleteOrderById('${o.id}')">ลบ</button>
+    </div>`;
+  }
+
+  // เลือกช่วงเวลาผ่านปุ่มชื่อเดือน → แสดงทุกออเดอร์เรียงต่อกันเป็นลิสต์เดียว ไม่แบ่งกลุ่มใดๆ เลย (ไม่มีหัวข้อสัปดาห์/วัน คั่น)
+  if(roMonthSelected){
+    el.innerHTML=orders.map(orderRowHtml).join('');
+    return;
+  }
+
+  // นอกเหนือจากนั้น: ช่วงเวลาที่เลือกเกิน 7 วัน → จัดกลุ่มเป็นรายสัปดาห์อัตโนมัติ ไม่เกิน 7 วัน → แสดงแยกรายวัน
   const spanDays=Math.round((new Date(to+'T00:00:00')-new Date(from+'T00:00:00'))/86400000)+1;
-  const groupByWeek=roMonthSelected?false:(spanDays>7);
+  const groupByWeek=spanDays>7;
   function groupKey(o){ return groupByWeek ? getWeekStart(o.date) : o.date; }
   function groupLabel(key){
     if(groupByWeek){
@@ -1758,19 +1777,7 @@ async function renderRecentOrders(){
   el.innerHTML=sortedKeys.map(k=>{
     const grp=groups[k];
     const sum=grp.reduce((s,o)=>s+Number(o.total_sale||0),0);
-    const rows=grp.map(o=>{
-      const cls=o.channel==='Grab Food'?'grab':o.channel==='Line Man'?'line':o.channel==='คอนโด'?'condo':'other';
-      const profit=Number(o.gross_profit)||0;
-      return `<div class="order-row clickable" onclick="showOrderDetail('${o.id}')">
-        <span class="badge ${cls}">${escapeHtml(shortChannelLabel(o.channel))}</span>
-        ${o.thai_plus?'<span class="badge other" style="font-size:10px">60/40</span>':''}
-        <span class="or-date">${formatThaiDateShort(o.date)}</span>
-        <span class="or-no">#${escapeHtml(o.order_no||'-')}</span>
-        <b class="or-total">${fmtMoney(o.total_sale)}</b>
-        <span class="or-profit ${profit>=0?'pos':'neg'}">${fmtMoney(profit)}</span>
-        <button class="btn-ghost btn-sm or-del" onclick="event.stopPropagation();deleteOrderById('${o.id}')">ลบ</button>
-      </div>`;
-    }).join('');
+    const rows=grp.map(orderRowHtml).join('');
     return `<div class="group-header">${escapeHtml(groupLabel(k))} · ${grp.length} ออเดอร์ · ${fmtMoney(sum)}</div>${rows}`;
   }).join('');
 }
