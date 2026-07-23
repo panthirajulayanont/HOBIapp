@@ -86,14 +86,14 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .home-nav-btn span{font-size:13px;font-weight:700;color:var(--text);}
 .card-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
 .card-head-row h2{margin:0 !important;}
-.cake-total-hero{text-align:center;padding:6px 0 14px;}
-.cake-total-num{font-size:42px;font-weight:800;color:var(--terracotta);line-height:1;font-family:var(--font-head);}
-.cake-total-lbl{font-size:12px;color:var(--muted);margin-top:5px;}
-.cake-flavor-list{display:flex;flex-direction:column;border-top:1px solid var(--border);}
-.cake-flavor-row{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid var(--border);font-size:13px;}
-.cake-flavor-row:last-child{border-bottom:none;}
-.cake-flavor-row .cf-name{font-weight:600;color:var(--text);}
-.cake-flavor-row .cf-qty{color:var(--muted);font-weight:700;flex-shrink:0;}
+.cake-bubble-wrap{display:flex;flex-direction:column;align-items:center;gap:20px;padding:10px 0 4px;}
+.cake-bubble-total{border-radius:50%;background:var(--pink);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(34,55,69,.28);text-align:center;flex-shrink:0;}
+.cake-bubble-total .cbt-num{font-weight:800;font-family:var(--font-head);line-height:1;}
+.cake-bubble-total .cbt-lbl{opacity:.88;margin-top:5px;padding:0 12px;line-height:1.3;}
+.cake-bubble-flavors{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:12px;}
+.cake-bubble{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;box-shadow:0 3px 9px rgba(34,55,69,.2);flex-shrink:0;text-align:center;}
+.cake-bubble .cb-code{letter-spacing:.3px;}
+.cake-bubble .cb-qty{font-weight:700;opacity:.92;margin-top:1px;}
 .quick-input-row{display:flex;gap:8px;}
 .quick-input-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:999px;padding:11px 8px;cursor:pointer;transition:transform .1s;}
 .quick-input-btn:active{transform:scale(.97);}
@@ -266,11 +266,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
     <div class="card">
       <h2>🍰 เค้กที่ขายไปแล้วทั้งหมด</h2>
-      <div class="cake-total-hero">
-        <div class="cake-total-num" id="home-cake-total">0</div>
-        <div class="cake-total-lbl">ชิ้น (cheesecake slice) นับตั้งแต่เปิดร้าน</div>
-      </div>
-      <div id="home-cake-breakdown" class="cake-flavor-list"></div>
+      <div id="home-cake-bubbles" class="cake-bubble-wrap"></div>
     </div>
 
     <div class="card">
@@ -1272,7 +1268,59 @@ const FLAVOR_COLOR_MAP=[
   {kw:['milktea','ชานม'],color:'#C9A66B'},
   {kw:['original','plain','ออริจินัล'],color:'#F0C05A'}
 ];
+// สีทางการของแต่ละรสชีสเค้ก (ตามโค้ดที่ร้านกำหนดเอง เช่น HN/MT/HJ/CC/CL/EG) — จับคู่แบบ exact กับ short_name เท่านั้น
+// (โค้ดสั้นแค่ 2-4 ตัวอักษร ถ้าใช้ fuzzy substring แบบ FLAVOR_COLOR_MAP จะชนกับชื่ออื่นง่ายเกินไป) ให้ความสำคัญสูงสุดเวลาระบายสีกราฟ/บับเบิ้ลที่เกี่ยวกับรสชีสเค้กทุกจุดในแอพ
+const CAKE_CODE_COLORS={hn:'#ffe9b3', mt:'#5b804a', hj:'#806b4a', cc:'#634639', cl:'#d1ab8c', eg:'#d4b694'};
+const CAKE_CODE_HATCH={mtcc:['#5b804a','#634639']}; // ลายทแยงสลับสี ใช้ทั้งเป็น canvas pattern (กราฟ) และ CSS gradient (บับเบิ้ล/การ์ด)
+function resolveCakeCode(nameOrCode){
+  const m=fuzzyFindMenu(nameOrCode);
+  return normFuzzy(m && m.short_name ? m.short_name : nameOrCode);
+}
+let __hatchPatternCache={};
+// สร้าง CanvasPattern ลายทแยง 2 สีสลับกัน (ใช้เป็น backgroundColor ของแท่งกราฟ Chart.js ได้โดยตรง)
+function getHatchCanvasPattern(color1,color2){
+  const key=color1+'|'+color2;
+  if(__hatchPatternCache[key]) return __hatchPatternCache[key];
+  const size=16;
+  const c=document.createElement('canvas');
+  c.width=size; c.height=size;
+  const ctx=c.getContext('2d');
+  ctx.fillStyle=color1; ctx.fillRect(0,0,size,size);
+  ctx.fillStyle=color2;
+  ctx.beginPath(); ctx.moveTo(0,size); ctx.lineTo(size,0); ctx.lineTo(size,size/2); ctx.lineTo(size/2,size); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(size/2,0); ctx.lineTo(0,size/2); ctx.closePath(); ctx.fill();
+  const pattern=ctx.createPattern(c,'repeat');
+  __hatchPatternCache[key]=pattern;
+  return pattern;
+}
+// ใช้กับ Chart.js (คืนค่าเป็น hex string หรือ CanvasPattern object) — คืน null ถ้าไม่ตรงโค้ดที่กำหนดสีไว้
+function cakeFlavorFillCanvas(nameOrCode){
+  const code=resolveCakeCode(nameOrCode);
+  if(CAKE_CODE_HATCH[code]) return getHatchCanvasPattern(CAKE_CODE_HATCH[code][0],CAKE_CODE_HATCH[code][1]);
+  if(CAKE_CODE_COLORS[code]) return CAKE_CODE_COLORS[code];
+  return null;
+}
+// ใช้กับ CSS (คืนค่าเป็น hex string หรือ repeating-linear-gradient string) — สำหรับการ์ด/บับเบิ้ลที่เป็น HTML ธรรมดา
+function cakeFlavorFillCss(nameOrCode){
+  const code=resolveCakeCode(nameOrCode);
+  if(CAKE_CODE_HATCH[code]){
+    const [c1,c2]=CAKE_CODE_HATCH[code];
+    return `repeating-linear-gradient(45deg, ${c1} 0px, ${c1} 8px, ${c2} 8px, ${c2} 16px)`;
+  }
+  if(CAKE_CODE_COLORS[code]) return CAKE_CODE_COLORS[code];
+  return null;
+}
+// เลือกสีตัวอักษร (เข้ม/ขาว) ให้อ่านง่ายตามความสว่างของสีพื้นหลัง (สูตร YIQ)
+function readableTextColorFor(hex){
+  const h=(hex||'').replace('#','');
+  if(h.length!==6) return '#fff';
+  const r=parseInt(h.slice(0,2),16), g=parseInt(h.slice(2,4),16), b=parseInt(h.slice(4,6),16);
+  const yiq=(r*299+g*587+b*114)/1000;
+  return yiq>=150 ? '#223745' : '#fff';
+}
 function flavorColorForMenuName(rawName,fallbackColor){
+  const cakeFill=cakeFlavorFillCanvas(rawName);
+  if(cakeFill) return cakeFill;
   const n=normFuzzy(canonicalMenuName(rawName)+' '+rawName);
   for(const f of FLAVOR_COLOR_MAP){
     if(f.kw.some(k=>n.includes(normFuzzy(k)))) return f.color;
@@ -2363,9 +2411,8 @@ async function renderHomeSummary(){
 }
 // การ์ดจำนวนเค้กที่ขายไปแล้วทั้งหมด (ตลอดกาล นับตั้งแต่เปิดร้าน) เฉพาะหมวด "cheesecake slice" — แจกแจง set menu ออกเป็นไอเทมย่อยตามรสจริงด้วย (ใช้ breakdownSetMenuItem ตัวเดียวกับกราฟรายวัน/รายสัปดาห์โหมด "แจกแจง")
 async function renderHomeCakeCount(){
-  const totalEl=document.getElementById('home-cake-total');
-  const listEl=document.getElementById('home-cake-breakdown');
-  if(!totalEl || !listEl) return;
+  const wrapEl=document.getElementById('home-cake-bubbles');
+  if(!wrapEl) return;
   const [items,allOpts]=await Promise.all([idbAll('order_items'),idbAll('order_item_options')]);
   const optsByKey={};
   allOpts.forEach(o=>{
@@ -2398,20 +2445,52 @@ async function renderHomeCakeCount(){
     }
   });
 
-  totalEl.textContent=total.toLocaleString('th-TH');
-
   const rows=Object.entries(byFlavor).sort((a,b)=>b[1]-a[1]);
+
+  // วงกลมใหญ่สุด = ยอดรวมทั้งหมด
+  const totalBubbleSize=150;
+  const totalHtml=`<div class="cake-bubble-total" style="width:${totalBubbleSize}px;height:${totalBubbleSize}px">
+    <div class="cbt-num" style="font-size:32px">${total.toLocaleString('th-TH')}</div>
+    <div class="cbt-lbl" style="font-size:10.5px">ชิ้นรวมทั้งหมด<br>นับตั้งแต่เปิดร้าน</div>
+  </div>`;
+
   if(!rows.length){
-    listEl.innerHTML='<div class="emptystate" style="padding:6px 0">ยังไม่มีข้อมูล</div>';
-  }else{
-    listEl.innerHTML=rows.map(([name,qty])=>{
-      const shortName=findMenuShortName(name);
-      return `<div class="cake-flavor-row">
-        <span class="cf-name">${escapeHtml(shortName)}</span>
-        <span class="cf-qty">${qty.toLocaleString('th-TH')} ชิ้น</span>
-      </div>`;
-    }).join('');
+    wrapEl.innerHTML=totalHtml+'<div class="emptystate">ยังไม่มีข้อมูล</div>';
+    return;
   }
+
+  // วงกลมเล็กแต่ละรส: ขนาดไล่ตามสัดส่วนยอดขาย (สเกลแบบ sqrt ให้ "พื้นที่" ของวงกลมสื่อสัดส่วนได้ใกล้เคียงสายตาจริงมากกว่าสเกลเส้นตรง)
+  const MIN_D=54, MAX_D=100;
+  const maxQty=Math.max(...rows.map(r=>r[1]));
+  const minQty=Math.min(...rows.map(r=>r[1]));
+  function bubbleSize(qty){
+    if(maxQty===minQty) return (MIN_D+MAX_D)/2;
+    const t=Math.sqrt((qty-minQty)/(maxQty-minQty));
+    return Math.round(MIN_D+t*(MAX_D-MIN_D));
+  }
+
+  const flavorsHtml=rows.map(([name,qty])=>{
+    const shortName=findMenuShortName(name);
+    const fill=cakeFlavorFillCss(name) || flavorColorForMenuNameCssFallback(name);
+    const solidForText=CAKE_CODE_COLORS[resolveCakeCode(name)] || (CAKE_CODE_HATCH[resolveCakeCode(name)]?CAKE_CODE_HATCH[resolveCakeCode(name)][0]:null) || '#a3654f';
+    const textColor=readableTextColorFor(solidForText);
+    const d=bubbleSize(qty);
+    const fontSize=Math.max(10.5,Math.round(d*0.16));
+    return `<div class="cake-bubble" style="width:${d}px;height:${d}px;background:${fill};color:${textColor}">
+      <div class="cb-code" style="font-size:${fontSize}px">${escapeHtml(shortName)}</div>
+      <div class="cb-qty" style="font-size:${Math.max(9,fontSize-2)}px">${qty.toLocaleString('th-TH')}</div>
+    </div>`;
+  }).join('');
+
+  wrapEl.innerHTML=totalHtml+`<div class="cake-bubble-flavors">${flavorsHtml}</div>`;
+}
+// สีสำรอง (string เสมอ ใช้กับ CSS ได้) กรณีไม่ตรงทั้งโค้ดที่กำหนดตายตัวและ keyword ทั่วไป
+function flavorColorForMenuNameCssFallback(name){
+  const n=normFuzzy(canonicalMenuName(name)+' '+name);
+  for(const f of FLAVOR_COLOR_MAP){
+    if(f.kw.some(k=>n.includes(normFuzzy(k)))) return f.color;
+  }
+  return '#a3654f';
 }
 async function renderDashboard(){
   const from=document.getElementById('d-from').value||'2000-01-01';
