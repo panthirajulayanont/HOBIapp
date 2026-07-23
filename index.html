@@ -113,12 +113,14 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .itemrow{display:flex;gap:6px;align-items:center;margin-bottom:6px;background:#fffae8;padding:8px;border-radius:9px;flex-wrap:wrap;}
 .itemrow input,.itemrow select{flex:1;min-width:0;}
 .itemrow input.qty,.itemrow input.price{flex:0 0 68px;}
+.itemrow .row-total{flex:0 0 auto;font-size:12.5px;font-weight:700;color:var(--brown);white-space:nowrap;margin-left:auto;padding-left:4px;}
 @media(max-width:520px){
   .itemrow .name{flex:1 1 100%;order:-1;}
   .itemrow .closebtn{flex:0 0 40px;}
   #o-items .itemrow input.qty,#o-items .itemrow input.price{flex:1 1 calc(50% - 20px);}
   #p-items .itemrow select.cat{flex:1 1 100%;}
   #p-items .itemrow input.qty,#p-items .itemrow input.unit,#p-items .itemrow input.price{flex:1 1 calc(33.33% - 14px);}
+  #p-items .itemrow .row-total{flex:1 1 100%;text-align:right;margin-left:0;padding-top:2px;}
 }
 .itemblock{border:1px solid var(--border);border-radius:11px;padding:8px;margin-bottom:8px;background:#fffae8;}
 .itemblock .itemrow{background:transparent;padding:0;margin-bottom:6px;}
@@ -451,6 +453,14 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div id="p-items"></div>
         <button type="button" class="btn-secondary btn-sm" onclick="addPurItemRow()">+ เพิ่มรายการ</button>
         <p class="hint" id="p-edit-hint" style="display:none">กำลังแก้ไขรายการเดิม — ระบบจะอัพเดตเฉพาะรายการแรกในลิสต์นี้เท่านั้น ถ้าจะเพิ่มรายการใหม่ ให้กด "ยกเลิกแก้ไข" ก่อน</p>
+
+        <div class="form-section-label">สรุปยอด <button type="button" class="info-btn" onclick="toggleEl('hint-pur-adjust')">i</button></div>
+        <p class="hint" id="hint-pur-adjust" style="display:none">ถ้ายอดที่จ่ายจริงท้ายบิลไม่ตรงกับราคาต่อชิ้น×จำนวนที่กรอกไว้ด้านบน (เช่น มีส่วนลดท้ายบิล หรือมีค่าส่งบวกเพิ่ม) ไม่ต้องไปนั่งคำนวณราคาต่อชิ้นใหม่เอง — ใส่ผลต่างตรงนี้ก้อนเดียว (ส่วนลดใส่ติดลบ, ค่าส่งเพิ่มใส่บวก) ระบบจะกระจายเฉลี่ยตามสัดส่วนลงในทุกไอเทมให้อัตโนมัติตอนกดบันทึก เพื่อให้ยอดรวมต่อไอเทมตรงกับเงินที่จ่ายจริง</p>
+        <div class="soft-box">
+          <label>ส่วนต่างท้ายบิล (ส่วนลด −  /  ค่าส่งเพิ่ม +)</label>
+          <input type="number" id="p-adjust" value="0" step="0.01" oninput="updatePurSummary()">
+          <div id="pur-summary" class="hint" style="margin-top:8px"></div>
+        </div>
 
         <div class="form-section-label">หมายเหตุ</div>
         <textarea id="p-note"></textarea>
@@ -2156,11 +2166,36 @@ function addPurItemRow(name,category,qty,unit,price){
   row.innerHTML=`
     <input type="text" class="name" placeholder="ชื่อสินค้า" value="${escapeHtml(name)}" style="flex:1.6">
     <select class="cat" style="flex:0 0 100px">${cats.map(c=>`<option ${c===category?'selected':''}>${c}</option>`).join('')}</select>
-    <input type="number" class="qty" placeholder="จำนวน" value="${qty}" style="flex:0 0 60px">
+    <input type="number" class="qty" placeholder="จำนวน" value="${qty}" style="flex:0 0 60px" oninput="updateRowTotal(this);updatePurSummary()">
     <input type="text" class="unit" placeholder="หน่วย" value="${escapeHtml(unit)}" style="flex:0 0 60px">
-    <input type="number" class="price" placeholder="ราคา/หน่วย" value="${price}" step="0.01" style="flex:0 0 80px">
-    <button type="button" class="closebtn" onclick="this.parentElement.remove()">✕</button>`;
+    <input type="number" class="price" placeholder="ราคา/หน่วย" value="${price}" step="0.01" style="flex:0 0 80px" oninput="updateRowTotal(this);updatePurSummary()">
+    <span class="row-total">${fmtMoney(qty*price)}</span>
+    <button type="button" class="closebtn" onclick="this.parentElement.remove();updatePurSummary()">✕</button>`;
   wrap.appendChild(row);
+  updatePurSummary();
+}
+function updateRowTotal(el){
+  const row=el.closest('.itemrow');
+  if(!row) return;
+  const qty=Number(row.querySelector('.qty').value)||0;
+  const price=Number(row.querySelector('.price').value)||0;
+  row.querySelector('.row-total').textContent=fmtMoney(qty*price);
+}
+function updatePurSummary(){
+  const summaryEl=document.getElementById('pur-summary');
+  if(!summaryEl) return;
+  const rows=[...document.querySelectorAll('#p-items .itemrow')];
+  const subtotal=rows.reduce((s,r)=>{
+    const qty=Number(r.querySelector('.qty').value)||0;
+    const price=Number(r.querySelector('.price').value)||0;
+    return s+qty*price;
+  },0);
+  const adjustEl=document.getElementById('p-adjust');
+  const adjust=Number(adjustEl&&adjustEl.value)||0;
+  const grand=subtotal+adjust;
+  summaryEl.innerHTML=`ยอดรวมตามรายการ: ${fmtMoney(subtotal)}`
+    +(adjust?` ${adjust>0?'+':'−'} ${fmtMoney(Math.abs(adjust))}`:'')
+    +` = <b>ยอดที่จ่ายจริง: ${fmtMoney(grand)}</b>`;
 }
 function resetPurForm(){
   document.getElementById('p-edit-id').value='';
@@ -2169,6 +2204,7 @@ function resetPurForm(){
   document.getElementById('p-date').value=todayISO();
   document.getElementById('p-store').value='';
   document.getElementById('p-note').value='';
+  document.getElementById('p-adjust').value='0';
   document.getElementById('p-items').innerHTML='';
   addPurItemRow();
 }
@@ -2184,20 +2220,33 @@ async function savePurchase(){
     price:Number(r.querySelector('.price').value)||0
   })).filter(x=>x.name);
   if(!rows.length){ toast('กรุณาเพิ่มอย่างน้อย 1 รายการ','err'); return; }
+
+  // ส่วนต่างท้ายบิล (ส่วนลด/ค่าส่งเพิ่ม) — กระจายเฉลี่ยตามสัดส่วนยอดของแต่ละไอเทม แล้วคำนวณ unit_price
+  // ใหม่กลับจาก total ที่ปรับแล้ว เพื่อให้ total ต่อไอเทมตรงกับเงินที่จ่ายจริง (unit_price*qty ยังเท่ากับ total เสมอ)
+  const adjustEl=document.getElementById('p-adjust');
+  const adjust=Number(adjustEl&&adjustEl.value)||0;
+  const subtotal=rows.reduce((s,r)=>s+r.qty*r.price,0);
+  rows.forEach(r=>{
+    const lineSubtotal=r.qty*r.price;
+    const share=adjust?(subtotal>0?(lineSubtotal/subtotal)*adjust:adjust/rows.length):0;
+    r.total=Math.round((lineSubtotal+share)*100)/100;
+    r.finalPrice=r.qty>0?Math.round((r.total/r.qty)*100)/100:r.price;
+  });
+
   const editId=document.getElementById('p-edit-id').value;
   if(editId){
     // กำลังแก้ไขรายการเดิม — อัพเดตเฉพาะรายการแรก (1 รายการซื้อ = 1 record) ไม่สร้างซ้ำ
     const r=rows[0];
     await idbPut('purchases',{
       id:editId, date, category:r.category, item_name:r.name, store,
-      qty:r.qty, unit:r.unit, unit_price:r.price, total:r.qty*r.price, note
+      qty:r.qty, unit:r.unit, unit_price:r.finalPrice, total:r.total, note
     });
     toast('แก้ไขรายการซื้อแล้ว','ok');
   }else{
     for(const r of rows){
       await idbPut('purchases',{
         id:uid(), date, category:r.category, item_name:r.name, store,
-        qty:r.qty, unit:r.unit, unit_price:r.price, total:r.qty*r.price, note
+        qty:r.qty, unit:r.unit, unit_price:r.finalPrice, total:r.total, note
       });
     }
     toast('บันทึกรายการซื้อแล้ว 🎉','ok');
