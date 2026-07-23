@@ -488,6 +488,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
             <option value="อื่นๆ">อื่นๆ</option>
           </select>
         </div>
+        <div><label>🔍 ค้นหาไอเทม</label><input type="text" id="rp-search" placeholder="พิมพ์คำค้นหา เช่น ครีมชีส" oninput="renderRecentPurchases()"></div>
       </div>
       <div id="pur-recent" class="emptystate" style="margin-top:10px">ยังไม่มีข้อมูล</div>
     </div>
@@ -815,6 +816,11 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <p class="hint" id="hint-export-excel" style="display:none">ดาวน์โหลดข้อมูลทั้งหมดในแอพตอนนี้เป็นไฟล์ .xlsx (Orders / Order_Items / Purchases / Menu) — ไฟล์นี้เป็นข้อมูลล้วนๆ ไม่มีสูตร/แดชบอร์ดแบบไฟล์เดิม เพราะแดชบอร์ดอยู่ในแอพนี้แล้ว</p>
       <div class="btn-row"><button class="btn-secondary" onclick="exportExcel()">📤 Export to Excel</button></div>
 
+      <h3>🧹 Merge Duplicate Item Names <button type="button" class="info-btn" onclick="toggleEl('hint-merge-items')">i</button></h3>
+      <p class="hint" id="hint-merge-items" style="display:none">แก้ปัญหาชื่อไอเทมซื้อของเดียวกันที่พิมพ์ไว้ไม่ตรงกัน (เช่น สะกดต่างกัน ไทย/อังกฤษปน) — ระบบจะสแกนรายการซื้อทั้งหมด แล้วรวมชื่อ+หมวดหมู่ให้ตรงกันตามกฎที่ตั้งไว้ในแอพ ถ้าอยากเพิ่มกฎรวมชื่ออื่นๆ บอกได้เลย จะเพิ่มให้ในแอพเวอร์ชันถัดไป</p>
+      <div id="merge-rules-list" class="hint" style="margin-bottom:8px"></div>
+      <div class="btn-row"><button class="btn-secondary" onclick="runItemNameCleanup()">🧹 Run Cleanup Now</button></div>
+
       <h3 style="color:var(--red)">Delete All Data</h3>
       <div class="warn-box">ระบบจะดาวน์โหลดไฟล์ Excel สำรองข้อมูลปัจจุบันให้อัตโนมัติก่อนลบทุกครั้ง และต้องพิมพ์ยืนยันให้ตรงก่อนปุ่มลบถึงจะกดได้ เพื่อกันเผลอกดโดน</div>
       <label>พิมพ์คำว่า <b>ลบทั้งหมด</b> เพื่อยืนยัน</label>
@@ -966,7 +972,7 @@ function switchTab(name,btn){
   if(name==='home'){ renderHomeSummary(); renderHomeCakeCount(); }
   if(name==='dashboard') renderDashboard();
   if(name==='finance'){ renderDailyFeeList(); }
-  if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); updateSyncStatusUI(); }
+  if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); updateSyncStatusUI(); renderMergeRulesList(); }
 }
 
 // เมื่อขนาดหน้าจอเปลี่ยน (เช่น หมุนจอ/ปรับขนาดหน้าต่าง) ให้วาดกราฟของแท็บที่เปิดอยู่ใหม่ เพื่อให้สัดส่วนกว้าง:สูงเหมาะกับขนาดจอปัจจุบัน
@@ -1890,8 +1896,7 @@ async function renderRecentOrders(){
     const cls=o.channel==='Grab Food'?'grab':o.channel==='Line Man'?'line':o.channel==='คอนโด'?'condo':'other';
     const profit=Number(o.gross_profit)||0;
     return `<div class="order-row clickable" onclick="showOrderDetail('${o.id}')">
-      <span class="badge ${cls}">${escapeHtml(shortChannelLabel(o.channel))}</span>
-      ${o.thai_plus?'<span class="badge other" style="font-size:10px">60/40</span>':''}
+      <span class="badge ${cls}">${escapeHtml(shortChannelLabel(o.channel))}${o.thai_plus?'<span title="Thai+ 60/40">*</span>':''}</span>
       <span class="or-date">${formatThaiDateShort(o.date)}</span>
       <span class="or-no">#${escapeHtml(o.order_no||'-')}</span>
       <b class="or-total">${fmtMoney(o.total_sale)}</b>
@@ -1978,7 +1983,7 @@ async function showOrderDetail(id){
 
   document.getElementById('modal-body').innerHTML=`
     <div style="margin-bottom:10px">
-      <span class="badge ${cls}">${escapeHtml(order.channel)}</span> ${order.thai_plus?'<span class="badge other">Thai Plus 60/40</span>':''}
+      <span class="badge ${cls}">${escapeHtml(order.channel)}${order.thai_plus?'<span title="Thai+ 60/40">*</span>':''}</span>
       <div class="hint" style="margin-top:4px">${order.date}</div>
     </div>
     <h3 style="margin-top:0">Order Items</h3>
@@ -2236,16 +2241,19 @@ async function renderRecentPurchases(){
   const fromEl=document.getElementById('rp-from');
   const toEl=document.getElementById('rp-to');
   const catSel=document.getElementById('rp-category');
+  const searchEl=document.getElementById('rp-search');
   const from=fromEl&&fromEl.value?fromEl.value:'2000-01-01';
   const to=toEl&&toEl.value?toEl.value:todayISO();
   const catVal=catSel?catSel.value:'all';
+  const searchVal=(searchEl&&searchEl.value?searchEl.value:'').trim().toLowerCase();
 
   let rows=(await idbAll('purchases')).filter(p=>p.date>=from && p.date<=to);
   if(catVal!=='all') rows=rows.filter(p=>p.category===catVal);
+  if(searchVal) rows=rows.filter(p=>(p.item_name||'').toLowerCase().includes(searchVal));
   rows.sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));
 
   const el=document.getElementById('pur-recent');
-  if(!rows.length){ el.className='emptystate'; el.textContent='ไม่มีรายการซื้อในช่วง/เงื่อนไขที่เลือก'; return; }
+  if(!rows.length){ el.className='emptystate'; el.textContent=searchVal?'ไม่พบไอเทมที่ตรงกับคำค้นหา':'ไม่มีรายการซื้อในช่วง/เงื่อนไขที่เลือก'; return; }
   el.className='';
   const sum=rows.reduce((s,p)=>s+Number(p.total||0),0);
   const header=`<div class="group-header">${rows.length} รายการ · รวม ${fmtMoney(sum)}</div>`;
@@ -3242,6 +3250,46 @@ async function refreshDbStats(){
   const orders=await idbAll('orders'); const pur=await idbAll('purchases'); const menu=await idbAll('menu');
   const opts=await idbAll('option_groups');
   document.getElementById('db-stats').textContent=`ออเดอร์: ${orders.length} รายการ · ซื้อของ: ${pur.length} รายการ · เมนู: ${menu.length} รายการ · ตัวเลือก: ${opts.length} รายการ`;
+}
+
+/* ============ MERGE DUPLICATE PURCHASE ITEM NAMES ============ */
+// แต่ละกฎ: ถ้าชื่อไอเทม (ตัวพิมพ์เล็กทั้งหมด) มีคำใดคำหนึ่งใน keywords ปรากฏอยู่ (substring)
+// จะถูกเปลี่ยนชื่อ+หมวดหมู่ให้เป็น canonical_name/canonical_category ที่กำหนดไว้
+// อยากเพิ่มกฎรวมชื่อไอเทมอื่นๆ บอกได้เลย จะเพิ่มเข้าไปในลิสต์นี้ให้
+const ITEM_NAME_MERGE_RULES=[
+  {
+    canonical_name:'Le Gall Cream Cheese 1kg',
+    canonical_category:'วัตถุดิบ',
+    keywords:['le gall','la gall','เลอกัลล์','เลอแกล']
+  }
+];
+function renderMergeRulesList(){
+  const el=document.getElementById('merge-rules-list');
+  if(!el) return;
+  if(!ITEM_NAME_MERGE_RULES.length){ el.textContent='ยังไม่มีกฎรวมชื่อไอเทม'; return; }
+  el.innerHTML='กฎที่ตั้งไว้ตอนนี้ ('+ITEM_NAME_MERGE_RULES.length+'):<br>'+ITEM_NAME_MERGE_RULES.map(r=>
+    `• คำที่ตรงกับ <b>${r.keywords.map(escapeHtml).join(', ')}</b> → รวมเป็น <b>${escapeHtml(r.canonical_name)}</b> (${escapeHtml(r.canonical_category)})`
+  ).join('<br>');
+}
+async function runItemNameCleanup(){
+  if(!ITEM_NAME_MERGE_RULES.length){ toast('ยังไม่มีกฎรวมชื่อไอเทม','err'); return; }
+  if(!confirm(`จะสแกนรายการซื้อทั้งหมด แล้วรวมชื่อไอเทมที่ตรงกับ ${ITEM_NAME_MERGE_RULES.length} กฎที่ตั้งไว้ให้เป็นชื่อเดียวกัน ต้องการดำเนินการต่อหรือไม่?`)) return;
+  const rows=await idbAll('purchases');
+  let changedCount=0;
+  for(const p of rows){
+    const nameLower=(p.item_name||'').toLowerCase();
+    const rule=ITEM_NAME_MERGE_RULES.find(r=>r.keywords.some(kw=>nameLower.includes(kw.toLowerCase())));
+    if(rule && (p.item_name!==rule.canonical_name || p.category!==rule.canonical_category)){
+      await idbPut('purchases',{...p,item_name:rule.canonical_name,category:rule.canonical_category});
+      changedCount++;
+    }
+  }
+  if(changedCount===0){
+    toast('ไม่พบรายการที่ตรงกับกฎรวมชื่อ (อาจรวมไว้หมดแล้ว)','ok');
+  }else{
+    toast(`รวมชื่อไอเทมสำเร็จ ${changedCount} รายการ 🎉`,'ok');
+    renderRecentPurchases();
+  }
 }
 
 /* ============ MENU MANAGEMENT UI ============ */
