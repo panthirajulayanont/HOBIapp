@@ -86,6 +86,14 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .home-nav-btn span{font-size:13px;font-weight:700;color:var(--text);}
 .card-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
 .card-head-row h2{margin:0 !important;}
+.cake-total-hero{text-align:center;padding:6px 0 14px;}
+.cake-total-num{font-size:42px;font-weight:800;color:var(--terracotta);line-height:1;font-family:var(--font-head);}
+.cake-total-lbl{font-size:12px;color:var(--muted);margin-top:5px;}
+.cake-flavor-list{display:flex;flex-direction:column;border-top:1px solid var(--border);}
+.cake-flavor-row{display:flex;justify-content:space-between;align-items:center;padding:8px 2px;border-bottom:1px solid var(--border);font-size:13px;}
+.cake-flavor-row:last-child{border-bottom:none;}
+.cake-flavor-row .cf-name{font-weight:600;color:var(--text);}
+.cake-flavor-row .cf-qty{color:var(--muted);font-weight:700;flex-shrink:0;}
 .quick-input-row{display:flex;gap:8px;}
 .quick-input-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:none;border-radius:999px;padding:11px 8px;cursor:pointer;transition:transform .1s;}
 .quick-input-btn:active{transform:scale(.97);}
@@ -257,6 +265,15 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     </div>
 
     <div class="card">
+      <h2>🍰 เค้กที่ขายไปแล้วทั้งหมด</h2>
+      <div class="cake-total-hero">
+        <div class="cake-total-num" id="home-cake-total">0</div>
+        <div class="cake-total-lbl">ชิ้น (cheesecake slice) นับตั้งแต่เปิดร้าน</div>
+      </div>
+      <div id="home-cake-breakdown" class="cake-flavor-list"></div>
+    </div>
+
+    <div class="card">
       <div class="card-head-row">
         <h2 style="margin:0">📤 Upload <button type="button" class="info-btn" onclick="toggleEl('hint-claude-import')">i</button></h2>
         <button class="btn-primary btn-sm" onclick="importFromClaudeJSON()">Import</button>
@@ -316,7 +333,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="row">
           <div><label>วันที่</label><input type="date" id="o-date"></div>
           <div><label>ช่องทาง</label>
-            <select id="o-channel">
+            <select id="o-channel" onchange="onOrderChannelChange()">
               <option>Grab Food</option><option>Line Man</option><option>คอนโด</option><option>อื่นๆ</option>
             </select>
           </div>
@@ -910,7 +927,7 @@ function switchTab(name,btn){
   document.getElementById('tab-'+name).classList.add('active');
   document.querySelectorAll('nav.bottomnav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(name==='home') renderHomeSummary();
+  if(name==='home'){ renderHomeSummary(); renderHomeCakeCount(); }
   if(name==='dashboard') renderDashboard();
   if(name==='finance'){ renderDailyFeeList(); }
   if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); updateSyncStatusUI(); }
@@ -1301,6 +1318,7 @@ const FIXED_SET_RULES=[
 ];
 const MELTY_WAKEY_TEST=n=>n.includes('meltywakey');
 // แจกแจง order_item 1 รายการ ให้กลายเป็น [{category, qty}] ตามกฎเซ็ทเมนู — คืนค่า null ถ้าไม่ใช่เซ็ทเมนูที่มีกฎ (ให้ผู้เรียกใช้หมวดหมู่ปกติของมันแทน)
+// menuName ในแต่ละรายการที่คืนออกมา = ชื่อเมนูย่อยจริงที่แจกแจงได้ (เอาไว้ใช้แจงนับตามรสชาติ เช่น การ์ดจำนวนเค้กที่ขายได้ทั้งหมดในหน้า Home)
 function breakdownSetMenuItem(item, optsForItem){
   const n=normFuzzy(canonicalMenuName(item.name)); // รองรับกรณี order_items.name เก็บเป็นชื่อย่อ (เช่น "MW") แทนชื่อเต็ม
   const fixedRule=FIXED_SET_RULES.find(r=>r.test(n));
@@ -1309,18 +1327,18 @@ function breakdownSetMenuItem(item, optsForItem){
     return fixedRule.components.map(c=>{
       const m=fuzzyFindMenu(c.code);
       const cat=m ? (m.category||'').trim()||'ไม่ระบุหมวดหมู่' : 'ไม่ระบุหมวดหมู่';
-      return {category:cat, qty:c.qty*qtyMult};
+      return {category:cat, qty:c.qty*qtyMult, menuName:m?m.name:c.code};
     });
   }
   if(MELTY_WAKEY_TEST(n)){
     if(!optsForItem || !optsForItem.length){
       // ไม่พบข้อมูลออปชั่นที่เลือกไว้ — กันข้อมูลหาย ให้นับไว้ในหมวดของ set menu เองแทน
-      return [{category:findMenuCategory(item.name)||'ไม่ระบุหมวดหมู่', qty:Number(item.qty)||1}];
+      return [{category:findMenuCategory(item.name)||'ไม่ระบุหมวดหมู่', qty:Number(item.qty)||1, menuName:canonicalMenuName(item.name)}];
     }
     return optsForItem.map(o=>{
       const m=fuzzyFindMenu(o.option);
       const cat=m ? (m.category||'').trim()||'ไม่ระบุหมวดหมู่' : 'ไม่ระบุหมวดหมู่';
-      return {category:cat, qty:Number(o.qty)||Number(item.qty)||1};
+      return {category:cat, qty:Number(o.qty)||Number(item.qty)||1, menuName:m?m.name:o.option};
     });
   }
   return null;
@@ -1549,6 +1567,29 @@ function resetOrderForm(){
   document.getElementById('o-thaiplus').checked=false;
   recalcOrderTotals();
 }
+// เลขออร์เดอร์ของช่องทาง "อื่นๆ" มักจะรันเป็นตัวเลขต่อเนื่องเอง (ไม่มีระบบออกเลขให้เหมือน Grab/LineMan)
+// หาตัวเลขที่มากที่สุดจากเลขออร์เดอร์เดิมทั้งหมดของช่องทาง "อื่นๆ" (ดึงกลุ่มตัวเลขตัวสุดท้ายในสตริง เผื่อมี prefix ปนอยู่) แล้วคืนค่าตัวถัดไป
+async function nextOtherOrderNo(){
+  const orders=await idbAll('orders');
+  let maxNum=0;
+  orders.filter(o=>o.channel==='อื่นๆ').forEach(o=>{
+    const digitGroups=(o.order_no||'').match(/\d+/g);
+    if(digitGroups){
+      const n=parseInt(digitGroups[digitGroups.length-1],10);
+      if(!isNaN(n) && n>maxNum) maxNum=n;
+    }
+  });
+  return maxNum+1;
+}
+// เมื่อเลือกช่องทาง "อื่นๆ" ในฟอร์มบันทึกออเดอร์ ให้รันเลขออร์เดอร์ต่อจากเลขล่าสุดให้อัตโนมัติ (เฉพาะตอนที่ยังไม่ได้กรอกเลขไว้เอง กันไม่ให้ทับค่าที่พิมพ์ไปแล้ว)
+async function onOrderChannelChange(){
+  const chSel=document.getElementById('o-channel');
+  const noEl=document.getElementById('o-orderno');
+  if(chSel && noEl && chSel.value==='อื่นๆ' && !noEl.value.trim()){
+    const next=await nextOtherOrderNo();
+    noEl.value=String(next);
+  }
+}
 async function saveOrder(){
   const blocks=[...document.querySelectorAll('#o-items .itemblock')].map(b=>{
     const r=b.querySelector('.itemrow');
@@ -1625,6 +1666,7 @@ async function saveOrder(){
   resetOrderForm();
   renderRecentOrders();
   renderHomeSummary();
+  renderHomeCakeCount();
 }
 async function editOrderById(id){
   const orders=await idbAll('orders');
@@ -1958,6 +2000,7 @@ async function renderDailyFeeList(){
   await refreshDailyFeeCache();
   await renderFinance();
   renderHomeSummary();
+  renderHomeCakeCount();
 }
 
 /* ============ PURCHASE FORM ============ */
@@ -2062,6 +2105,7 @@ async function savePurchase(){
   resetPurForm();
   renderRecentPurchases();
   renderHomeSummary();
+  renderHomeCakeCount();
 }
 async function editPurchaseById(id){
   const rows=await idbAll('purchases');
@@ -2085,6 +2129,7 @@ async function deletePurchaseById(id){
   await idbDelete('purchases',id);
   renderRecentPurchases();
   renderHomeSummary();
+  renderHomeCakeCount();
   toast('ลบแล้ว','ok');
 }
 async function renderRecentPurchases(){
@@ -2315,6 +2360,58 @@ async function renderHomeSummary(){
 
   salesEl.textContent=fmtMoney(totalSale);
   profitEl.textContent=fmtMoney(totalNetProfit);
+}
+// การ์ดจำนวนเค้กที่ขายไปแล้วทั้งหมด (ตลอดกาล นับตั้งแต่เปิดร้าน) เฉพาะหมวด "cheesecake slice" — แจกแจง set menu ออกเป็นไอเทมย่อยตามรสจริงด้วย (ใช้ breakdownSetMenuItem ตัวเดียวกับกราฟรายวัน/รายสัปดาห์โหมด "แจกแจง")
+async function renderHomeCakeCount(){
+  const totalEl=document.getElementById('home-cake-total');
+  const listEl=document.getElementById('home-cake-breakdown');
+  if(!totalEl || !listEl) return;
+  const [items,allOpts]=await Promise.all([idbAll('order_items'),idbAll('order_item_options')]);
+  const optsByKey={};
+  allOpts.forEach(o=>{
+    const k=o.date+'|'+o.order_no+'|'+o.main_menu;
+    (optsByKey[k]=optsByKey[k]||[]).push(o);
+  });
+  const targetCat=normCatName('cheesecake slice');
+  const byFlavor={};
+  let total=0;
+  items.forEach(i=>{
+    const key=i.date+'|'+i.order_no+'|'+i.name;
+    const bd=breakdownSetMenuItem(i, optsByKey[key]||[]);
+    if(bd){
+      bd.forEach(b=>{
+        if(normCatName(b.category)===targetCat){
+          const flavor=b.menuName||i.name;
+          const q=Number(b.qty)||0;
+          byFlavor[flavor]=(byFlavor[flavor]||0)+q;
+          total+=q;
+        }
+      });
+    }else{
+      const cat=findMenuCategory(i.name)||'ไม่ระบุหมวดหมู่';
+      if(normCatName(cat)===targetCat){
+        const flavor=canonicalMenuName(i.name);
+        const q=Number(i.qty)||0;
+        byFlavor[flavor]=(byFlavor[flavor]||0)+q;
+        total+=q;
+      }
+    }
+  });
+
+  totalEl.textContent=total.toLocaleString('th-TH');
+
+  const rows=Object.entries(byFlavor).sort((a,b)=>b[1]-a[1]);
+  if(!rows.length){
+    listEl.innerHTML='<div class="emptystate" style="padding:6px 0">ยังไม่มีข้อมูล</div>';
+  }else{
+    listEl.innerHTML=rows.map(([name,qty])=>{
+      const shortName=findMenuShortName(name);
+      return `<div class="cake-flavor-row">
+        <span class="cf-name">${escapeHtml(shortName)}</span>
+        <span class="cf-qty">${qty.toLocaleString('th-TH')} ชิ้น</span>
+      </div>`;
+    }).join('');
+  }
 }
 async function renderDashboard(){
   const from=document.getElementById('d-from').value||'2000-01-01';
@@ -3185,6 +3282,7 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   renderRecentPurchases();
   renderDailyFeeList();
   renderHomeSummary();
+  renderHomeCakeCount();
   refreshDbStats();
 });
 </script>
