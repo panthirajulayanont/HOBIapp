@@ -62,7 +62,7 @@ button{cursor:pointer;border:none;border-radius:999px;padding:10px 20px;font-siz
 .btn-secondary:hover{background:var(--butter);}
 .btn-danger{background:#fff;color:var(--red);border:1.5px solid var(--red);}
 .btn-ghost{background:transparent;color:var(--muted);border-radius:999px;}
-.btn-sm{padding:5px 12px;font-size:12px;border-radius:999px;}
+.btn-sm{padding:9px 16px;font-size:12.5px;border-radius:999px;}
 button:disabled{opacity:.5;cursor:not-allowed;}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
 nav.bottomnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;z-index:20;box-shadow:0 -2px 8px rgba(0,0,0,.06);}
@@ -71,16 +71,16 @@ nav.bottomnav button.active{color:var(--pink-dark);font-weight:700;}
 nav.bottomnav button .ic{font-size:19px;display:flex;align-items:center;justify-content:center;}
 nav.bottomnav button .ic svg{width:21px;height:21px;stroke:var(--muted);transition:stroke .15s;}
 nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
-.imgdrop{border:2px dashed var(--terracotta);border-radius:12px;padding:22px;text-align:center;color:var(--pink-dark);background:#fbf6ec;cursor:pointer;font-size:13px;}
+.imgdrop{border:2px dashed var(--terracotta);border-radius:12px;padding:22px;text-align:center;color:var(--pink-dark);background:#fffae8;cursor:pointer;font-size:13px;}
 .imgdrop.small{padding:12px;}
 .preview{max-width:100%;max-height:260px;border-radius:10px;margin-top:10px;display:block;}
 .preview-grid{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
 .preview-grid .thumb-wrap{position:relative;width:78px;height:78px;}
 .preview-grid img{width:78px;height:78px;object-fit:cover;border-radius:8px;border:1px solid var(--border);display:block;}
-.preview-grid .thumb-x{position:absolute;top:-6px;right:-6px;width:20px;height:20px;border-radius:50%;background:#c0392b;color:#fff;border:none;font-size:12px;line-height:20px;text-align:center;padding:0;cursor:pointer;}
+.preview-grid .thumb-x{position:absolute;top:-7px;right:-7px;width:26px;height:26px;border-radius:50%;background:#c0392b;color:#fff;border:none;font-size:13px;line-height:26px;text-align:center;padding:0;cursor:pointer;}
 .pending-list{margin-top:12px;border-top:1px dashed var(--border);padding-top:10px;}
 .pending-list .pl-title{font-size:12.5px;color:var(--muted);margin-bottom:6px;}
-.pending-card{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fbf6ec;border:1px solid var(--border);border-radius:9px;padding:8px 10px;margin-bottom:6px;font-size:12.5px;}
+.pending-card{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fffae8;border:1px solid var(--border);border-radius:9px;padding:8px 10px;margin-bottom:6px;font-size:12.5px;}
 .pending-card .pc-info{flex:1;min-width:0;}
 .pending-card .pc-info b{display:block;font-size:13px;}
 .pending-card .pc-btns{display:flex;gap:4px;flex-shrink:0;}
@@ -104,26 +104,26 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .quick-input-btn span{font-size:12.5px;font-weight:700;color:var(--pink-dark);}
 .form-section-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin:16px 0 8px;padding-top:14px;border-top:1px solid var(--border);}
 .form-section-label:first-child{border-top:none;padding-top:0;margin-top:0;}
-.soft-box{background:#faf7f0;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;}
+.soft-box{background:#fffae8;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;}
 .soft-box-title{font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px;}
-.subcard{border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-top:14px;background:#fdfbf7;}
+.subcard{border:1.5px solid var(--border);border-radius:12px;padding:12px 14px;margin-top:14px;background:#fffae8;}
 .subcard .collapsible-head{margin:0;font-size:14px;}
 .icon-circle{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .icon-circle svg{width:24px;height:24px;}
-.itemrow{display:flex;gap:6px;align-items:center;margin-bottom:6px;background:#fdf6f4;padding:8px;border-radius:9px;flex-wrap:wrap;}
+.itemrow{display:flex;gap:6px;align-items:center;margin-bottom:6px;background:#fffae8;padding:8px;border-radius:9px;flex-wrap:wrap;}
 .itemrow input,.itemrow select{flex:1;min-width:0;}
 .itemrow input.qty,.itemrow input.price{flex:0 0 68px;}
 @media(max-width:520px){
   .itemrow .name{flex:1 1 100%;order:-1;}
-  .itemrow .closebtn{flex:0 0 32px;}
+  .itemrow .closebtn{flex:0 0 40px;}
   #o-items .itemrow input.qty,#o-items .itemrow input.price{flex:1 1 calc(50% - 20px);}
   #p-items .itemrow select.cat{flex:1 1 100%;}
   #p-items .itemrow input.qty,#p-items .itemrow input.unit,#p-items .itemrow input.price{flex:1 1 calc(33.33% - 14px);}
 }
-.itemblock{border:1px solid var(--border);border-radius:11px;padding:8px;margin-bottom:8px;background:#fffdfc;}
+.itemblock{border:1px solid var(--border);border-radius:11px;padding:8px;margin-bottom:8px;background:#fffae8;}
 .itemblock .itemrow{background:transparent;padding:0;margin-bottom:6px;}
 .opt-list{margin:0 0 6px 14px;}
-.opt-list .itemrow{background:#f6f1f0;padding:6px;margin-bottom:4px;}
+.opt-list .itemrow{background:#fffae8;padding:6px;margin-bottom:4px;}
 .thaiplus-box{display:flex;align-items:flex-start;gap:8px;background:var(--butter);border:1px solid #e0cf9a;border-radius:10px;padding:10px 12px;margin-top:10px;}
 .thaiplus-box input{width:auto;margin-top:2px;}
 .stockbadge{display:inline-block;padding:1px 7px;border-radius:20px;font-size:10.5px;font-weight:700;}
@@ -140,14 +140,14 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .detail-row .k{color:var(--muted);}
 .detail-row .v{font-weight:600;text-align:right;}
 .list-item.clickable{cursor:pointer;}
-.list-item.clickable:hover{background:#fbf6ec;border-radius:8px;}
+.list-item.clickable:hover{background:#fff9df;border-radius:8px;}
 .group-header{background:var(--butter);color:#5a4a2a;font-weight:700;font-size:12.5px;padding:8px 10px;border-radius:8px;margin:14px 0 4px;}
 .group-header:first-child{margin-top:0;}
 .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid transparent;}
-.badge.grab{background:var(--olive);color:var(--pink-dark);}
-.badge.line{background:var(--terracotta);color:var(--pink-dark);}
-.badge.other{background:var(--butter);color:var(--pink-dark);}
-.badge.condo{background:var(--tan);color:var(--pink-dark);}
+.badge.grab{background:#fff2bf;color:#665e58;}
+.badge.line{background:#7d7062;color:#fffefa;}
+.badge.other{background:#e6dcc0;color:#665e58;}
+.badge.condo{background:#665e58;color:#fffefa;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 table th,table td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--border);}
 table th{color:var(--muted);font-weight:600;font-size:11.5px;}
@@ -156,7 +156,7 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .list-item .meta{font-size:12px;color:var(--muted);}
 .order-row{display:flex;align-items:center;gap:7px;padding:9px 2px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12.5px;white-space:nowrap;overflow:hidden;}
 .order-row:last-child{border-bottom:none;}
-.order-row:hover{background:#fbf6ec;border-radius:8px;}
+.order-row:hover{background:#fff9df;border-radius:8px;}
 .order-row .or-date{color:var(--muted);flex-shrink:0;}
 .order-row .or-no{color:var(--muted);flex-shrink:0;overflow:hidden;text-overflow:ellipsis;}
 .order-row .or-total{margin-left:auto;flex-shrink:0;color:var(--brown);font-size:13.5px;}
@@ -203,7 +203,7 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .donut-center .dc-val{font-size:16px;font-weight:800;color:var(--brown);}
 .donut-center .dc-lbl{font-size:9.5px;color:var(--muted);margin-top:1px;}
 .mini-chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px;}
-.mini-chart-card{background:#fdfbf7;border:1px solid var(--border);border-radius:16px;padding:10px 12px 12px;}
+.mini-chart-card{background:#fffae8;border:1px solid var(--border);border-radius:16px;padding:10px 12px 12px;}
 .mini-chart-card .mc-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.02em;margin-bottom:6px;}
 .mini-chart-card canvas{max-height:130px;}
 @media (min-width:768px){
@@ -232,11 +232,11 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .pillrow{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
 .pill{padding:6px 12px;border-radius:20px;border:1.5px solid var(--border);background:#fff;font-size:12.5px;cursor:pointer;color:var(--muted);}
 .pill.active{background:var(--pink);border-color:var(--pink);color:var(--pink-dark);font-weight:600;}
-.seg{display:flex;background:#f2e5e2;border-radius:10px;padding:3px;margin-bottom:12px;}
+.seg{display:flex;background:#f3f1ed;border-radius:10px;padding:3px;margin-bottom:12px;}
 .seg button{flex:1;background:none;color:var(--muted);padding:8px;border-radius:8px;}
 .seg button.active{background:#fff;color:var(--pink-dark);box-shadow:0 1px 3px rgba(0,0,0,.08);}
 .emptystate{text-align:center;color:var(--muted);font-size:13px;padding:20px 0;}
-.closebtn{background:none;border:none;color:var(--red);font-size:16px;padding:2px 6px;}
+.closebtn{background:none;border:none;color:var(--red);font-size:16px;padding:8px 10px;}
 a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-size:12.5px;}
 </style>
 </head>
@@ -255,7 +255,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 <div class="modal-overlay" id="modal-overlay" onclick="closeModalOnOverlay(event)">
   <div class="modal-panel" onclick="event.stopPropagation()">
     <div class="modal-header">
-      <h3 id="modal-title">รายละเอียดออเดอร์</h3>
+      <h3 id="modal-title">Order Details</h3>
       <button class="closebtn" onclick="closeModal()" style="font-size:20px">✕</button>
     </div>
     <div id="modal-body"></div>
@@ -298,15 +298,15 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <p class="hint" id="hint-pending" style="display:none">หลังนำเข้าข้อมูลจาก Claude Chat แล้ว ตรวจสอบรายการด้านล่างนี้ก่อน กด "ยืนยัน" เพื่อบันทึกจริงเข้าไปในลิสต์ของหน้าออเดอร์/ซื้อของ/การเงินทันที หรือกด "ลบ" ถ้าไม่ต้องการรายการนี้ (แก้ไขรายละเอียดเพิ่มเติมได้ทีหลังจากลิสต์ในแต่ละหน้า)</p>
       <div id="home-pending-empty" class="emptystate">ยังไม่มีรายการรอตรวจสอบ</div>
       <div id="home-pending-orders-wrap" style="display:none">
-        <h3>🧾 ออเดอร์</h3>
+        <h3>🧾 Orders</h3>
         <div id="home-pending-orders"></div>
       </div>
       <div id="home-pending-purchases-wrap" style="display:none">
-        <h3>🛒 ซื้อของ</h3>
+        <h3>🛒 Purchases</h3>
         <div id="home-pending-purchases"></div>
       </div>
       <div id="home-pending-dailyfees-wrap" style="display:none">
-        <h3>💰 การเงิน (ค่าธรรมเนียมรายวัน)</h3>
+        <h3>💰 Finance (Daily Fees)</h3>
         <div id="home-pending-dailyfees"></div>
       </div>
     </div>
@@ -436,7 +436,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- PURCHASES TAB -->
   <div class="tabpage" id="tab-purchases">
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'pur-form-body')">📝 บันทึกซื้อของเข้าร้าน <span class="chevron">▾</span></h2>
+      <h2 class="collapsible-head" onclick="toggleSection(this,'pur-form-body')">📝 Add New Purchase <span class="chevron">▾</span></h2>
       <div id="pur-form-body" style="display:none">
       <form id="pur-form" onsubmit="return false">
         <input type="hidden" id="p-edit-id">
@@ -465,7 +465,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     </div>
 
     <div class="card">
-      <h2>รายการซื้อล่าสุด</h2>
+      <h2>Recent Purchases</h2>
       <div class="pillrow">
         <div class="pill" onclick="setRangePreset('today','rp',this)">วันนี้</div>
         <div class="pill" onclick="setRangePreset('thisweek','rp',this)">สัปดาห์นี้</div>
@@ -496,7 +496,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- DASHBOARD TAB -->
   <div class="tabpage" id="tab-dashboard">
     <div class="card">
-      <h2>เลือกช่วงเวลา</h2>
+      <h2>Select Date Range</h2>
       <div class="pillrow">
         <div class="pill" onclick="setRangePreset('today','d',this)">วันนี้</div>
         <div class="pill" onclick="setRangePreset('thisweek','d',this)">สัปดาห์นี้</div>
@@ -759,7 +759,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       </div>
 
       <div class="card">
-        <h3 style="margin-top:0">สรุปตามแอพ</h3>
+        <h3 style="margin-top:0">Summary by Platform</h3>
         <div id="fin-channel-summary" class="emptystate">ยังไม่มีข้อมูล</div>
       </div>
 
@@ -778,25 +778,50 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- SETTINGS TAB -->
   <div class="tabpage" id="tab-settings">
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'settings-datacloud-body')">🗄️ ข้อมูล / ฐานข้อมูล &amp; Cloud Sync <span class="chevron">▾</span></h2>
+      <h2 class="collapsible-head" onclick="toggleSection(this,'settings-help-body')">❓ Help &amp; How-To <span class="chevron">▾</span></h2>
+      <div id="settings-help-body" style="display:none">
+      <p class="hint">รวมคำอธิบายทุกจุดในแอพไว้ที่เดียว อ่านรอบเดียวจบ — ปุ่ม (i) เล็กๆ ตามหน้าต่างๆ ก็ยังกดดูซ้ำได้เหมือนเดิมถ้าลืม</p>
+      <h3>📤 Upload (Home)</h3>
+      <p class="hint">ส่งรูปแคปออเดอร์/ใบเสร็จไปให้ Claude อ่านในแชทปกติ (ไม่มีค่าใช้จ่ายเพิ่ม) แล้วก็อปโค้ด JSON ที่ได้มาวางตรงนี้ กด "Import" — ระบบจะพักข้อมูลไว้ให้ตรวจสอบทีละรายการก่อนบันทึกจริง (รองรับทั้งออเดอร์และรายการซื้อของในโค้ดเดียวกัน)</p>
+      <h3>Imported data to be confirmed (Home)</h3>
+      <p class="hint">หลังนำเข้าข้อมูลจาก Claude Chat แล้ว ตรวจสอบรายการด้านล่างนี้ก่อน กด "ยืนยัน" เพื่อบันทึกจริงเข้าไปในลิสต์ของหน้าออเดอร์/ซื้อของ/การเงินทันที หรือกด "ลบ" ถ้าไม่ต้องการรายการนี้ (แก้ไขรายละเอียดเพิ่มเติมได้ทีหลังจากลิสต์ในแต่ละหน้า)</p>
+      <h3>แคมเปญ 60/40 (Orders)</h3>
+      <p class="hint">ค่าคอมมิชชั่นคำนวณต่างจากปกติ และยอดขายนี้จะไม่โชว์ใน Grab Earnings (หน้า Finance โชว์แต่ยอดหักลบ) — ระบบจะจดไว้ในหมายเหตุให้อัตโนมัติ</p>
+      <h3>ค่าธรรมเนียมแพลตฟอร์มต่อออเดอร์ (Orders)</h3>
+      <p class="hint">กรอกตรงนี้ได้เลยถ้าเช็คค่าคอม/ค่าโฆษณาต่อออเดอร์ได้ (เช่น Grab ดูได้จากหน้า Transactions) — ถ้าไม่สะดวกดูรายออเดอร์ (เช่น LineMan ที่หน้าการเงินให้แค่ยอดรวมทั้งวัน) ปล่อยเป็น 0 ไว้แล้วไปบันทึกรวมเป็นยอดรายวันที่หน้าการเงินแทนได้เลย ระบบจะไม่นับซ้ำ — ถ้าวันนั้น+ช่องทางนั้นมีบันทึกรวมรายวันแล้ว จะใช้ยอดรวมรายวันแทนค่าที่กรอกต่อออเดอร์ให้อัตโนมัติตอนคำนวณกำไร</p>
+      <h3>Import from Excel File (Settings)</h3>
+      <p class="hint">เลือกไฟล์ HOBI_ระบบบัญชีร้าน.xlsx เพื่อดึงข้อมูล Orders / Order_Items / Purchases / Menu เข้ามาในแอพ (ข้อมูลจะถูกเพิ่มเข้าไป ไม่ลบของเดิมในแอพ)</p>
+      <h3>Export to Excel (Settings)</h3>
+      <p class="hint">ดาวน์โหลดข้อมูลทั้งหมดในแอพตอนนี้เป็นไฟล์ .xlsx (Orders / Order_Items / Purchases / Menu) — ไฟล์นี้เป็นข้อมูลล้วนๆ ไม่มีสูตร/แดชบอร์ดแบบไฟล์เดิม เพราะแดชบอร์ดอยู่ในแอพนี้แล้ว</p>
+      <h3>Cross-Device Sync / Cloud Sync (Settings)</h3>
+      <p class="hint">เชื่อมต่อ Firebase (ฟรี) เพื่อให้กรอกข้อมูลจากมือถือหรือคอมก็ได้ ข้อมูล sync กันอัตโนมัติแบบเรียลไทม์ — ขั้นตอนตั้งค่าละเอียดทั้งหมดอยู่ในหัวข้อ "Cross-Device Sync (Cloud Sync)" ด้านล่างในหน้านี้ (กดปุ่ม i ตรงนั้น)</p>
+      <h3>Main Menu (Settings)</h3>
+      <p class="hint">รายชื่อเมนูที่ร้านขาย ใช้เป็นตัวเลือก dropdown (แบ่งตามหมวดหมู่) ตอนกรอกออเดอร์ในหน้าแรก ตั้งราคาขาย/ต้นทุนไว้ที่นี่เพื่อให้ระบบคำนวณกำไรอัตโนมัติ</p>
+      <h3>Options Menu (Settings)</h3>
+      <p class="hint">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 class="collapsible-head" onclick="toggleSection(this,'settings-datacloud-body')">🗄️ Data / Database &amp; Cloud Sync <span class="chevron">▾</span></h2>
       <div id="settings-datacloud-body" style="display:none">
       <div id="db-stats" class="hint">กำลังโหลด...</div>
-      <h3>นำเข้าจากไฟล์ Excel เดิม <button type="button" class="info-btn" onclick="toggleEl('hint-import-excel')">i</button></h3>
+      <h3>Import from Excel File <button type="button" class="info-btn" onclick="toggleEl('hint-import-excel')">i</button></h3>
       <p class="hint" id="hint-import-excel" style="display:none">เลือกไฟล์ HOBI_ระบบบัญชีร้าน.xlsx เพื่อดึงข้อมูล Orders / Order_Items / Purchases / Menu เข้ามาในแอพ (ข้อมูลจะถูกเพิ่มเข้าไป ไม่ลบของเดิมในแอพ)</p>
       <input type="file" id="import-file" accept=".xlsx,.xls">
       <div class="btn-row"><button class="btn-secondary" onclick="importExcel()">📥 นำเข้าไฟล์ Excel</button></div>
 
-      <h3>ส่งออกเป็น Excel <button type="button" class="info-btn" onclick="toggleEl('hint-export-excel')">i</button></h3>
+      <h3>Export to Excel <button type="button" class="info-btn" onclick="toggleEl('hint-export-excel')">i</button></h3>
       <p class="hint" id="hint-export-excel" style="display:none">ดาวน์โหลดข้อมูลทั้งหมดในแอพตอนนี้เป็นไฟล์ .xlsx (Orders / Order_Items / Purchases / Menu) — ไฟล์นี้เป็นข้อมูลล้วนๆ ไม่มีสูตร/แดชบอร์ดแบบไฟล์เดิม เพราะแดชบอร์ดอยู่ในแอพนี้แล้ว</p>
-      <div class="btn-row"><button class="btn-secondary" onclick="exportExcel()">📤 ส่งออกเป็น Excel</button></div>
+      <div class="btn-row"><button class="btn-secondary" onclick="exportExcel()">📤 Export to Excel</button></div>
 
-      <h3 style="color:var(--red)">ลบข้อมูลทั้งหมด</h3>
+      <h3 style="color:var(--red)">Delete All Data</h3>
       <div class="warn-box">ระบบจะดาวน์โหลดไฟล์ Excel สำรองข้อมูลปัจจุบันให้อัตโนมัติก่อนลบทุกครั้ง และต้องพิมพ์ยืนยันให้ตรงก่อนปุ่มลบถึงจะกดได้ เพื่อกันเผลอกดโดน</div>
       <label>พิมพ์คำว่า <b>ลบทั้งหมด</b> เพื่อยืนยัน</label>
       <input type="text" id="confirm-delete-text" placeholder="ลบทั้งหมด" oninput="checkDeleteConfirm()" autocomplete="off">
-      <div class="btn-row"><button class="btn-danger" id="confirm-delete-btn" onclick="clearAllData()" disabled>🗑️ ลบข้อมูลทั้งหมดในแอพ (สำรองอัตโนมัติก่อนลบ)</button></div>
+      <div class="btn-row"><button class="btn-danger" id="confirm-delete-btn" onclick="clearAllData()" disabled>🗑️ Delete All App Data (auto-backup first)</button></div>
 
-      <h3>☁️ ซิงค์ข้อมูลข้ามเครื่อง (Cloud Sync) <button type="button" class="info-btn" onclick="toggleEl('hint-cloud-sync')">i</button></h3>
+      <h3>☁️ Cross-Device Sync (Cloud Sync) <button type="button" class="info-btn" onclick="toggleEl('hint-cloud-sync')">i</button></h3>
       <div id="hint-cloud-sync" style="display:none">
       <p class="hint">เชื่อมต่อ Firebase (ฟรี) เพื่อให้กรอกข้อมูลจากมือถือหรือคอมก็ได้ ข้อมูล sync กันอัตโนมัติแบบเรียลไทม์ ต้องตั้งค่าโปรเจกต์ Firebase ก่อนครั้งเดียว:</p>
       <p class="hint">
@@ -836,7 +861,7 @@ service cloud.firestore {
       <p class="hint" id="hint-menu-manage" style="display:none">รายชื่อเมนูที่ร้านขาย ใช้เป็นตัวเลือก dropdown (แบ่งตามหมวดหมู่) ตอนกรอกออเดอร์ในหน้าแรก ตั้งราคาขาย/ต้นทุนไว้ที่นี่เพื่อให้ระบบคำนวณกำไรอัตโนมัติ</p>
       <div id="menu-manage-list"></div>
       <div class="subcard">
-        <h3 class="collapsible-head" onclick="toggleSection(this,'menu-add-form-body')">เพิ่ม/แก้ไขเมนู <span class="chevron">▾</span></h3>
+        <h3 class="collapsible-head" onclick="toggleSection(this,'menu-add-form-body')">Add/Edit Menu Item <span class="chevron">▾</span></h3>
         <div id="menu-add-form-body" style="display:none">
         <div class="row">
           <div><label>ชื่อเมนู</label><input type="text" id="mn-name" placeholder="เช่น Honey cheesecake"></div>
@@ -866,7 +891,7 @@ service cloud.firestore {
       <p class="hint" id="hint-option-groups" style="display:none">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน</p>
       <div id="opt-manage-list"></div>
       <div class="subcard">
-        <h3 class="collapsible-head" onclick="toggleSection(this,'opt-add-form-body')">เพิ่มตัวเลือก <span class="chevron">▾</span></h3>
+        <h3 class="collapsible-head" onclick="toggleSection(this,'opt-add-form-body')">Add Option <span class="chevron">▾</span></h3>
         <div id="opt-add-form-body" style="display:none">
         <div class="row">
           <div><label>กลุ่มตัวเลือก</label><input type="text" id="og-group" placeholder="เช่น Taste Note" list="og-group-list">
@@ -882,7 +907,7 @@ service cloud.firestore {
         <input type="text" id="og-linked" placeholder="เช่น Black cold brew, Milky cold brew">
         <input type="hidden" id="og-edit-id">
         <div class="btn-row">
-          <button class="btn-secondary" onclick="addOptionGroupManual()">+ เพิ่มตัวเลือก</button>
+          <button class="btn-secondary" onclick="addOptionGroupManual()">+ Add Option</button>
           <button class="btn-ghost" id="og-cancel-btn" onclick="resetOptionForm()" style="display:none">ยกเลิกแก้ไข</button>
         </div>
         </div>
@@ -1956,9 +1981,9 @@ async function showOrderDetail(id){
       <span class="badge ${cls}">${escapeHtml(order.channel)}</span> ${order.thai_plus?'<span class="badge other">Thai Plus 60/40</span>':''}
       <div class="hint" style="margin-top:4px">${order.date}</div>
     </div>
-    <h3 style="margin-top:0">รายการเมนู</h3>
+    <h3 style="margin-top:0">Order Items</h3>
     ${itemsHtml}
-    <h3>สรุปการเงิน</h3>
+    <h3>Financial Summary</h3>
     <div class="detail-row"><span class="k">ยอดขายรวม</span><span class="v">${fmtMoney(order.total_sale)}</span></div>
     <div class="detail-row"><span class="k">ต้นทุนสินค้ารวม</span><span class="v">${fmtMoney(order.total_cost)}</span></div>
     ${(order.commission || order.ad_fee) ? `
@@ -1970,10 +1995,10 @@ async function showOrderDetail(id){
     <div class="detail-row"><span class="k">กำไรขั้นต้น (ก่อนหักค่าธรรมเนียมแพลตฟอร์ม)</span><span class="v">${fmtMoney(order.total_sale-order.total_cost)}</span></div>
     <p class="hint">ค่าคอมมิชชั่น/ค่าโฆษณาของวันนี้ดูรวมได้ที่การ์ด "ค่าธรรมเนียมแพลตฟอร์มรายวัน" ในหน้าออเดอร์</p>
     `}
-    ${order.note ? `<h3>หมายเหตุ</h3><div class="hint" style="white-space:pre-wrap">${escapeHtml(order.note)}</div>` : ''}
+    ${order.note ? `<h3>Note</h3><div class="hint" style="white-space:pre-wrap">${escapeHtml(order.note)}</div>` : ''}
     <div class="btn-row" style="margin-top:14px">
-      <button class="btn-secondary" onclick="closeModal();editOrderById('${order.id}')">✏️ แก้ไข</button>
-      <button class="btn-danger" onclick="closeModal();deleteOrderById('${order.id}')">🗑️ ลบออเดอร์นี้</button>
+      <button class="btn-secondary" onclick="closeModal();editOrderById('${order.id}')">✏️ Edit</button>
+      <button class="btn-danger" onclick="closeModal();deleteOrderById('${order.id}')">🗑️ Delete This Order</button>
       <button class="btn-ghost" onclick="closeModal()">ปิด</button>
     </div>`;
   openModal();
@@ -2597,7 +2622,7 @@ async function renderDashboard(){
   try{
     // ยอดขายรายสัปดาห์ — stacked bar by channel: Grab (bottom) -> Line Man -> คอนโด -> อื่นๆ พร้อมเส้นกำไรสุทธิรายสัปดาห์ซ้อนทับ
     const channelOrder=['Grab Food','Line Man','คอนโด','อื่นๆ'];
-    const channelColors={'Grab Food':'#fff2bf','Line Man':'#c2b796','คอนโด':'#665e58','อื่นๆ':'#ddd1a8'};
+    const channelColors={'Grab Food':'#fff2bf','Line Man':'#7d7062','คอนโด':'#665e58','อื่นๆ':'#e6dcc0'};
     const weekKeys=[...new Set(orders.map(o=>getWeekKey(o.date)))].sort();
     const weekLabels=weekKeys.map(formatWeekLabel);
     const byWeekChannel={};
