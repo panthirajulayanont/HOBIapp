@@ -476,7 +476,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
     <div class="card">
       <h2>Recent Purchases</h2>
-      <div class="pillrow">
+      <div class="pillrow" id="rp-preset-pillrow">
         <div class="pill" onclick="setRangePreset('today','rp',this)">วันนี้</div>
         <div class="pill" onclick="setRangePreset('thisweek','rp',this)">สัปดาห์นี้</div>
         <div class="pill" onclick="setRangePreset('month','rp',this)">เดือนนี้</div>
@@ -484,11 +484,40 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="pill" onclick="setRangePreset('lastmonth','rp',this)">เดือนก่อน</div>
         <div class="pill active" onclick="setRangePreset('all','rp',this)">ทั้งหมด</div>
       </div>
-      <div class="row">
-        <div><label>จากวันที่</label><input type="date" id="rp-from" onchange="renderRecentPurchases()"></div>
-        <div><label>ถึงวันที่</label><input type="date" id="rp-to" onchange="renderRecentPurchases()"></div>
+      <div class="pillrow" id="rp-month-pillrow">
+        <div class="pill" onclick="setMonthPreset(0,'rp',this)">Jan</div>
+        <div class="pill" onclick="setMonthPreset(1,'rp',this)">Feb</div>
+        <div class="pill" onclick="setMonthPreset(2,'rp',this)">Mar</div>
+        <div class="pill" onclick="setMonthPreset(3,'rp',this)">Apr</div>
+        <div class="pill" onclick="setMonthPreset(4,'rp',this)">May</div>
+        <div class="pill" onclick="setMonthPreset(5,'rp',this)">Jun</div>
+        <div class="pill" onclick="setMonthPreset(6,'rp',this)">Jul</div>
+        <div class="pill" onclick="setMonthPreset(7,'rp',this)">Aug</div>
+        <div class="pill" onclick="setMonthPreset(8,'rp',this)">Sep</div>
+        <div class="pill" onclick="setMonthPreset(9,'rp',this)">Oct</div>
+        <div class="pill" onclick="setMonthPreset(10,'rp',this)">Nov</div>
+        <div class="pill" onclick="setMonthPreset(11,'rp',this)">Dec</div>
       </div>
       <div class="row">
+        <div><label>จากวันที่</label><input type="date" id="rp-from" onchange="renderRecentPurchases();renderPurchaseSpendDashboard()"></div>
+        <div><label>ถึงวันที่</label><input type="date" id="rp-to" onchange="renderRecentPurchases();renderPurchaseSpendDashboard()"></div>
+      </div>
+
+      <div class="chart-card" style="margin-top:14px">
+        <div class="chart-card-head">
+          <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.5 4.3"/></svg></div>
+          <div class="cc-title">ยอดซื้อวัตถุดิบหลัก (ตามช่วงเวลาที่เลือกด้านบน)</div>
+          <button type="button" class="info-btn" onclick="toggleEl('hint-pur-spend')">i</button>
+        </div>
+        <p class="hint" id="hint-pur-spend" style="display:none">ติดตามยอดซื้อของกลุ่มวัตถุดิบหลัก 5 กลุ่ม: Cream Cheese, Whipping Cream, Matcha, Houjicha, Cold Brew (จับคู่จากคำที่อยู่ในชื่อไอเทม เช่น "tavi" หรือ "brew" สำหรับ Cold Brew) — อยากเพิ่ม/แก้กลุ่มไหน บอกได้เลย</p>
+        <div class="cc-donut-wrap">
+          <canvas id="chart-pur-spend"></canvas>
+          <div class="donut-center" id="donut-pur-spend-center"><div class="dc-val">฿0</div><div class="dc-lbl">รวม 5 กลุ่ม</div></div>
+        </div>
+        <div id="pur-spend-summary" style="margin-top:10px"></div>
+      </div>
+
+      <div class="row" style="margin-top:14px">
         <div><label>หมวดหมู่</label>
           <select id="rp-category" onchange="renderRecentPurchases()">
             <option value="all">ทุกหมวดหมู่</option>
@@ -499,6 +528,13 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           </select>
         </div>
         <div><label>🔍 ค้นหาไอเทม</label><input type="text" id="rp-search" placeholder="พิมพ์คำค้นหา เช่น ครีมชีส" oninput="renderRecentPurchases()"></div>
+        <div><label>เรียงลำดับ</label>
+          <select id="rp-sort" onchange="renderRecentPurchases()">
+            <option value="date_desc">วันที่ซื้อ (ล่าสุดก่อน)</option>
+            <option value="date_asc">วันที่ซื้อ (เก่าสุดก่อน)</option>
+            <option value="name_asc">ชื่อไอเทม (ก-ฮ)</option>
+          </select>
+        </div>
       </div>
       <div id="pur-recent" class="emptystate" style="margin-top:10px">ยังไม่มีข้อมูล</div>
     </div>
@@ -986,7 +1022,7 @@ function switchTab(name,btn){
   if(name==='home'){ renderHomeSummary(); renderHomeCakeCount(); }
   if(name==='dashboard') renderDashboard();
   if(name==='finance'){ renderDailyFeeList(); }
-  if(name==='purchases'){ refreshPurItemNameCache(); }
+  if(name==='purchases'){ refreshPurItemNameCache(); renderPurchaseSpendDashboard(); }
   if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); updateSyncStatusUI(); renderMergeRulesList(); }
 }
 
@@ -1708,7 +1744,7 @@ async function onOrderChannelChange(){
   const noEl=document.getElementById('o-orderno');
   if(chSel && noEl && chSel.value==='อื่นๆ' && !noEl.value.trim()){
     const next=await nextOtherOrderNo();
-    noEl.value=String(next);
+    noEl.value='OT-'+String(next).padStart(3,'0');
   }
 }
 async function saveOrder(){
@@ -2290,6 +2326,7 @@ async function savePurchase(){
   await refreshPurItemNameCache();
   resetPurForm();
   renderRecentPurchases();
+  renderPurchaseSpendDashboard();
   renderHomeSummary();
   renderHomeCakeCount();
 }
@@ -2314,6 +2351,7 @@ async function deletePurchaseById(id){
   if(!confirm('ลบรายการนี้?')) return;
   await idbDelete('purchases',id);
   renderRecentPurchases();
+  renderPurchaseSpendDashboard();
   renderHomeSummary();
   renderHomeCakeCount();
   toast('ลบแล้ว','ok');
@@ -2323,15 +2361,19 @@ async function renderRecentPurchases(){
   const toEl=document.getElementById('rp-to');
   const catSel=document.getElementById('rp-category');
   const searchEl=document.getElementById('rp-search');
+  const sortEl=document.getElementById('rp-sort');
   const from=fromEl&&fromEl.value?fromEl.value:'2000-01-01';
   const to=toEl&&toEl.value?toEl.value:todayISO();
   const catVal=catSel?catSel.value:'all';
   const searchVal=(searchEl&&searchEl.value?searchEl.value:'').trim().toLowerCase();
+  const sortVal=sortEl?sortEl.value:'date_desc';
 
   let rows=(await idbAll('purchases')).filter(p=>p.date>=from && p.date<=to);
   if(catVal!=='all') rows=rows.filter(p=>p.category===catVal);
   if(searchVal) rows=rows.filter(p=>(p.item_name||'').toLowerCase().includes(searchVal));
-  rows.sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));
+  if(sortVal==='name_asc') rows.sort((a,b)=>(a.item_name||'').localeCompare(b.item_name||'','th'));
+  else if(sortVal==='date_asc') rows.sort((a,b)=>(a.date+a.id).localeCompare(b.date+b.id));
+  else rows.sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));
 
   const el=document.getElementById('pur-recent');
   if(!rows.length){ el.className='emptystate'; el.textContent=searchVal?'ไม่พบไอเทมที่ตรงกับคำค้นหา':'ไม่มีรายการซื้อในช่วง/เงื่อนไขที่เลือก'; return; }
@@ -2347,6 +2389,56 @@ async function renderRecentPurchases(){
         <button class="btn-ghost btn-sm" onclick="deletePurchaseById('${p.id}')">ลบ</button>
       </div>
     </div>`).join('');
+}
+
+/* ============ PURCHASE SPEND DASHBOARD (วัตถุดิบหลักที่ติดตาม) ============ */
+// จับคู่ item_name กับกลุ่มด้วยคำสำคัญ (substring, ไม่สนตัวพิมพ์เล็ก/ใหญ่) — อยากเพิ่ม/แก้กลุ่มไหน บอกได้เลย
+const PURCHASE_SPEND_TRACK_GROUPS=[
+  {label:'Cream Cheese',keywords:['cream cheese','ครีมชีส']},
+  {label:'Whipping Cream',keywords:['whipping cream','วิปปิ้งครีม','วิปครีม']},
+  {label:'Matcha',keywords:['matcha','มัทฉะ']},
+  {label:'Houjicha',keywords:['houjicha','hojicha','โฮจิฉะ']},
+  {label:'Cold Brew',keywords:['tavi','brew']}
+];
+async function renderPurchaseSpendDashboard(){
+  const canvas=document.getElementById('chart-pur-spend');
+  if(!canvas) return;
+  const fromEl=document.getElementById('rp-from');
+  const toEl=document.getElementById('rp-to');
+  const from=fromEl&&fromEl.value?fromEl.value:'2000-01-01';
+  const to=toEl&&toEl.value?toEl.value:todayISO();
+
+  const rows=(await idbAll('purchases')).filter(p=>p.date>=from && p.date<=to);
+  const stats=PURCHASE_SPEND_TRACK_GROUPS.map(g=>({label:g.label,count:0,total:0}));
+  rows.forEach(p=>{
+    const nameLower=(p.item_name||'').toLowerCase();
+    const gi=PURCHASE_SPEND_TRACK_GROUPS.findIndex(g=>g.keywords.some(kw=>nameLower.includes(kw.toLowerCase())));
+    if(gi>=0){ stats[gi].count++; stats[gi].total+=Number(p.total||0); }
+  });
+
+  const summaryEl=document.getElementById('pur-spend-summary');
+  const grandTotal=stats.reduce((s,g)=>s+g.total,0);
+  if(summaryEl){
+    summaryEl.innerHTML=stats.map(g=>`<div class="detail-row"><span class="k">${escapeHtml(g.label)}</span><span class="v">${fmtMoney(g.total)}${g.count?` (${g.count} ครั้ง)`:''}</span></div>`).join('');
+  }
+
+  const withData=stats.filter(g=>g.total>0);
+  if(!withData.length){
+    if(charts['chart-pur-spend']){ charts['chart-pur-spend'].destroy(); delete charts['chart-pur-spend']; }
+    canvas.style.display='none';
+    const centerEl=document.getElementById('donut-pur-spend-center');
+    if(centerEl) centerEl.style.display='none';
+    if(summaryEl) summaryEl.innerHTML='<div class="emptystate">ยังไม่มีข้อมูลของกลุ่มที่ติดตามในช่วงเวลานี้</div>';
+    return;
+  }
+  canvas.style.display='';
+  const centerEl=document.getElementById('donut-pur-spend-center');
+  if(centerEl) centerEl.style.display='';
+  drawPie('chart-pur-spend',
+    withData.map(g=>`${g.label} (${g.count} ครั้ง)`),
+    withData.map(g=>g.total),
+    'donut-pur-spend-center',
+    `รวม ${withData.length} กลุ่ม`);
 }
 
 /* ============ DASHBOARD ============ */
@@ -2485,7 +2577,7 @@ function setRangePreset(preset,prefix,el){
   document.getElementById(prefix+'-to').value=to;
   if(prefix==='d') renderDashboard();
   else if(prefix==='ro') renderRecentOrders();
-  else if(prefix==='rp') renderRecentPurchases();
+  else if(prefix==='rp'){ renderRecentPurchases(); renderPurchaseSpendDashboard(); }
   else if(prefix==='fin') renderFinance();
 }
 // ปุ่มเลือกเดือนตามชื่อ (Jan-Dec) ของปีปัจจุบัน — ใช้ในการ์ด Orders/Finance เพื่อกระโดดไปดูเดือนไหนก็ได้เร็วๆ
@@ -2503,6 +2595,7 @@ function setMonthPreset(monthIndex,prefix,el){
   document.getElementById(prefix+'-to').value=to;
   if(prefix==='ro') renderRecentOrders();
   else if(prefix==='fin') renderFinance();
+  else if(prefix==='rp'){ renderRecentPurchases(); renderPurchaseSpendDashboard(); }
 }
 let roChannelFilter='all';
 function setChannelFilter(value,el){
@@ -3371,6 +3464,7 @@ async function runItemNameCleanup(){
     toast(`รวมชื่อไอเทมสำเร็จ ${changedCount} รายการ 🎉`,'ok');
     await refreshPurItemNameCache();
     renderRecentPurchases();
+    renderPurchaseSpendDashboard();
   }
 }
 
@@ -3558,6 +3652,7 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   document.getElementById('fin-to').value=todayISO();
   renderRecentOrders();
   renderRecentPurchases();
+  renderPurchaseSpendDashboard();
   renderDailyFeeList();
   renderHomeSummary();
   renderHomeCakeCount();
