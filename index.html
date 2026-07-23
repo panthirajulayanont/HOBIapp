@@ -3371,6 +3371,13 @@ function resetOptionForm(){
   document.getElementById('og-linked').value='';
   document.getElementById('og-cancel-btn').style.display='none';
 }
+/* ============ SERVICE WORKER (ทำให้ติดตั้งเป็นแอพจริงได้ + แคชให้โหลดเร็วขึ้น) ============ */
+// ต้องมีไฟล์ sw.js อยู่โฟลเดอร์เดียวกับหน้านี้บนเซิร์ฟเวอร์ ถึงจะลงทะเบียนสำเร็จ
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').catch(()=>{ /* เงียบไว้ ถ้าไม่มีไฟล์ sw.js แอพก็ยังใช้งานได้ปกติ แค่ไม่ได้ประโยชน์จากแคช */ });
+  });
+}
 /* ============ INIT ============ */
 window.addEventListener('DOMContentLoaded',async ()=>{
   await openDB();
