@@ -5,11 +5,13 @@
 //            (ตรานั้นจะโผล่มาเฉพาะตอนที่เบราว์เซอร์มองว่าเป็นแค่ "shortcut" ไม่ใช่แอพที่ติดตั้งจริง)
 //        (2) แคชไฟล์ CDN หลัก ๆ ไว้ ทำให้เปิดแอพครั้งต่อ ๆ ไปเร็วขึ้นมาก และเปิดได้แม้เน็ตหลุดชั่วคราว
 
-const CACHE_NAME = 'hobi-app-v1';
+const CACHE_NAME = 'hobi-app-v2';
 
 const PRECACHE_URLS = [
   './',
   './index.html',
+  './icon-192.png',
+  './icon-512.png',
   'https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js',
   'https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js',
   'https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2',
