@@ -800,6 +800,10 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <p class="hint">ค่าคอมมิชชั่นคำนวณต่างจากปกติ และยอดขายนี้จะไม่โชว์ใน Grab Earnings (หน้า Finance โชว์แต่ยอดหักลบ) — ระบบจะจดไว้ในหมายเหตุให้อัตโนมัติ</p>
       <h3>ค่าธรรมเนียมแพลตฟอร์มต่อออเดอร์ (Orders)</h3>
       <p class="hint">กรอกตรงนี้ได้เลยถ้าเช็คค่าคอม/ค่าโฆษณาต่อออเดอร์ได้ (เช่น Grab ดูได้จากหน้า Transactions) — ถ้าไม่สะดวกดูรายออเดอร์ (เช่น LineMan ที่หน้าการเงินให้แค่ยอดรวมทั้งวัน) ปล่อยเป็น 0 ไว้แล้วไปบันทึกรวมเป็นยอดรายวันที่หน้าการเงินแทนได้เลย ระบบจะไม่นับซ้ำ — ถ้าวันนั้น+ช่องทางนั้นมีบันทึกรวมรายวันแล้ว จะใช้ยอดรวมรายวันแทนค่าที่กรอกต่อออเดอร์ให้อัตโนมัติตอนคำนวณกำไร</p>
+      <h3>ชื่อไอเทม autocomplete + ส่วนต่างท้ายบิล (Purchases)</h3>
+      <p class="hint">พิมพ์ชื่อไอเทมในฟอร์มซื้อของไม่กี่ตัวอักษร ระบบจะโชว์ชื่อที่เคยกรอกไว้แล้วในหมวดหมู่เดียวกันให้เลือกซ้ำ (กดเลือกจากลิสต์แทนพิมพ์ใหม่ ชื่อจะตรงกันทุกครั้งแม้ซื้อจากคนละร้าน) แต่ละแถวจะโชว์ยอดรวม (จำนวน×ราคา) ให้อัตโนมัติด้วย — ถ้ายอดที่จ่ายจริงท้ายบิลไม่ตรง (มีส่วนลด/ค่าส่งเพิ่ม) ใส่ผลต่างในช่อง "ส่วนต่างท้ายบิล" ก้อนเดียว ระบบจะกระจายเฉลี่ยลงแต่ละไอเทมให้เอง ไม่ต้องคำนวณเอง</p>
+      <h3>🔍 ค้นหาไอเทม (Purchases)</h3>
+      <p class="hint">พิมพ์คำค้นหาในช่อง "ค้นหาไอเทม" เพื่อกรองรายการซื้อที่มีคำนั้นอยู่ในชื่อไอเทม</p>
       <h3>Import from Excel File (Settings)</h3>
       <p class="hint">เลือกไฟล์ HOBI_ระบบบัญชีร้าน.xlsx เพื่อดึงข้อมูล Orders / Order_Items / Purchases / Menu เข้ามาในแอพ (ข้อมูลจะถูกเพิ่มเข้าไป ไม่ลบของเดิมในแอพ)</p>
       <h3>Export to Excel (Settings)</h3>
@@ -982,6 +986,7 @@ function switchTab(name,btn){
   if(name==='home'){ renderHomeSummary(); renderHomeCakeCount(); }
   if(name==='dashboard') renderDashboard();
   if(name==='finance'){ renderDailyFeeList(); }
+  if(name==='purchases'){ refreshPurItemNameCache(); }
   if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); updateSyncStatusUI(); renderMergeRulesList(); }
 }
 
@@ -2157,21 +2162,47 @@ function fillPurForm(j){
   (j.items||[]).forEach(it=>addPurItemRow(it.item_name,it.category,it.qty,it.unit,it.unit_price));
   if(!(j.items||[]).length) addPurItemRow();
 }
+/* ============ PURCHASE ITEM-NAME AUTOCOMPLETE (ชื่อไอเทมเดิมที่เคยกรอกไว้ ต่อหมวดหมู่) ============ */
+// ช่วยให้กรอกชื่อวัตถุดิบซ้ำๆ ได้เร็วและตรงกัน แม้ซื้อจากคนละร้าน (ร้านตั้งชื่อไม่เหมือนกัน)
+// โดยดึงชื่อไอเทมที่เคยบันทึกไว้แล้วมาเป็นตัวเลือกให้เลือกซ้ำ แทนที่จะพิมพ์ใหม่ทุกครั้ง
+let purItemNamesByCategory={};
+async function refreshPurItemNameCache(){
+  const rows=await idbAll('purchases');
+  const byCat={};
+  rows.forEach(p=>{
+    const cat=p.category||'อื่นๆ';
+    if(!byCat[cat]) byCat[cat]=new Set();
+    if(p.item_name) byCat[cat].add(p.item_name);
+  });
+  purItemNamesByCategory=byCat;
+}
+let purRowSeq=0;
+function refreshPurItemNameList(catSelectEl){
+  const row=catSelectEl.closest('.itemrow');
+  if(!row) return;
+  const dl=row.querySelector('datalist');
+  if(!dl) return;
+  const names=[...(purItemNamesByCategory[catSelectEl.value]||[])].sort((a,b)=>a.localeCompare(b));
+  dl.innerHTML=names.map(n=>`<option value="${escapeHtml(n)}">`).join('');
+}
 function addPurItemRow(name,category,qty,unit,price){
   name=name||''; category=category||'วัตถุดิบ'; qty=qty||1; unit=unit||'ชิ้น'; price=price||0;
   const cats=['วัตถุดิบ','แพ็กเกจจิ้ง','อุปกรณ์ทำครัว','อื่นๆ'];
   const wrap=document.getElementById('p-items');
   const row=document.createElement('div');
   row.className='itemrow';
+  const dlId=`pur-namelist-${purRowSeq++}`;
   row.innerHTML=`
-    <input type="text" class="name" placeholder="ชื่อสินค้า" value="${escapeHtml(name)}" style="flex:1.6">
-    <select class="cat" style="flex:0 0 100px">${cats.map(c=>`<option ${c===category?'selected':''}>${c}</option>`).join('')}</select>
+    <input type="text" class="name" placeholder="ชื่อสินค้า (พิมพ์ไม่กี่ตัวจะขึ้นรายการเดิมให้เลือก)" value="${escapeHtml(name)}" style="flex:1.6" list="${dlId}">
+    <datalist id="${dlId}"></datalist>
+    <select class="cat" style="flex:0 0 100px" onchange="refreshPurItemNameList(this)">${cats.map(c=>`<option ${c===category?'selected':''}>${c}</option>`).join('')}</select>
     <input type="number" class="qty" placeholder="จำนวน" value="${qty}" style="flex:0 0 60px" oninput="updateRowTotal(this);updatePurSummary()">
     <input type="text" class="unit" placeholder="หน่วย" value="${escapeHtml(unit)}" style="flex:0 0 60px">
     <input type="number" class="price" placeholder="ราคา/หน่วย" value="${price}" step="0.01" style="flex:0 0 80px" oninput="updateRowTotal(this);updatePurSummary()">
     <span class="row-total">${fmtMoney(qty*price)}</span>
     <button type="button" class="closebtn" onclick="this.parentElement.remove();updatePurSummary()">✕</button>`;
   wrap.appendChild(row);
+  refreshPurItemNameList(row.querySelector('.cat'));
   updatePurSummary();
 }
 function updateRowTotal(el){
@@ -2256,6 +2287,7 @@ async function savePurchase(){
     editingPendingPurchaseIndex=-1;
     renderPurPendingList();
   }
+  await refreshPurItemNameCache();
   resetPurForm();
   renderRecentPurchases();
   renderHomeSummary();
@@ -3337,6 +3369,7 @@ async function runItemNameCleanup(){
     toast('ไม่พบรายการที่ตรงกับกฎรวมชื่อ (อาจรวมไว้หมดแล้ว)','ok');
   }else{
     toast(`รวมชื่อไอเทมสำเร็จ ${changedCount} รายการ 🎉`,'ok');
+    await refreshPurItemNameCache();
     renderRecentPurchases();
   }
 }
@@ -3511,6 +3544,7 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   }
   await refreshMenuCache();
   await refreshOptionCache();
+  await refreshPurItemNameCache();
   resetOrderForm();
   resetPurForm();
   resetDailyFeeForm();
