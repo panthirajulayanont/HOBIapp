@@ -102,13 +102,14 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .cake-bubble{flex:0 0 calc(25% - 6px);max-width:min(calc(25% - 6px),calc(var(--cbt-size) / 2));max-height:calc(var(--cbt-size) / 2);aspect-ratio:1/1;box-sizing:border-box;padding:2px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;text-align:center;}
 .cake-bubble .cb-code{letter-spacing:.3px;}
 .cake-bubble .cb-qty{font-weight:700;opacity:.92;margin-top:1px;line-height:1.25;}
-.stock-bubble-wrap{display:flex;flex-wrap:nowrap;gap:6px;padding:6px 0 4px;overflow:hidden;}
-.stock-bubble{position:relative;flex:1 1 0;min-width:0;max-width:70px;aspect-ratio:1/1;border-radius:20%;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .1s;overflow:hidden;}
-.stock-bubble:active{transform:scale(.94);}
-.stock-bubble.zero::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.55);pointer-events:none;}
-.stock-bubble .stock-label{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;padding-top:6%;}
-.stock-bubble .stock-qty{font-weight:800;font-family:var(--font-head);line-height:1;font-size:clamp(11px,3.6vw,15px);}
-.stock-bubble .stock-name{font-weight:600;opacity:.92;margin-top:2px;line-height:1.1;font-size:clamp(7.8px,2.4vw,10.2px);max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.stock-bubble-wrap{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:6px;padding:6px 0 4px;overflow:hidden;}
+.stock-item{display:flex;flex-direction:column;align-items:center;flex:1 1 0;min-width:0;max-width:70px;cursor:pointer;}
+.stock-shape{position:relative;width:100%;aspect-ratio:1/1;border-radius:20%;display:flex;align-items:center;justify-content:center;transition:transform .1s;overflow:hidden;}
+.stock-item:active .stock-shape{transform:scale(.94);}
+.stock-item.zero .stock-shape{max-width:75%;}
+.stock-item.zero .stock-shape::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.55);pointer-events:none;}
+.stock-qty{font-weight:800;font-family:var(--font-head);line-height:1;font-size:clamp(11px,3.6vw,15px);}
+.stock-name{font-weight:600;opacity:.92;margin-top:3px;line-height:1.15;text-align:center;white-space:normal;overflow-wrap:break-word;font-size:clamp(7.8px,2.4vw,10.2px);}
 #stock-modal-overlay{align-items:center;}
 .stock-modal-circle{width:min(66vw,240px);height:min(66vw,240px);border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 10px 34px rgba(0,0,0,.28);padding:16px;box-sizing:border-box;animation:stockpop .18s ease-out;}
 @keyframes stockpop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
@@ -2994,11 +2995,11 @@ async function renderTodayStock(){
     const fill=cakeFlavorFillCss(m.name) || flavorColorForMenuNameCssFallback(m.name);
     const solidForText=CAKE_CODE_COLORS[resolveCakeCode(m.name)] || (CAKE_CODE_HATCH[resolveCakeCode(m.name)]?CAKE_CODE_HATCH[resolveCakeCode(m.name)][0]:null) || '#a5705f';
     const textColor=readableTextColorFor(solidForText);
-    return `<div class="stock-bubble${qty===0?' zero':''}" style="background:${fill}" onclick="openStockDetail('${m.id}')">
-      <div class="stock-label">
+    return `<div class="stock-item${qty===0?' zero':''}" onclick="openStockDetail('${m.id}')">
+      <div class="stock-shape" style="background:${fill}">
         <div class="stock-qty" style="color:${textColor}">${qty}</div>
-        <div class="stock-name" style="color:${textColor}">${escapeHtml(shortName)}</div>
       </div>
+      <div class="stock-name">${escapeHtml(shortName)}</div>
     </div>`;
   }).join('');
 }
