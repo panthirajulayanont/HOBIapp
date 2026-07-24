@@ -95,13 +95,26 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .card-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
 .card-head-row h2{margin:0 !important;}
 .cake-sold-card{background:transparent;box-shadow:none;padding:8px 0;}
-.cake-bubble-wrap{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:min(16px,3vw);padding:10px 0 4px;width:100%;box-sizing:border-box;}
+.cake-bubble-wrap{display:flex;flex-direction:row;align-items:flex-start;gap:10px;padding:10px 0 4px;width:100%;box-sizing:border-box;}
 .cake-bubble-total{border-radius:50%;background:var(--pink);color:var(--pink-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;flex-shrink:0;}
 .cake-bubble-total .cbt-num{font-weight:800;font-family:var(--font-head);line-height:1;}
-.cake-bubble-flavors{display:grid;grid-template-columns:repeat(3,max-content);gap:min(8px,1.8vw);flex:0 0 auto;}
-.cake-bubble{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;text-align:center;}
+.cake-bubble-flavors{display:flex;flex-wrap:wrap;align-content:flex-start;gap:8px;flex:1 1 0;min-width:0;}
+.cake-bubble{flex:0 0 calc(25% - 6px);max-width:calc(25% - 6px);aspect-ratio:1/1;box-sizing:border-box;padding:2px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;text-align:center;}
 .cake-bubble .cb-code{letter-spacing:.3px;}
 .cake-bubble .cb-qty{font-weight:700;opacity:.92;margin-top:1px;line-height:1.25;}
+.stock-bubble-wrap{display:flex;flex-wrap:wrap;gap:10px;padding:6px 0;}
+.stock-bubble{flex:0 0 calc(25% - 8px);max-width:calc(25% - 8px);aspect-ratio:1/1;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-align:center;box-sizing:border-box;padding:2px;transition:transform .1s;}
+.stock-bubble:active{transform:scale(.94);}
+.stock-bubble .stock-qty{font-weight:800;font-family:var(--font-head);line-height:1;font-size:clamp(14px,4.2vw,18px);}
+.stock-bubble .stock-name{font-weight:600;opacity:.9;margin-top:2px;line-height:1.15;font-size:clamp(8px,2.2vw,10px);}
+#stock-modal-overlay{align-items:center;}
+.stock-modal-circle{width:min(66vw,240px);height:min(66vw,240px);border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 10px 34px rgba(0,0,0,.28);padding:16px;box-sizing:border-box;animation:stockpop .18s ease-out;}
+@keyframes stockpop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
+.stock-modal-name{font-size:14px;font-weight:700;color:var(--pink-dark);text-align:center;}
+.stock-modal-qty{font-size:40px;font-weight:800;font-family:var(--font-head);color:var(--brown);line-height:1;margin:4px 0;}
+.stock-modal-btns{display:flex;gap:14px;margin-top:4px;}
+.stock-adj-btn{width:44px;height:44px;border-radius:50%;border:none;background:var(--pink);color:var(--pink-dark);font-size:22px;font-weight:800;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+.stock-adj-btn:active{transform:scale(.94);}
 .form-section-label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;margin:16px 0 8px;padding-top:14px;border-top:1px solid var(--border);}
 .form-section-label:first-child{border-top:none;padding-top:0;margin-top:0;}
 .soft-box{background:#fffae8;border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:8px;}
@@ -398,6 +411,18 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   </div>
 </div>
 
+<div class="modal-overlay" id="stock-modal-overlay" onclick="closeStockModalOnOverlay(event)">
+  <div class="stock-modal-circle" onclick="event.stopPropagation()">
+    <div class="stock-modal-name" id="stock-modal-name"></div>
+    <div class="stock-modal-qty" id="stock-modal-qty">0</div>
+    <div class="stock-modal-btns">
+      <button type="button" class="stock-adj-btn" onclick="adjustStockQty(-1)">−</button>
+      <button type="button" class="stock-adj-btn" onclick="adjustStockQty(1)">+</button>
+    </div>
+    <button type="button" class="btn-ghost" style="margin-top:10px" onclick="closeStockModal()">ปิด</button>
+  </div>
+</div>
+
 <div class="container">
 
   <!-- HOME TAB -->
@@ -434,6 +459,11 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <button class="btn-sm" style="flex:1;background:var(--seg);color:var(--pink-dark)" onclick="openCheckDataModal()">Check Data</button>
         </div>
       </div>
+    </div>
+
+    <div class="card">
+      <h2>Today's Stock</h2>
+      <div id="home-stock-wrap" class="stock-bubble-wrap"></div>
     </div>
   </div>
 
@@ -1052,7 +1082,7 @@ function switchTab(name,btn){
   document.getElementById('tab-'+name).classList.add('active');
   document.querySelectorAll('nav.bottomnav button').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  if(name==='home'){ renderHomeSummary(); renderHomeCakeCount(); }
+  if(name==='home'){ renderHomeSummary(); renderHomeCakeCount(); renderTodayStock(); }
   if(name==='dashboard') renderDashboard();
   if(name==='finance'){ renderDailyFeeList(); }
   if(name==='purchases'){ refreshPurItemNameCache(); renderPurchaseSpendDashboard(); }
@@ -1075,7 +1105,7 @@ window.addEventListener('resize',()=>{
 let db;
 function openDB(){
   return new Promise((resolve,reject)=>{
-    const req=indexedDB.open('hobiDB',3);
+    const req=indexedDB.open('hobiDB',4);
     req.onupgradeneeded=(e)=>{
       const d=e.target.result;
       if(!d.objectStoreNames.contains('orders')){
@@ -1108,6 +1138,10 @@ function openDB(){
         const s=d.createObjectStore('daily_fees',{keyPath:'id'});
         s.createIndex('date','date',{unique:false});
         s.createIndex('channel','channel',{unique:false});
+      }
+      if(!d.objectStoreNames.contains('daily_stock')){
+        const s=d.createObjectStore('daily_stock',{keyPath:'id'});
+        s.createIndex('date','date',{unique:false});
       }
     };
     req.onsuccess=(e)=>{ db=e.target.result; resolve(db); };
@@ -1304,6 +1338,7 @@ async function refreshAllViews(){
   await refreshDbStats();
   await renderHomeSummary();
   await renderHomeCakeCount();
+  await renderTodayStock();
   renderPurchaseSpendDashboard();
   renderDailyFeeList();
   if(document.getElementById('tab-dashboard').classList.contains('active')) await renderDashboard();
@@ -2862,11 +2897,10 @@ async function renderHomeCakeCount(){
 
   const rows=Object.entries(byFlavor).sort((a,b)=>b[1]-a[1]);
 
-  // วงกลมใหญ่สุด = ยอดรวมทั้งหมด แสดงแค่ "xxx ชิ้น" บรรทัดเดียว
-  // ขนาดใช้ clamp()+vw แทนตัวเลขตายตัว เพื่อให้หดตามความกว้างจออัตโนมัติ ไม่ล้นขอบจอ (บนจอกว้างจะชนเพดาน 150px เท่าดีไซน์เดิม)
-  const totalBubbleSize='clamp(70px, 32vw, 150px)';
+  // วงกลมใหญ่สุด = ยอดรวมทั้งหมด แสดงแค่ "xxx ชิ้น" บรรทัดเดียว (ทำให้เล็กลงกว่าเดิม)
+  const totalBubbleSize='clamp(56px, 24vw, 110px)';
   const totalHtml=`<div class="cake-bubble-total" style="width:${totalBubbleSize};height:${totalBubbleSize}">
-    <div class="cbt-num" style="font-size:clamp(15px, 6.5vw, 26px)">${total.toLocaleString('th-TH')} ชิ้น</div>
+    <div class="cbt-num" style="font-size:clamp(12px, 5.2vw, 19px)">${total.toLocaleString('th-TH')} ชิ้น</div>
   </div>`;
 
   if(!rows.length){
@@ -2874,10 +2908,9 @@ async function renderHomeCakeCount(){
     return;
   }
 
-  // วงกลมเล็กแต่ละรส: ขนาดเท่ากันทุกวง = 1/3 ของวงรวมทั้งหมด (คำนวณผ่าน calc() ต่อจาก clamp() ด้านบน)
-  const BUBBLE_D=`calc(${totalBubbleSize} / 3)`;
-  const fontSize='clamp(7px, 1.9vw, 9px)';
-  const fontSizeSmall='clamp(6px, 1.6vw, 7px)';
+  // วงกลมเล็กแต่ละรส: ขนาดกำหนดผ่าน CSS (.cake-bubble ~25% ของแถว = ได้ราว 4 วงต่อแถวก่อนขึ้นบรรทัดใหม่) ไม่ผูกกับขนาดวงรวมแล้ว
+  const fontSize='clamp(9px, 2.4vw, 11px)';
+  const fontSizeSmall='clamp(7.5px, 2vw, 9px)';
 
   // จำนวนถาด: รส HN หารด้วย 6, รสอื่นๆ หารด้วย 4 — ปัดลงเป็นจำนวนเต็มถาดเสมอ
   function trayCountText(name,qty){
@@ -2893,13 +2926,75 @@ async function renderHomeCakeCount(){
     const solidForText=CAKE_CODE_COLORS[resolveCakeCode(name)] || (CAKE_CODE_HATCH[resolveCakeCode(name)]?CAKE_CODE_HATCH[resolveCakeCode(name)][0]:null) || '#a5705f';
     const textColor=readableTextColorFor(solidForText);
     const trays=trayCountText(name,qty);
-    return `<div class="cake-bubble" style="width:${BUBBLE_D};height:${BUBBLE_D};background:${fill};color:${textColor}">
+    return `<div class="cake-bubble" style="background:${fill};color:${textColor}">
       <div class="cb-code" style="font-size:${fontSize}">${escapeHtml(shortName)}</div>
       <div class="cb-qty" style="font-size:${fontSizeSmall}">${qty.toLocaleString('th-TH')} (${trays}t)</div>
     </div>`;
   }).join('');
 
   wrapEl.innerHTML=totalHtml+`<div class="cake-bubble-flavors">${flavorsHtml}</div>`;
+}
+
+/* ============ TODAY'S STOCK (จำนวนคงเหลือของแต่ละรสเค้กวันนี้ ปรับ +/− ได้ ผูกกับวันที่ปัจจุบันเท่านั้น) ============ */
+let todayStockCache=[];
+async function refreshTodayStockCache(){
+  const all=await idbAll('daily_stock');
+  const today=todayISO();
+  todayStockCache=all.filter(s=>s.date===today);
+}
+function getTodayStockQty(menuId){
+  const rec=todayStockCache.find(s=>s.menu_id===menuId);
+  return rec ? (Number(rec.qty)||0) : 0;
+}
+async function setTodayStockQty(menuId,qty){
+  qty=Math.max(0,Math.round(qty));
+  const today=todayISO();
+  const id=today+'|'+menuId;
+  await idbPut('daily_stock',{id,date:today,menu_id:menuId,qty});
+  const idx=todayStockCache.findIndex(s=>s.menu_id===menuId);
+  if(idx>=0) todayStockCache[idx].qty=qty;
+  else todayStockCache.push({id,date:today,menu_id:menuId,qty});
+}
+async function renderTodayStock(){
+  const wrap=document.getElementById('home-stock-wrap');
+  if(!wrap) return;
+  await refreshTodayStockCache();
+  const targetCat=normCatName('cheesecake slice');
+  const flavors=menuCache.filter(m=>normCatName(m.category)===targetCat);
+  if(!flavors.length){ wrap.innerHTML='<div class="emptystate">ยังไม่มีเมนูหมวด cheesecake slice ในหน้าตั้งค่า</div>'; return; }
+  wrap.innerHTML=flavors.map(m=>{
+    const qty=getTodayStockQty(m.id);
+    const shortName=(m.short_name&&m.short_name.trim())?m.short_name.trim():m.name;
+    const fill=cakeFlavorFillCss(m.name) || flavorColorForMenuNameCssFallback(m.name);
+    const solidForText=CAKE_CODE_COLORS[resolveCakeCode(m.name)] || (CAKE_CODE_HATCH[resolveCakeCode(m.name)]?CAKE_CODE_HATCH[resolveCakeCode(m.name)][0]:null) || '#a5705f';
+    const textColor=readableTextColorFor(solidForText);
+    return `<div class="stock-bubble" style="background:${fill};color:${textColor}" onclick="openStockDetail('${m.id}')">
+      <div class="stock-qty">${qty}</div>
+      <div class="stock-name">${escapeHtml(shortName)}</div>
+    </div>`;
+  }).join('');
+}
+let stockModalMenuId=null;
+function openStockDetail(menuId){
+  const m=menuCache.find(x=>x.id===menuId);
+  if(!m) return;
+  stockModalMenuId=menuId;
+  const shortName=(m.short_name&&m.short_name.trim())?m.short_name.trim():m.name;
+  document.getElementById('stock-modal-name').textContent=shortName;
+  document.getElementById('stock-modal-qty').textContent=getTodayStockQty(menuId);
+  document.getElementById('stock-modal-overlay').style.display='flex';
+}
+function closeStockModal(){
+  document.getElementById('stock-modal-overlay').style.display='none';
+  stockModalMenuId=null;
+  renderTodayStock();
+}
+function closeStockModalOnOverlay(e){ if(e.target.id==='stock-modal-overlay') closeStockModal(); }
+async function adjustStockQty(delta){
+  if(!stockModalMenuId) return;
+  const next=Math.max(0,getTodayStockQty(stockModalMenuId)+delta);
+  await setTodayStockQty(stockModalMenuId,next);
+  document.getElementById('stock-modal-qty').textContent=next;
 }
 // สีสำรอง (string เสมอ ใช้กับ CSS ได้) กรณีไม่ตรงทั้งโค้ดที่กำหนดตายตัวและ keyword ทั่วไป
 function flavorColorForMenuNameCssFallback(name){
@@ -3612,7 +3707,7 @@ async function clearAllData(){
     if(!confirm('สำรองข้อมูลอัตโนมัติไม่สำเร็จ ('+err.message+')\nต้องการลบข้อมูลต่อโดยไม่มีไฟล์สำรองหรือไม่?')) return;
   }
   await idbClear('orders'); await idbClear('order_items'); await idbClear('purchases'); await idbClear('menu');
-  await idbClear('option_groups'); await idbClear('order_item_options');
+  await idbClear('option_groups'); await idbClear('order_item_options'); await idbClear('daily_stock');
   await refreshMenuCache(); await refreshOptionCache();
   document.getElementById('confirm-delete-text').value='';
   document.getElementById('confirm-delete-btn').disabled=true;
@@ -3856,6 +3951,7 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   renderDailyFeeList();
   renderHomeSummary();
   renderHomeCakeCount();
+  renderTodayStock();
   refreshDbStats();
 });
 </script>
