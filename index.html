@@ -251,10 +251,9 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 #tab-home .card h2{margin-bottom:6px;font-size:15px;}
 #tab-home .kpi-hero-grid{margin-bottom:8px;gap:8px;}
 #tab-home .kpi-hero{padding:10px 12px;}
-#tab-home .kpi-hero .kpi-icon{width:24px;height:24px;margin-bottom:6px;}
-#tab-home .kpi-hero .kpi-icon svg{width:14px;height:14px;}
-#tab-home .kpi-hero .kpi-val{font-size:16.5px;}
-#tab-home .kpi-hero .kpi-lbl{font-size:10.5px;margin-top:2px;}
+#tab-home .kpi-hero-plain .kpi-lbl{font-size:10.5px;margin-top:0;margin-bottom:4px;}
+#tab-home .kpi-hero-plain .kpi-val{font-size:26px;}
+#tab-home .kpi-mini-grid{margin-bottom:8px;gap:8px;}
 #tab-home .cake-bubble-wrap{padding:2px 0;gap:12px;}
 #tab-home .card-head-row{margin-bottom:8px;}
 #tab-home textarea#claude-import-json{min-height:40px;}
@@ -278,7 +277,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <div class="modal-panel" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h3 id="modal-title">Order Details</h3>
-      <button class="closebtn" onclick="closeModal()" style="font-size:20px">✕</button>
+      <button class="closebtn" onclick="closeModal()" style="font-size:20px">×</button>
     </div>
     <div id="modal-body"></div>
   </div>
@@ -288,20 +287,20 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <div class="modal-panel" onclick="event.stopPropagation()">
     <div class="modal-header">
       <h3>Check Data <button type="button" class="info-btn" onclick="toggleEl('hint-pending')">i</button></h3>
-      <button class="closebtn" onclick="closeCheckDataModal()" style="font-size:20px">✕</button>
+      <button class="closebtn" onclick="closeCheckDataModal()" style="font-size:20px">×</button>
     </div>
     <p class="hint" id="hint-pending" style="display:none">ตรวจสอบรายการด้านล่างนี้ก่อน กด "ยืนยัน" เพื่อบันทึกจริงเข้าไปในลิสต์ของหน้าออเดอร์/ซื้อของ/การเงินทันที หรือกด "ลบ" ถ้าไม่ต้องการรายการนี้ (แก้ไขรายละเอียดเพิ่มเติมได้ทีหลังจากลิสต์ในแต่ละหน้า)</p>
     <div id="home-pending-empty" class="emptystate">ยังไม่มีรายการรอตรวจสอบ</div>
     <div id="home-pending-orders-wrap" style="display:none">
-      <h3>🧾 Orders</h3>
+      <h3>Orders</h3>
       <div id="home-pending-orders"></div>
     </div>
     <div id="home-pending-purchases-wrap" style="display:none">
-      <h3>🛒 Purchases</h3>
+      <h3>Purchases</h3>
       <div id="home-pending-purchases"></div>
     </div>
     <div id="home-pending-dailyfees-wrap" style="display:none">
-      <h3>💰 Finance (Daily Fees)</h3>
+      <h3>Finance (Daily Fees)</h3>
       <div id="home-pending-dailyfees"></div>
     </div>
   </div>
@@ -312,31 +311,41 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- HOME TAB -->
   <div class="tabpage active" id="tab-home">
     <div class="kpi-hero-grid">
-      <div class="kpi-hero c1">
+      <div class="kpi-hero c1 kpi-hero-plain">
+        <div class="kpi-lbl">ยอดขายรวมทั้งหมด</div>
         <div class="kpi-val" id="home-total-sales">฿0</div>
-          <div class="kpi-bottom-row"><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="12" cy="12" r="2.3"/><path d="M6 10v4M18 10v4"/></svg></div><div class="kpi-lbl">ยอดขายรวมทั้งหมด</div></div>
       </div>
-      <div class="kpi-hero c5">
+      <div class="kpi-hero c5 kpi-hero-plain">
+        <div class="kpi-lbl">กำไรสุทธิรวมทั้งหมด</div>
         <div class="kpi-val" id="home-total-netprofit">฿0</div>
-          <div class="kpi-bottom-row"><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg></div><div class="kpi-lbl">กำไรสุทธิรวมทั้งหมด</div></div>
+      </div>
+    </div>
+    <div class="kpi-mini-grid" style="margin-top:8px">
+      <div class="kpi-mini">
+        <div class="mini-icon" style="background:var(--tan)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v2h2a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><circle cx="16.5" cy="14" r="1.3"/></svg></div>
+        <div class="mini-body"><div class="mini-val" id="home-mini-net">฿0</div><div class="mini-lbl">ยอดสุทธิร้านได้รับ</div></div>
+      </div>
+      <div class="kpi-mini">
+        <div class="mini-icon" style="background:var(--olive)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 15 10 9 14 13 20 6"/><polyline points="14 6 20 6 20 12"/></svg></div>
+        <div class="mini-body"><div class="mini-val" id="home-mini-grossprofit">฿0</div><div class="mini-lbl">กำไรขั้นต้น</div></div>
+      </div>
+      <div class="kpi-mini">
+        <div class="mini-icon icon-dark-bg" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg></div>
+        <div class="mini-body"><div class="mini-val" id="home-mini-netprofit">฿0</div><div class="mini-lbl">กำไรสุทธิ</div></div>
       </div>
     </div>
 
     <div class="card">
-      <h2>🍰 Cake Sold</h2>
+      <h2>Cake Sold</h2>
       <div id="home-cake-bubbles" class="cake-bubble-wrap"></div>
     </div>
 
     <div class="card">
-      <div class="card-head-row">
-        <h2 style="margin:0">📤 Upload <button type="button" class="info-btn" onclick="toggleEl('hint-claude-import')">i</button></h2>
-        <div style="display:flex;gap:6px">
-          <button class="btn-sm" style="background:var(--seg);color:var(--pink-dark)" onclick="openCheckDataModal()">Check Data</button>
-          <button class="btn-primary btn-sm" onclick="importFromClaudeJSON()">Import</button>
-        </div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <textarea id="claude-import-json" placeholder='วางโค้ด JSON ที่ Claude ให้มาตรงนี้ เช่น {"orders":[...],"purchases":[...]}' style="flex:1;min-width:140px;min-height:40px;font-family:monospace;font-size:11.5px"></textarea>
+        <button class="btn-primary btn-sm" onclick="importFromClaudeJSON()">Import</button>
+        <button class="btn-sm" style="background:var(--seg);color:var(--pink-dark)" onclick="openCheckDataModal()">Check Data</button>
       </div>
-      <p class="hint" id="hint-claude-import" style="display:none">ส่งรูปแคปออเดอร์/ใบเสร็จไปให้ Claude อ่านในแชทปกติ (ไม่มีค่าใช้จ่ายเพิ่ม) แล้วก็อปโค้ด JSON ที่ได้มาวางตรงนี้ กด "Import" — ระบบจะพักข้อมูลไว้ให้ตรวจสอบทีละรายการก่อนบันทึกจริง (รองรับทั้งออเดอร์และรายการซื้อของในโค้ดเดียวกัน)</p>
-      <textarea id="claude-import-json" placeholder='วางโค้ด JSON ที่ Claude ให้มาตรงนี้ เช่น {"orders":[...],"purchases":[...]}' style="min-height:64px;font-family:monospace;font-size:11.5px"></textarea>
     </div>
 
     <div class="card">
@@ -361,7 +370,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- ORDERS TAB -->
   <div class="tabpage" id="tab-orders">
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'order-form-body')">📝 Add New Order <span class="chevron">▾</span></h2>
+      <h2 class="collapsible-head" onclick="toggleSection(this,'order-form-body')">Add New Order <span class="chevron">▾</span></h2>
       <div id="order-form-body" style="display:none">
       <form id="order-form" onsubmit="return false">
         <input type="hidden" id="o-edit-id">
@@ -414,7 +423,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <textarea id="o-note" placeholder="เช่น ชื่อคอนโด/ลูกค้า, แคมเปญพิเศษ"></textarea>
 
         <div class="btn-row" style="margin-top:14px">
-          <button class="btn-primary" onclick="saveOrder()">💾 บันทึกออเดอร์</button>
+          <button class="btn-primary" onclick="saveOrder()">บันทึกออเดอร์</button>
           <button class="btn-ghost" onclick="resetOrderForm()">ล้างฟอร์ม</button>
           <button class="btn-ghost" id="o-cancel-btn" onclick="resetOrderForm()" style="display:none">ยกเลิกแก้ไข</button>
         </div>
@@ -424,7 +433,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
     <div class="card">
       <h2>Orders</h2>
-      <div class="filter-toggle" onclick="toggleSection(this,'ro-filter-body')">🔍 ตัวกรอง: <span class="ft-summary" id="ro-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
+      <div class="filter-toggle" onclick="toggleSection(this,'ro-filter-body')">ตัวกรอง: <span class="ft-summary" id="ro-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
       <div id="ro-filter-body" class="filter-body" style="display:none">
       <div class="pillrow" id="ro-preset-pillrow">
         <div class="pill" onclick="setRangePreset('today','ro',this)">วันนี้</div>
@@ -467,7 +476,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- PURCHASES TAB -->
   <div class="tabpage" id="tab-purchases">
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'pur-form-body')">📝 Add New Purchase <span class="chevron">▾</span></h2>
+      <h2 class="collapsible-head" onclick="toggleSection(this,'pur-form-body')">Add New Purchase <span class="chevron">▾</span></h2>
       <div id="pur-form-body" style="display:none">
       <form id="pur-form" onsubmit="return false">
         <input type="hidden" id="p-edit-id">
@@ -495,7 +504,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <textarea id="p-note"></textarea>
 
         <div class="btn-row" style="margin-top:14px">
-          <button class="btn-primary" onclick="savePurchase()">💾 บันทึกรายการซื้อ</button>
+          <button class="btn-primary" onclick="savePurchase()">บันทึกรายการซื้อ</button>
           <button class="btn-ghost" onclick="resetPurForm()">ล้างฟอร์ม</button>
           <button class="btn-ghost" id="p-cancel-btn" onclick="resetPurForm()" style="display:none">ยกเลิกแก้ไข</button>
         </div>
@@ -505,7 +514,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
     <div class="card">
       <h2>Recent Purchases</h2>
-      <div class="filter-toggle" onclick="toggleSection(this,'rp-filter-body')">🔍 ตัวกรอง: <span class="ft-summary" id="rp-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
+      <div class="filter-toggle" onclick="toggleSection(this,'rp-filter-body')">ตัวกรอง: <span class="ft-summary" id="rp-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
       <div id="rp-filter-body" class="filter-body" style="display:none">
       <div class="pillrow" id="rp-preset-pillrow">
         <div class="pill" onclick="setRangePreset('today','rp',this)">วันนี้</div>
@@ -559,7 +568,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
             <option value="อื่นๆ">อื่นๆ</option>
           </select>
         </div>
-        <div><label>🔍 ค้นหาไอเทม</label><input type="text" id="rp-search" placeholder="พิมพ์คำค้นหา เช่น ครีมชีส" oninput="renderRecentPurchases()"></div>
+        <div><label>ค้นหาไอเทม</label><input type="text" id="rp-search" placeholder="พิมพ์คำค้นหา เช่น ครีมชีส" oninput="renderRecentPurchases()"></div>
         <div><label>เรียงลำดับ</label>
           <select id="rp-sort" onchange="renderRecentPurchases()">
             <option value="date_desc">วันที่ซื้อ (ล่าสุดก่อน)</option>
@@ -575,7 +584,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- DASHBOARD TAB -->
   <div class="tabpage" id="tab-dashboard">
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'d-filter-body')">📅 Select Date Range: <span class="ft-summary" id="d-filter-summary" style="font-weight:400">ทั้งหมด</span> <span class="chevron">▾</span></h2>
+      <h2 class="collapsible-head" onclick="toggleSection(this,'d-filter-body')">Select Date Range: <span class="ft-summary" id="d-filter-summary" style="font-weight:400">ทั้งหมด</span> <span class="chevron">▾</span></h2>
       <div id="d-filter-body" style="display:none">
       <div class="pillrow">
         <div class="pill" onclick="setRangePreset('today','d',this)">วันนี้</div>
@@ -589,7 +598,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div><label>จากวันที่</label><input type="date" id="d-from" onchange="renderDashboard();updateFilterSummary('d')"></div>
         <div><label>ถึงวันที่</label><input type="date" id="d-to" onchange="renderDashboard();updateFilterSummary('d')"></div>
       </div>
-      <button class="btn-primary" style="margin-top:10px" onclick="renderDashboard()">🔍 แสดงผล</button>
+      <button class="btn-primary" style="margin-top:10px" onclick="renderDashboard()">แสดงผล</button>
       </div>
     </div>
 
@@ -712,7 +721,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <div class="cc-title" id="chart-qty-title">จำนวนไอเทมที่ขายได้รายสัปดาห์ (ชิ้น)</div>
         </div>
         <button type="button" class="chart-drilldown-back" id="chart-qty-back-btn" style="display:none" onclick="qtyChartBackToWeekly()">← กลับไปดูรายสัปดาห์</button>
-        <p class="hint" style="margin:0 0 8px">💡 คลิกที่แท่งของสัปดาห์ไหนก็ได้ เพื่อดูรายละเอียดเป็นรายวันภายในสัปดาห์นั้น</p>
+        <p class="hint" style="margin:0 0 8px">คลิกที่แท่งของสัปดาห์ไหนก็ได้ เพื่อดูรายละเอียดเป็นรายวันภายในสัปดาห์นั้น</p>
         <div class="pillrow" id="qty-mode-pillrow" style="margin-bottom:12px">
           <div class="pill active" onclick="setQtyChartMode('grouped',this)">ตามหมวดหมู่ (รวม Set Menu)</div>
           <div class="pill" onclick="setQtyChartMode('decomposed',this)">แจกแจง Set Menu เป็นไอเทมย่อย</div>
@@ -725,7 +734,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- FINANCE TAB -->
   <div class="tabpage" id="tab-finance">
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'dailyfee-form-body')">📝 Add Daily Fee <span class="chevron">▾</span></h2>
+      <h2 class="collapsible-head" onclick="toggleSection(this,'dailyfee-form-body')">Add Daily Fee <span class="chevron">▾</span></h2>
       <div id="dailyfee-form-body" style="display:none">
       <p class="hint" id="hint-dailyfee">แคปหน้า "การเงิน/Finance" สรุปรายวันจาก Grab/LineMan แล้วกรอกค่าคอมมิชชั่นกับค่าโฆษณารวมของวันนั้นต่อช่องทางที่นี่ (ไม่ต้องกรอกต่อออเดอร์ เพราะตัวเลขจริงในหน้าการเงินเป็นยอดรวมทั้งวัน) ระบบจะเอาไปหักออกจากยอดขายรวมของวันนั้นในแดชบอร์ด/รายงานให้อัตโนมัติ</p>
       <input type="hidden" id="df-edit-id">
@@ -750,7 +759,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <input type="text" id="df-note" placeholder="เช่น อ้างอิงจากหน้าการเงินวันนี้">
 
       <div class="btn-row" style="margin-top:14px">
-        <button class="btn-primary" onclick="saveDailyFee()">💾 บันทึก</button>
+        <button class="btn-primary" onclick="saveDailyFee()">บันทึก</button>
         <button class="btn-ghost" id="df-cancel-btn" onclick="resetDailyFeeForm()" style="display:none">ยกเลิกแก้ไข</button>
       </div>
       </div>
@@ -758,7 +767,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 
     <div class="card">
       <h2>Finance</h2>
-      <div class="filter-toggle" onclick="toggleSection(this,'fin-filter-body')">🔍 ตัวกรอง: <span class="ft-summary" id="fin-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
+      <div class="filter-toggle" onclick="toggleSection(this,'fin-filter-body')">ตัวกรอง: <span class="ft-summary" id="fin-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
       <div id="fin-filter-body" class="filter-body" style="display:none">
       <div class="pillrow" id="fin-preset-pillrow">
         <div class="pill" onclick="setRangePreset('today','fin',this)">วันนี้</div>
@@ -853,10 +862,10 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- SETTINGS TAB -->
   <div class="tabpage" id="tab-settings">
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'settings-help-body')">❓ Help &amp; How-To <span class="chevron">▾</span></h2>
+      <h2 class="collapsible-head" onclick="toggleSection(this,'settings-help-body')">Help &amp; How-To <span class="chevron">▾</span></h2>
       <div id="settings-help-body" style="display:none">
       <p class="hint">รวมคำอธิบายทุกจุดในแอพไว้ที่เดียว อ่านรอบเดียวจบ — ปุ่ม (i) เล็กๆ ตามหน้าต่างๆ ก็ยังกดดูซ้ำได้เหมือนเดิมถ้าลืม</p>
-      <h3>📤 Upload (Home)</h3>
+      <h3>Upload (Home)</h3>
       <p class="hint">ส่งรูปแคปออเดอร์/ใบเสร็จไปให้ Claude อ่านในแชทปกติ (ไม่มีค่าใช้จ่ายเพิ่ม) แล้วก็อปโค้ด JSON ที่ได้มาวางตรงนี้ กด "Import" — ระบบจะพักข้อมูลไว้ให้ตรวจสอบทีละรายการก่อนบันทึกจริง (รองรับทั้งออเดอร์และรายการซื้อของในโค้ดเดียวกัน)</p>
       <h3>Imported data to be confirmed (Home)</h3>
       <p class="hint">หลังนำเข้าข้อมูลจาก Claude Chat แล้ว ตรวจสอบรายการด้านล่างนี้ก่อน กด "ยืนยัน" เพื่อบันทึกจริงเข้าไปในลิสต์ของหน้าออเดอร์/ซื้อของ/การเงินทันที หรือกด "ลบ" ถ้าไม่ต้องการรายการนี้ (แก้ไขรายละเอียดเพิ่มเติมได้ทีหลังจากลิสต์ในแต่ละหน้า)</p>
@@ -866,7 +875,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <p class="hint">กรอกตรงนี้ได้เลยถ้าเช็คค่าคอม/ค่าโฆษณาต่อออเดอร์ได้ (เช่น Grab ดูได้จากหน้า Transactions) — ถ้าไม่สะดวกดูรายออเดอร์ (เช่น LineMan ที่หน้าการเงินให้แค่ยอดรวมทั้งวัน) ปล่อยเป็น 0 ไว้แล้วไปบันทึกรวมเป็นยอดรายวันที่หน้าการเงินแทนได้เลย ระบบจะไม่นับซ้ำ — ถ้าวันนั้น+ช่องทางนั้นมีบันทึกรวมรายวันแล้ว จะใช้ยอดรวมรายวันแทนค่าที่กรอกต่อออเดอร์ให้อัตโนมัติตอนคำนวณกำไร</p>
       <h3>ชื่อไอเทม autocomplete + ส่วนต่างท้ายบิล (Purchases)</h3>
       <p class="hint">พิมพ์ชื่อไอเทมในฟอร์มซื้อของไม่กี่ตัวอักษร ระบบจะโชว์ชื่อที่เคยกรอกไว้แล้วในหมวดหมู่เดียวกันให้เลือกซ้ำ (กดเลือกจากลิสต์แทนพิมพ์ใหม่ ชื่อจะตรงกันทุกครั้งแม้ซื้อจากคนละร้าน) แต่ละแถวจะโชว์ยอดรวม (จำนวน×ราคา) ให้อัตโนมัติด้วย — ถ้ายอดที่จ่ายจริงท้ายบิลไม่ตรง (มีส่วนลด/ค่าส่งเพิ่ม) ใส่ผลต่างในช่อง "ส่วนต่างท้ายบิล" ก้อนเดียว ระบบจะกระจายเฉลี่ยลงแต่ละไอเทมให้เอง ไม่ต้องคำนวณเอง</p>
-      <h3>🔍 ค้นหาไอเทม (Purchases)</h3>
+      <h3>ค้นหาไอเทม (Purchases)</h3>
       <p class="hint">พิมพ์คำค้นหาในช่อง "ค้นหาไอเทม" เพื่อกรองรายการซื้อที่มีคำนั้นอยู่ในชื่อไอเทม</p>
       <h3>Import from Excel File (Settings)</h3>
       <p class="hint">เลือกไฟล์ HOBI_ระบบบัญชีร้าน.xlsx เพื่อดึงข้อมูล Orders / Order_Items / Purchases / Menu เข้ามาในแอพ (ข้อมูลจะถูกเพิ่มเข้าไป ไม่ลบของเดิมในแอพ)</p>
@@ -882,30 +891,30 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     </div>
 
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'settings-datacloud-body')">🗄️ Data / Database &amp; Cloud Sync <span class="chevron">▾</span></h2>
+      <h2 class="collapsible-head" onclick="toggleSection(this,'settings-datacloud-body')">Data / Database &amp; Cloud Sync <span class="chevron">▾</span></h2>
       <div id="settings-datacloud-body" style="display:none">
       <div id="db-stats" class="hint">กำลังโหลด...</div>
       <h3>Import from Excel File <button type="button" class="info-btn" onclick="toggleEl('hint-import-excel')">i</button></h3>
       <p class="hint" id="hint-import-excel" style="display:none">เลือกไฟล์ HOBI_ระบบบัญชีร้าน.xlsx เพื่อดึงข้อมูล Orders / Order_Items / Purchases / Menu เข้ามาในแอพ (ข้อมูลจะถูกเพิ่มเข้าไป ไม่ลบของเดิมในแอพ)</p>
       <input type="file" id="import-file" accept=".xlsx,.xls">
-      <div class="btn-row"><button class="btn-secondary" onclick="importExcel()">📥 นำเข้าไฟล์ Excel</button></div>
+      <div class="btn-row"><button class="btn-secondary" onclick="importExcel()">นำเข้าไฟล์ Excel</button></div>
 
       <h3>Export to Excel <button type="button" class="info-btn" onclick="toggleEl('hint-export-excel')">i</button></h3>
       <p class="hint" id="hint-export-excel" style="display:none">ดาวน์โหลดข้อมูลทั้งหมดในแอพตอนนี้เป็นไฟล์ .xlsx (Orders / Order_Items / Purchases / Menu) — ไฟล์นี้เป็นข้อมูลล้วนๆ ไม่มีสูตร/แดชบอร์ดแบบไฟล์เดิม เพราะแดชบอร์ดอยู่ในแอพนี้แล้ว</p>
-      <div class="btn-row"><button class="btn-secondary" onclick="exportExcel()">📤 Export to Excel</button></div>
+      <div class="btn-row"><button class="btn-secondary" onclick="exportExcel()">Export to Excel</button></div>
 
-      <h3>🧹 Merge Duplicate Item Names <button type="button" class="info-btn" onclick="toggleEl('hint-merge-items')">i</button></h3>
+      <h3>Merge Duplicate Item Names <button type="button" class="info-btn" onclick="toggleEl('hint-merge-items')">i</button></h3>
       <p class="hint" id="hint-merge-items" style="display:none">แก้ปัญหาชื่อไอเทมซื้อของเดียวกันที่พิมพ์ไว้ไม่ตรงกัน (เช่น สะกดต่างกัน ไทย/อังกฤษปน) — ระบบจะสแกนรายการซื้อทั้งหมด แล้วรวมชื่อ+หมวดหมู่ให้ตรงกันตามกฎที่ตั้งไว้ในแอพ ถ้าอยากเพิ่มกฎรวมชื่ออื่นๆ บอกได้เลย จะเพิ่มให้ในแอพเวอร์ชันถัดไป</p>
       <div id="merge-rules-list" class="hint" style="margin-bottom:8px"></div>
-      <div class="btn-row"><button class="btn-secondary" onclick="runItemNameCleanup()">🧹 Run Cleanup Now</button></div>
+      <div class="btn-row"><button class="btn-secondary" onclick="runItemNameCleanup()">Run Cleanup Now</button></div>
 
       <h3 style="color:var(--red)">Delete All Data</h3>
       <div class="warn-box">ระบบจะดาวน์โหลดไฟล์ Excel สำรองข้อมูลปัจจุบันให้อัตโนมัติก่อนลบทุกครั้ง และต้องพิมพ์ยืนยันให้ตรงก่อนปุ่มลบถึงจะกดได้ เพื่อกันเผลอกดโดน</div>
       <label>พิมพ์คำว่า <b>ลบทั้งหมด</b> เพื่อยืนยัน</label>
       <input type="text" id="confirm-delete-text" placeholder="ลบทั้งหมด" oninput="checkDeleteConfirm()" autocomplete="off">
-      <div class="btn-row"><button class="btn-danger" id="confirm-delete-btn" onclick="clearAllData()" disabled>🗑️ Delete All App Data (auto-backup first)</button></div>
+      <div class="btn-row"><button class="btn-danger" id="confirm-delete-btn" onclick="clearAllData()" disabled>Delete All App Data (auto-backup first)</button></div>
 
-      <h3>☁️ Cross-Device Sync (Cloud Sync) <button type="button" class="info-btn" onclick="toggleEl('hint-cloud-sync')">i</button></h3>
+      <h3>Cross-Device Sync (Cloud Sync) <button type="button" class="info-btn" onclick="toggleEl('hint-cloud-sync')">i</button></h3>
       <div id="hint-cloud-sync" style="display:none">
       <p class="hint">เชื่อมต่อ Firebase (ฟรี) เพื่อให้กรอกข้อมูลจากมือถือหรือคอมก็ได้ ข้อมูล sync กันอัตโนมัติแบบเรียลไทม์ ต้องตั้งค่าโปรเจกต์ Firebase ก่อนครั้งเดียว:</p>
       <p class="hint">
@@ -913,7 +922,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         2. เมนูซ้าย "Build" → <b>Firestore Database</b> → Create database → เลือกโหมดใดก็ได้ (ตั้งค่า Rules เพิ่มด้านล่าง)<br>
         3. เมนูซ้าย "Build" → <b>Authentication</b> → Get started → เปิดใช้ผู้ให้บริการ "Google"<br>
         4. Authentication → Settings → Authorized domains → เพิ่มโดเมนเว็บที่ใช้เปิดแอพนี้ (เช่น ยูสเซอร์.github.io)<br>
-        5. ไปที่ ⚙️ Project settings → เลื่อนลงหา "Your apps" → กด "Add app" เลือกไอคอนเว็บ (&lt;/&gt;) → คัดลอกโค้ด <code>firebaseConfig</code> ทั้งก้อนมาวางด้านล่างนี้<br>
+        5. ไปที่ Project settings → เลื่อนลงหา "Your apps" → กด "Add app" เลือกไอคอนเว็บ (&lt;/&gt;) → คัดลอกโค้ด <code>firebaseConfig</code> ทั้งก้อนมาวางด้านล่างนี้<br>
         6. ที่ Firestore → แท็บ Rules วางกฎนี้แล้ว Publish:
       </p>
       <textarea readonly style="min-height:110px;font-family:monospace;font-size:11.5px" onclick="this.select()">rules_version = '2';
@@ -935,8 +944,8 @@ service cloud.firestore {
         <button class="btn-primary" id="cloud-signin-btn" onclick="signInGoogle()">เข้าสู่ระบบด้วย Google</button>
         <button class="btn-ghost" id="cloud-signout-btn" onclick="signOutCloud()" style="display:none">ออกจากระบบ</button>
       </div>
-      <div class="warn-box" style="margin-top:10px">💡 ครั้งแรกหลัง sign in แล้ว ถ้ามีข้อมูลเดิมอยู่ในเครื่องนี้ (จากก่อนเปิด Cloud Sync) ให้กดปุ่มด้านล่างเพื่ออัพโหลดข้อมูลเดิมขึ้นคลาวด์ครั้งเดียว</div>
-      <div class="btn-row"><button class="btn-secondary" onclick="migrateLocalToCloud()">📤 อัพโหลดข้อมูลในเครื่องนี้ขึ้นคลาวด์</button></div>
+      <div class="warn-box" style="margin-top:10px">ครั้งแรกหลัง sign in แล้ว ถ้ามีข้อมูลเดิมอยู่ในเครื่องนี้ (จากก่อนเปิด Cloud Sync) ให้กดปุ่มด้านล่างเพื่ออัพโหลดข้อมูลเดิมขึ้นคลาวด์ครั้งเดียว</div>
+      <div class="btn-row"><button class="btn-secondary" onclick="migrateLocalToCloud()">อัพโหลดข้อมูลในเครื่องนี้ขึ้นคลาวด์</button></div>
       </div>
     </div>
 
@@ -1260,7 +1269,7 @@ function updateSyncStatusUI(){
   const outBtn=document.getElementById('cloud-signout-btn');
   if(!statusEl) return;
   if(isCloudActive()){
-    statusEl.innerHTML='🟢 เชื่อมต่อ Cloud Sync แล้ว — เข้าสู่ระบบเป็น <b>'+escapeHtml(cloudUser.email||cloudUser.displayName||'')+'</b> (ข้อมูลจะ sync กับทุกเครื่องที่ login ด้วยบัญชีนี้)';
+    statusEl.innerHTML='เชื่อมต่อ Cloud Sync แล้ว — เข้าสู่ระบบเป็น <b>'+escapeHtml(cloudUser.email||cloudUser.displayName||'')+'</b> (ข้อมูลจะ sync กับทุกเครื่องที่ login ด้วยบัญชีนี้)';
     if(inBtn) inBtn.style.display='none';
     if(outBtn) outBtn.style.display='inline-block';
   }else if(firestoreDB){
@@ -1309,7 +1318,7 @@ async function migrateLocalToCloud(){
       const rows=await idbAllLocal(s);
       for(const r of rows){ await idbPut(s,r); total++; }
     }
-    toast(`อัพโหลดข้อมูล ${total} รายการขึ้นคลาวด์แล้ว 🎉`,'ok');
+    toast(`อัพโหลดข้อมูล ${total} รายการขึ้นคลาวด์แล้ว`,'ok');
     await refreshAllViews();
   }catch(err){
     console.error(err);
@@ -1442,7 +1451,7 @@ function cakeFlavorFillCss(nameOrCode){
   const code=resolveCakeCode(nameOrCode);
   if(CAKE_CODE_HATCH[code]){
     const [c1,c2]=CAKE_CODE_HATCH[code];
-    return `repeating-linear-gradient(45deg, ${c1} 0px, ${c1} 8px, ${c2} 8px, ${c2} 16px)`;
+    return `linear-gradient(90deg, ${c1} 50%, ${c2} 50%)`;
   }
   if(CAKE_CODE_COLORS[code]) return CAKE_CODE_COLORS[code];
   return null;
@@ -1568,7 +1577,7 @@ function renderOrderPendingList(){
       <div class="pending-card">
         <div class="pc-info"><b>${escapeHtml(o.order_no||'(ไม่มีเลขออเดอร์)')}</b>${escapeHtml(o.channel||'')} · ${escapeHtml(o.date||'')} · ${(o.items||[]).length} รายการ · ฿${Number(o.total_sale||0).toFixed(2)}</div>
         <div class="pc-btns">
-          <button type="button" class="btn-primary btn-sm" onclick="confirmPendingOrder(${i})">✅ ยืนยัน</button>
+          <button type="button" class="btn-primary btn-sm" onclick="confirmPendingOrder(${i})">ยืนยัน</button>
           <button type="button" class="btn-ghost btn-sm" onclick="discardPendingOrder(${i})">ลบ</button>
         </div>
       </div>`).join('');
@@ -1623,7 +1632,7 @@ function buildMenuOptionsHtml(selected){
     html+='</optgroup>';
   });
   if(selected && !menuCache.some(m=>m.name===selected)){
-    html+=`<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)} ⚠️ (ไม่อยู่ในรายการเมนู)</option>`;
+    html+=`<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)} (ไม่อยู่ในรายการเมนู)</option>`;
   }
   return html;
 }
@@ -1645,7 +1654,7 @@ function addOrderItemRow(name,qty,price,options){
       <select class="name" onchange="onOrderItemNameChange(this)">${buildMenuOptionsHtml(name)}</select>
       <input type="number" class="qty" placeholder="จำนวน" value="${qty}" min="0" oninput="recalcOrderTotals()">
       <input type="number" class="price" placeholder="ราคา/ชิ้น" value="${price}" step="0.01" oninput="recalcOrderTotals()">
-      <button type="button" class="closebtn" onclick="this.closest('.itemblock').remove();recalcOrderTotals()">✕</button>
+      <button type="button" class="closebtn" onclick="this.closest('.itemblock').remove();recalcOrderTotals()">×</button>
     </div>
     <div class="opt-list"></div>
     <button type="button" class="btn-ghost btn-sm" onclick="addOptionRow(this)">+ ตัวเลือก/ท็อปปิ้ง</button>`;
@@ -1664,13 +1673,13 @@ function addOptionRow(triggerBtn,group,option,qty){
   // ถ้ากลุ่มที่ส่งมา (เช่น จาก Claude Chat import) ยังไม่เคยตั้งค่าไว้ในระบบ ให้แสดงไว้เป็นตัวเลือกพิเศษ
   // แทนที่จะหายไปเงียบๆ เพื่อให้ผู้ใช้เห็นและตรวจสอบได้ ไม่เสียข้อมูล
   if(group && !groups.includes(group)){
-    groupOpts += `<option value="${escapeHtml(group)}" selected>${escapeHtml(group)} ⚠️ (ยังไม่ได้ตั้งค่าไว้)</option>`;
+    groupOpts += `<option value="${escapeHtml(group)}" selected>${escapeHtml(group)} (ยังไม่ได้ตั้งค่าไว้)</option>`;
   }
   row.innerHTML=`
     <select class="opt-group" style="flex:1" onchange="onOptGroupChange(this)">${groupOpts||'<option value="">(ยังไม่มีข้อมูลกลุ่มตัวเลือก)</option>'}</select>
     <select class="opt-name" style="flex:1.4" onchange="recalcOrderTotals()"></select>
     <input type="number" class="opt-qty" value="${qty||1}" min="1" style="flex:0 0 50px" oninput="recalcOrderTotals()">
-    <button type="button" class="closebtn" onclick="this.parentElement.remove();recalcOrderTotals()">✕</button>`;
+    <button type="button" class="closebtn" onclick="this.parentElement.remove();recalcOrderTotals()">×</button>`;
   list.appendChild(row);
   populateOptionNameSelect(row.querySelector('.opt-group'),row.querySelector('.opt-name'),option);
   recalcOrderTotals();
@@ -1685,11 +1694,11 @@ function populateOptionNameSelect(groupSel,nameSel,selectedName){
   const opts=getOptionsForGroup(group);
   let html=opts.map(o=>{
     const oos=isOutOfStock(o.stock_status);
-    return `<option value="${escapeHtml(o.name)}" ${o.name===selectedName?'selected':''} ${oos?'style="color:#c0392b"':''}>${escapeHtml(o.name)}${oos?' ⚠️ หมดสต็อก':''}</option>`;
+    return `<option value="${escapeHtml(o.name)}" ${o.name===selectedName?'selected':''} ${oos?'style="color:#c0392b"':''}>${escapeHtml(o.name)}${oos?' หมดสต็อก':''}</option>`;
   }).join('');
   // ถ้าชื่อออปชั่นที่ส่งมายังไม่เคยตั้งค่าไว้ในกลุ่มนี้ ให้แสดงไว้เป็นตัวเลือกพิเศษแทนที่จะหายไปเงียบๆ
   if(selectedName && !opts.some(o=>o.name===selectedName)){
-    html += `<option value="${escapeHtml(selectedName)}" selected>${escapeHtml(selectedName)} ⚠️ (ยังไม่ได้ตั้งค่าไว้)</option>`;
+    html += `<option value="${escapeHtml(selectedName)}" selected>${escapeHtml(selectedName)} (ยังไม่ได้ตั้งค่าไว้)</option>`;
   }
   nameSel.innerHTML = html || '<option value="">(ไม่มีตัวเลือกในกลุ่มนี้)</option>';
 }
@@ -1697,7 +1706,7 @@ function markManualTotal(){ orderManualTotalEdited=true; }
 function onThaiPlusToggle(silent){
   const box=document.getElementById('o-thaiplus');
   const note=document.getElementById('o-note');
-  const marker='⚠️ Thais Help Thai Plus (เราชนะไทย 60/40): ยอดขายนี้จะไม่โชว์ใน Grab Earnings (หน้า Finance โชว์แต่ยอดหักลบ)';
+  const marker='Thais Help Thai Plus (เราชนะไทย 60/40): ยอดขายนี้จะไม่โชว์ใน Grab Earnings (หน้า Finance โชว์แต่ยอดหักลบ)';
   if(box.checked){
     if(!note.value.includes('Thais Help Thai Plus')) note.value = note.value ? (marker+'\n'+note.value) : marker;
   }else if(!silent){
@@ -1795,7 +1804,7 @@ async function saveOrder(){
   const outOfStockPicked=blocks.flatMap(b=>b.options).filter(o=>isOutOfStock(getOptionStock(o.group,o.option)));
   if(outOfStockPicked.length){
     const names=outOfStockPicked.map(o=>o.option).join(', ');
-    if(!confirm(`⚠️ ตัวเลือกนี้ถูกมาร์คว่าหมดสต็อก: ${names}\nยืนยันบันทึกต่อหรือไม่?`)) return;
+    if(!confirm(`ตัวเลือกนี้ถูกมาร์คว่าหมดสต็อก: ${names}\nยืนยันบันทึกต่อหรือไม่?`)) return;
   }
 
   const editId=document.getElementById('o-edit-id').value;
@@ -1842,7 +1851,7 @@ async function saveOrder(){
       });
     }
   }
-  toast(editId?'แก้ไขออเดอร์แล้ว':'บันทึกออเดอร์แล้ว 🎉','ok');
+  toast(editId?'แก้ไขออเดอร์แล้ว':'บันทึกออเดอร์แล้ว','ok');
   if(editingPendingOrderIndex>=0){
     pendingOrders.splice(editingPendingOrderIndex,1);
     editingPendingOrderIndex=-1;
@@ -2026,7 +2035,7 @@ function closeCheckDataModal(){ document.getElementById('checkdata-modal-overlay
 function closeCheckDataModalOnOverlay(e){ if(e.target.id==='checkdata-modal-overlay') closeCheckDataModal(); }
 const KPI_INFO={
   's-sales':{title:'ยอดขายรวม',body:'ผลรวมยอดขาย (total_sale) ของทุกออเดอร์ในช่วงเวลาที่เลือก ตามราคาขายรวมที่กรอกไว้ในแต่ละออเดอร์ ยังไม่หักค่าคอมมิชชั่น ค่าโฆษณา หรือต้นทุนสินค้าใดๆ'},
-  's-profit':{title:'กำไรขั้นต้น',body:'กำไรขั้นต้น = ยอดสุทธิร้านได้รับ − ต้นทุนสินค้าต่อออเดอร์<br><br>💡 คำนวณจากต้นทุนสินค้าต่อออร์เดอร์ ยังไม่ได้หัก "ยอดซื้อของเข้าร้าน" ทั้งหมด (เพราะของที่ซื้ออาจยังไม่ถูกขายหมด) ดูยอดซื้อของแยกไว้ด้านล่างเพื่อเทียบกระแสเงินสด'},
+  's-profit':{title:'กำไรขั้นต้น',body:'กำไรขั้นต้น = ยอดสุทธิร้านได้รับ − ต้นทุนสินค้าต่อออเดอร์<br><br>คำนวณจากต้นทุนสินค้าต่อออร์เดอร์ ยังไม่ได้หัก "ยอดซื้อของเข้าร้าน" ทั้งหมด (เพราะของที่ซื้ออาจยังไม่ถูกขายหมด) ดูยอดซื้อของแยกไว้ด้านล่างเพื่อเทียบกระแสเงินสด'},
   's-net':{title:'ยอดสุทธิร้านได้รับ',body:'ยอดขายรวม − ค่าคอมมิชชั่น − ค่าโฆษณา ทุกช่องทางรวมกัน (ใช้ยอดที่กรอกต่อออเดอร์หรือยอดรวมรายวันจากหน้าการเงิน แล้วแต่ว่าวันที่+ช่องทางนั้นมีบันทึกแบบไหนไว้ — เลือกใช้แหล่งเดียวเพื่อไม่ให้นับซ้ำ) คือเงินที่ร้านได้รับจริงก่อนหักต้นทุนสินค้า'},
   's-orders':{title:'จำนวนออเดอร์',body:'จำนวนออเดอร์ทั้งหมดที่บันทึกไว้ในช่วงเวลาที่เลือก นับรวมทุกช่องทาง'},
   's-netprofit':{title:'กำไรสุทธิ',body:'กำไรสุทธิ = ยอดสุทธิร้านได้รับ − ยอดซื้อของเข้าร้าน<br><br>ต่างจาก "กำไรขั้นต้น" ตรงที่ตัวนี้หักยอดซื้อของเข้าร้านทั้งหมดในช่วงเวลาที่เลือก (ไม่ใช่แค่ต้นทุนต่อออเดอร์) จึงสะท้อนกระแสเงินสดจริงของร้านได้ใกล้เคียงกว่า'},
@@ -2084,8 +2093,8 @@ async function showOrderDetail(id){
     `}
     ${order.note ? `<h3>Note</h3><div class="hint" style="white-space:pre-wrap">${escapeHtml(order.note)}</div>` : ''}
     <div class="btn-row" style="margin-top:14px">
-      <button class="btn-secondary" onclick="closeModal();editOrderById('${order.id}')">✏️ Edit</button>
-      <button class="btn-danger" onclick="closeModal();deleteOrderById('${order.id}')">🗑️ Delete This Order</button>
+      <button class="btn-secondary" onclick="closeModal();editOrderById('${order.id}')">Edit</button>
+      <button class="btn-danger" onclick="closeModal();deleteOrderById('${order.id}')">Delete This Order</button>
       <button class="btn-ghost" onclick="closeModal()">ปิด</button>
     </div>`;
   openModal();
@@ -2108,7 +2117,7 @@ function renderDailyFeePendingList(){
       <div class="pending-card">
         <div class="pc-info"><b>${escapeHtml(f.channel||'')}</b>${escapeHtml(f.date||'')} · ค่าคอม ${fmtMoney(f.commission)} · ค่าโฆษณา ${fmtMoney(f.ad_fee)}</div>
         <div class="pc-btns">
-          <button type="button" class="btn-primary btn-sm" onclick="confirmPendingDailyFee(${i})">✅ ยืนยัน</button>
+          <button type="button" class="btn-primary btn-sm" onclick="confirmPendingDailyFee(${i})">ยืนยัน</button>
           <button type="button" class="btn-ghost btn-sm" onclick="discardPendingDailyFee(${i})">ลบ</button>
         </div>
       </div>`).join('');
@@ -2152,7 +2161,7 @@ async function saveDailyFee(){
   }
   resetDailyFeeForm();
   await renderDailyFeeList();
-  toast(editId?'แก้ไขค่าธรรมเนียมแล้ว':'บันทึกค่าธรรมเนียมแล้ว 🎉','ok');
+  toast(editId?'แก้ไขค่าธรรมเนียมแล้ว':'บันทึกค่าธรรมเนียมแล้ว','ok');
 }
 function editDailyFeeRow(id){
   const f=dailyFeeCache.find(x=>x.id===id); if(!f) return;
@@ -2203,7 +2212,7 @@ function renderPurPendingList(){
       <div class="pending-card">
         <div class="pc-info"><b>${escapeHtml(p.store||'(ไม่ทราบร้าน)')}</b>${escapeHtml(p.date||'')} · ${(p.items||[]).length} รายการ</div>
         <div class="pc-btns">
-          <button type="button" class="btn-primary btn-sm" onclick="confirmPendingPurchase(${i})">✅ ยืนยัน</button>
+          <button type="button" class="btn-primary btn-sm" onclick="confirmPendingPurchase(${i})">ยืนยัน</button>
           <button type="button" class="btn-ghost btn-sm" onclick="discardPendingPurchase(${i})">ลบ</button>
         </div>
       </div>`).join('');
@@ -2267,7 +2276,7 @@ function addPurItemRow(name,category,qty,unit,price){
     <input type="text" class="unit" placeholder="หน่วย" value="${escapeHtml(unit)}" style="flex:0 0 60px">
     <input type="number" class="price" placeholder="ราคา/หน่วย" value="${price}" step="0.01" style="flex:0 0 80px" oninput="updateRowTotal(this);updatePurSummary()">
     <span class="row-total">${fmtMoney(qty*price)}</span>
-    <button type="button" class="closebtn" onclick="this.parentElement.remove();updatePurSummary()">✕</button>`;
+    <button type="button" class="closebtn" onclick="this.parentElement.remove();updatePurSummary()">×</button>`;
   wrap.appendChild(row);
   refreshPurItemNameList(row.querySelector('.cat'));
   updatePurSummary();
@@ -2347,7 +2356,7 @@ async function savePurchase(){
         qty:r.qty, unit:r.unit, unit_price:r.finalPrice, total:r.total, note
       });
     }
-    toast('บันทึกรายการซื้อแล้ว 🎉','ok');
+    toast('บันทึกรายการซื้อแล้ว','ok');
   }
   if(editingPendingPurchaseIndex>=0){
     pendingPurchases.splice(editingPendingPurchaseIndex,1);
@@ -2677,13 +2686,21 @@ async function renderHomeSummary(){
     return dailyFeeKeys.has(feeKey(o.date,o.channel)) ? 0 : (Number(o.commission||0)+Number(o.ad_fee||0));
   }
   const totalSale=orders.reduce((s,o)=>s+Number(o.total_sale||0),0);
+  const totalCost=orders.reduce((s,o)=>s+Number(o.total_cost||0),0);
   const totalComm=orders.reduce((s,o)=>s+orderFee(o),0)+dailyFees.reduce((s,f)=>s+Number(f.commission||0)+Number(f.ad_fee||0),0);
   const totalNet=totalSale-totalComm;
+  const totalGrossProfit=totalSale-totalCost-totalComm;
   const totalPurchases=pur.reduce((s,p)=>s+Number(p.total||0),0);
   const totalNetProfit=totalNet-totalPurchases;
 
   salesEl.textContent=fmtMoney(totalSale);
   profitEl.textContent=fmtMoney(totalNetProfit);
+  const netMiniEl=document.getElementById('home-mini-net');
+  const grossMiniEl=document.getElementById('home-mini-grossprofit');
+  const netProfitMiniEl=document.getElementById('home-mini-netprofit');
+  if(netMiniEl) netMiniEl.textContent=fmtMoney(totalNet);
+  if(grossMiniEl) grossMiniEl.textContent=fmtMoney(totalGrossProfit);
+  if(netProfitMiniEl) netProfitMiniEl.textContent=fmtMoney(totalNetProfit);
 }
 // การ์ดจำนวนเค้กที่ขายไปแล้วทั้งหมด (ตลอดกาล นับตั้งแต่เปิดร้าน) เฉพาะหมวด "cheesecake slice" — แจกแจง set menu ออกเป็นไอเทมย่อยตามรสจริงด้วย (ใช้ breakdownSetMenuItem ตัวเดียวกับกราฟรายวัน/รายสัปดาห์โหมด "แจกแจง")
 async function renderHomeCakeCount(){
@@ -2734,16 +2751,16 @@ async function renderHomeCakeCount(){
     return;
   }
 
-  // วงกลมเล็กแต่ละรส: ขนาดเท่ากันทุกวง (ไม่ไล่ตามสัดส่วนแล้ว)
-  const BUBBLE_D=78;
-  const fontSize=13;
+  // วงกลมเล็กแต่ละรส: ขนาดเท่ากันทุกวง = 1/3 ของวงรวมทั้งหมด
+  const BUBBLE_D=Math.round(totalBubbleSize/3);
+  const fontSize=9;
 
-  // จำนวนถาด: รส HN หารด้วย 6, รสอื่นๆ หารด้วย 4
+  // จำนวนถาด: รส HN หารด้วย 6, รสอื่นๆ หารด้วย 4 — ปัดลงเป็นจำนวนเต็มถาดเสมอ
   function trayCountText(name,qty){
     const code=resolveCakeCode(name);
     const divisor=(code==='hn')?6:4;
-    const trays=qty/divisor;
-    return Number.isInteger(trays)?String(trays):trays.toFixed(1);
+    const trays=Math.floor(qty/divisor);
+    return String(trays);
   }
 
   const flavorsHtml=rows.map(([name,qty])=>{
@@ -2754,7 +2771,7 @@ async function renderHomeCakeCount(){
     const trays=trayCountText(name,qty);
     return `<div class="cake-bubble" style="width:${BUBBLE_D}px;height:${BUBBLE_D}px;background:${fill};color:${textColor}">
       <div class="cb-code" style="font-size:${fontSize}px">${escapeHtml(shortName)}</div>
-      <div class="cb-qty" style="font-size:${fontSize-3}px">${qty.toLocaleString('th-TH')} (${trays} ถาด)</div>
+      <div class="cb-qty" style="font-size:${fontSize-2}px">${qty.toLocaleString('th-TH')} (${trays}t)</div>
     </div>`;
   }).join('');
 
@@ -2838,7 +2855,7 @@ async function renderDashboard(){
 
   if(typeof Chart==='undefined'){
     document.getElementById('dash-content').insertAdjacentHTML('afterbegin',
-      '<div class="warn-box" id="chart-lib-warn">⚠️ โหลดไลบรารีกราฟ (Chart.js) ไม่สำเร็จ อาจเป็นเพราะอินเทอร์เน็ตหลุดตอนเปิดหน้านี้ — ลองรีเฟรชหน้าใหม่อีกครั้ง (ตัวเลขสรุปด้านบนยังใช้งานได้ปกติ)</div>');
+      '<div class="warn-box" id="chart-lib-warn">โหลดไลบรารีกราฟ (Chart.js) ไม่สำเร็จ อาจเป็นเพราะอินเทอร์เน็ตหลุดตอนเปิดหน้านี้ — ลองรีเฟรชหน้าใหม่อีกครั้ง (ตัวเลขสรุปด้านบนยังใช้งานได้ปกติ)</div>');
     return;
   }
   document.getElementById('chart-lib-warn')?.remove();
@@ -3448,7 +3465,7 @@ function checkDeleteConfirm(){
 async function clearAllData(){
   const val=document.getElementById('confirm-delete-text').value.trim();
   if(val!=='ลบทั้งหมด'){ toast('กรุณาพิมพ์ยืนยันให้ตรงก่อน','err'); return; }
-  if(!confirm('⚠️ ยืนยันลบข้อมูลทั้งหมดในแอพนี้อีกครั้ง?\nระบบจะดาวน์โหลดไฟล์สำรองให้ก่อน แต่หลังจากลบแล้วข้อมูลในแอพจะหายทั้งหมด ย้อนกลับไม่ได้')) return;
+  if(!confirm('ยืนยันลบข้อมูลทั้งหมดในแอพนี้อีกครั้ง?\nระบบจะดาวน์โหลดไฟล์สำรองให้ก่อน แต่หลังจากลบแล้วข้อมูลในแอพจะหายทั้งหมด ย้อนกลับไม่ได้')) return;
   try{
     await exportExcel(); // auto-backup before destructive action
   }catch(err){
@@ -3503,7 +3520,7 @@ async function runItemNameCleanup(){
   if(changedCount===0){
     toast('ไม่พบรายการที่ตรงกับกฎรวมชื่อ (อาจรวมไว้หมดแล้ว)','ok');
   }else{
-    toast(`รวมชื่อไอเทมสำเร็จ ${changedCount} รายการ 🎉`,'ok');
+    toast(`รวมชื่อไอเทมสำเร็จ ${changedCount} รายการ`,'ok');
     await refreshPurItemNameCache();
     renderRecentPurchases();
     renderPurchaseSpendDashboard();
