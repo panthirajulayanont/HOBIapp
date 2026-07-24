@@ -63,6 +63,10 @@ button{cursor:pointer;border:none;border-radius:999px;padding:10px 20px;font-siz
 .btn-danger{background:#fff;color:var(--red);border:1.5px solid var(--red);}
 .btn-ghost{background:transparent;color:var(--muted);border-radius:999px;}
 .btn-sm{padding:9px 16px;font-size:12.5px;border-radius:999px;}
+.icon-btn{display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;flex-shrink:0;border:none;border-radius:50%;background:var(--border);color:var(--pink-dark);cursor:pointer;padding:0;}
+.icon-btn:hover{background:var(--tan);}
+.icon-btn.danger{background:rgba(102,94,88,.1);color:var(--red);}
+.icon-btn.danger:hover{background:rgba(102,94,88,.18);}
 button:disabled{opacity:.5;cursor:not-allowed;}
 .btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;}
 nav.bottomnav{position:fixed;bottom:0;left:0;right:0;background:#fff;border-top:1px solid var(--border);display:flex;z-index:20;box-shadow:0 -2px 8px rgba(0,0,0,.06);}
@@ -90,10 +94,10 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .home-nav-btn span{font-size:13px;font-weight:700;color:var(--text);}
 .card-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px;flex-wrap:wrap;}
 .card-head-row h2{margin:0 !important;}
-.cake-bubble-wrap{display:flex;flex-direction:row;flex-wrap:wrap;align-items:center;justify-content:center;gap:20px;padding:10px 0 4px;}
+.cake-bubble-wrap{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;gap:16px;padding:10px 0 4px;overflow-x:auto;}
 .cake-bubble-total{border-radius:50%;background:var(--pink);color:var(--pink-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;box-shadow:0 6px 18px rgba(58,58,58,.22);text-align:center;flex-shrink:0;}
 .cake-bubble-total .cbt-num{font-weight:800;font-family:var(--font-head);line-height:1;}
-.cake-bubble-flavors{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;flex:1 1 auto;}
+.cake-bubble-flavors{display:grid;grid-template-columns:repeat(3,max-content);gap:8px;flex:0 0 auto;}
 .cake-bubble{border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;box-shadow:0 3px 9px rgba(34,55,69,.2);flex-shrink:0;text-align:center;}
 .cake-bubble .cb-code{letter-spacing:.3px;}
 .cake-bubble .cb-qty{font-weight:700;opacity:.92;margin-top:1px;line-height:1.25;}
@@ -253,8 +257,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 #tab-home .kpi-hero{padding:10px 12px;}
 #tab-home .kpi-hero-plain .kpi-lbl{font-size:10.5px;margin-top:0;margin-bottom:4px;}
 #tab-home .kpi-hero-plain .kpi-val{font-size:26px;}
-#tab-home .kpi-mini-grid{margin-bottom:8px;gap:8px;}
-#tab-home .cake-bubble-wrap{padding:2px 0;gap:12px;}
+#tab-home .cake-bubble-wrap{padding:2px 0;gap:14px;}
 #tab-home .card-head-row{margin-bottom:8px;}
 #tab-home textarea#claude-import-json{min-height:40px;}
 #tab-home .quick-input-row{gap:6px;}
@@ -306,6 +309,16 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   </div>
 </div>
 
+<div class="modal-overlay" id="month-modal-overlay" onclick="closeMonthPickerModalOnOverlay(event)">
+  <div class="modal-panel" style="max-width:340px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>เลือกเดือน</h3>
+      <button class="closebtn" onclick="closeMonthPickerModal()" style="font-size:20px">×</button>
+    </div>
+    <div class="pillrow" id="month-modal-pillrow" style="flex-direction:column;align-items:stretch;gap:6px"></div>
+  </div>
+</div>
+
 <div class="container">
 
   <!-- HOME TAB -->
@@ -319,19 +332,13 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="kpi-lbl">กำไรสุทธิรวมทั้งหมด</div>
         <div class="kpi-val" id="home-total-netprofit">฿0</div>
       </div>
-    </div>
-    <div class="kpi-mini-grid" style="margin-top:8px">
-      <div class="kpi-mini">
-        <div class="mini-icon" style="background:var(--tan)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v2h2a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><circle cx="16.5" cy="14" r="1.3"/></svg></div>
-        <div class="mini-body"><div class="mini-val" id="home-mini-net">฿0</div><div class="mini-lbl">ยอดสุทธิร้านได้รับ</div></div>
+      <div class="kpi-hero c2 kpi-hero-plain">
+        <div class="kpi-lbl">ยอดสุทธิร้านได้รับ</div>
+        <div class="kpi-val" id="home-mini-net">฿0</div>
       </div>
-      <div class="kpi-mini">
-        <div class="mini-icon" style="background:var(--olive)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 15 10 9 14 13 20 6"/><polyline points="14 6 20 6 20 12"/></svg></div>
-        <div class="mini-body"><div class="mini-val" id="home-mini-grossprofit">฿0</div><div class="mini-lbl">กำไรขั้นต้น</div></div>
-      </div>
-      <div class="kpi-mini">
-        <div class="mini-icon icon-dark-bg" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.5 2.5L16 9"/></svg></div>
-        <div class="mini-body"><div class="mini-val" id="home-mini-netprofit">฿0</div><div class="mini-lbl">กำไรสุทธิ</div></div>
+      <div class="kpi-hero c4 kpi-hero-plain">
+        <div class="kpi-lbl">กำไรขั้นต้น</div>
+        <div class="kpi-val" id="home-mini-grossprofit">฿0</div>
       </div>
     </div>
 
@@ -370,7 +377,10 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- ORDERS TAB -->
   <div class="tabpage" id="tab-orders">
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'order-form-body')">Add New Order <span class="chevron">▾</span></h2>
+      <div class="card-head-row">
+        <h2>Orders</h2>
+        <button type="button" class="btn-primary btn-sm" onclick="toggleSection(this,'order-form-body')">+ Add Order</button>
+      </div>
       <div id="order-form-body" style="display:none">
       <form id="order-form" onsubmit="return false">
         <input type="hidden" id="o-edit-id">
@@ -429,11 +439,15 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         </div>
       </form>
       </div>
-    </div>
 
-    <div class="card">
-      <h2>Orders</h2>
-      <div class="filter-toggle" onclick="toggleSection(this,'ro-filter-body')">ตัวกรอง: <span class="ft-summary" id="ro-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
+      <div class="pillrow" id="ro-channel-pillrow" style="margin-top:10px">
+        <div class="pill active" onclick="setChannelFilter('all',this)">All</div>
+        <div class="pill" onclick="setChannelFilter('Grab Food',this)">Grab Food</div>
+        <div class="pill" onclick="setChannelFilter('Line Man',this)">Line Man</div>
+        <div class="pill" onclick="setChannelFilter('อื่นๆ',this)">อื่นๆ</div>
+      </div>
+
+      <div class="filter-toggle" onclick="toggleSection(this,'ro-filter-body')">Period: <span class="ft-summary" id="ro-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
       <div id="ro-filter-body" class="filter-body" style="display:none">
       <div class="pillrow" id="ro-preset-pillrow">
         <div class="pill" onclick="setRangePreset('today','ro',this)">วันนี้</div>
@@ -442,31 +456,11 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="pill" onclick="setRangePreset('lastweek','ro',this)">สัปดาห์ที่แล้ว</div>
         <div class="pill" onclick="setRangePreset('month','ro',this)">เดือนนี้</div>
         <div class="pill active" onclick="setRangePreset('all','ro',this)">ทั้งหมด</div>
-      </div>
-      <div class="pillrow" id="ro-month-pillrow">
-        <div class="pill" onclick="setMonthPreset(0,'ro',this)">Jan</div>
-        <div class="pill" onclick="setMonthPreset(1,'ro',this)">Feb</div>
-        <div class="pill" onclick="setMonthPreset(2,'ro',this)">Mar</div>
-        <div class="pill" onclick="setMonthPreset(3,'ro',this)">Apr</div>
-        <div class="pill" onclick="setMonthPreset(4,'ro',this)">May</div>
-        <div class="pill" onclick="setMonthPreset(5,'ro',this)">Jun</div>
-        <div class="pill" onclick="setMonthPreset(6,'ro',this)">Jul</div>
-        <div class="pill" onclick="setMonthPreset(7,'ro',this)">Aug</div>
-        <div class="pill" onclick="setMonthPreset(8,'ro',this)">Sep</div>
-        <div class="pill" onclick="setMonthPreset(9,'ro',this)">Oct</div>
-        <div class="pill" onclick="setMonthPreset(10,'ro',this)">Nov</div>
-        <div class="pill" onclick="setMonthPreset(11,'ro',this)">Dec</div>
+        <div class="pill" onclick="openMonthPickerModal('ro')">เลือกเดือน</div>
       </div>
       <div class="row">
         <div><label>จากวันที่</label><input type="date" id="ro-from" onchange="roMonthSelected=false;renderRecentOrders();updateFilterSummary('ro')"></div>
         <div><label>ถึงวันที่</label><input type="date" id="ro-to" onchange="roMonthSelected=false;renderRecentOrders();updateFilterSummary('ro')"></div>
-      </div>
-      <div class="pillrow" id="ro-channel-pillrow" style="margin-top:10px">
-        <div class="pill active" onclick="setChannelFilter('all',this)">All</div>
-        <div class="pill" onclick="setChannelFilter('Grab Food',this)">Grab Food</div>
-        <div class="pill" onclick="setChannelFilter('Line Man',this)">Line Man</div>
-        <div class="pill" onclick="setChannelFilter('คอนโด',this)">คอนโด</div>
-        <div class="pill" onclick="setChannelFilter('อื่นๆ',this)">อื่นๆ</div>
       </div>
       </div>
       <div id="orders-recent" class="emptystate" style="margin-top:10px">ยังไม่มีข้อมูล</div>
@@ -476,7 +470,10 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- PURCHASES TAB -->
   <div class="tabpage" id="tab-purchases">
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'pur-form-body')">Add New Purchase <span class="chevron">▾</span></h2>
+      <div class="card-head-row">
+        <h2>Recent Purchases</h2>
+        <button type="button" class="btn-primary btn-sm" onclick="toggleSection(this,'pur-form-body')">+ Add Purchase</button>
+      </div>
       <div id="pur-form-body" style="display:none">
       <form id="pur-form" onsubmit="return false">
         <input type="hidden" id="p-edit-id">
@@ -510,10 +507,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         </div>
       </form>
       </div>
-    </div>
 
-    <div class="card">
-      <h2>Recent Purchases</h2>
       <div class="filter-toggle" onclick="toggleSection(this,'rp-filter-body')">ตัวกรอง: <span class="ft-summary" id="rp-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
       <div id="rp-filter-body" class="filter-body" style="display:none">
       <div class="pillrow" id="rp-preset-pillrow">
@@ -1027,6 +1021,8 @@ function toast(msg,type){
   clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast',2600);
 }
 function fmtMoney(n){ n=Number(n)||0; return '฿'+n.toLocaleString('th-TH',{maximumFractionDigits:0}); }
+const ICON_EDIT='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
+const ICON_DELETE='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
 function toggleEl(id){
   const el=document.getElementById(id);
   if(el) el.style.display = (el.style.display==='none'||!el.style.display) ? 'block' : 'none';
@@ -1306,6 +1302,10 @@ async function refreshAllViews(){
   renderMenuManage();
   await renderOptionManage();
   await refreshDbStats();
+  await renderHomeSummary();
+  await renderHomeCakeCount();
+  renderPurchaseSpendDashboard();
+  renderDailyFeeList();
   if(document.getElementById('tab-dashboard').classList.contains('active')) await renderDashboard();
 }
 async function migrateLocalToCloud(){
@@ -1575,10 +1575,10 @@ function renderOrderPendingList(){
   box.innerHTML=`<div class="pl-title">พบ ${pendingOrders.length} ออเดอร์ที่ยังไม่ได้บันทึก</div>` +
     pendingOrders.map((o,i)=>`
       <div class="pending-card">
-        <div class="pc-info"><b>${escapeHtml(o.order_no||'(ไม่มีเลขออเดอร์)')}</b>${escapeHtml(o.channel||'')} · ${escapeHtml(o.date||'')} · ${(o.items||[]).length} รายการ · ฿${Number(o.total_sale||0).toFixed(2)}</div>
+        <div class="pc-info"><b>${escapeHtml(o.order_no||'(ไม่มีเลขออเดอร์)')}</b>${escapeHtml(o.channel||'')} · ${o.date?formatThaiDateShort(o.date):''} · ${(o.items||[]).length} รายการ · ฿${Number(o.total_sale||0).toFixed(2)}</div>
         <div class="pc-btns">
           <button type="button" class="btn-primary btn-sm" onclick="confirmPendingOrder(${i})">ยืนยัน</button>
-          <button type="button" class="btn-ghost btn-sm" onclick="discardPendingOrder(${i})">ลบ</button>
+          <button type="button" class="icon-btn danger" onclick="discardPendingOrder(${i})" aria-label="ลบ">${ICON_DELETE}</button>
         </div>
       </div>`).join('');
   updateHomePendingEmptyState();
@@ -1913,7 +1913,7 @@ async function deleteOrderById(id){
   renderRecentOrders();
   toast('ลบแล้ว','ok');
 }
-const THAI_MONTHS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const THAI_MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 // จัดกลุ่มวันที่เป็นสัปดาห์ (เริ่มวันจันทร์) — ใช้กับกราฟยอดขายรายสัปดาห์บนแดชบอร์ด
 function getWeekStartDate(dateStr){
   const d=new Date(dateStr+'T00:00:00');
@@ -1964,7 +1964,7 @@ function getWeekStart(dateStr){
 }
 function formatThaiDateShort(iso){
   const [y,m,d]=iso.split('-');
-  return Number(d)+' '+THAI_MONTHS[Number(m)-1];
+  return Number(d)+' '+THAI_MONTHS[Number(m)-1]+' '+y;
 }
 async function renderRecentOrders(){
   const fromEl=document.getElementById('ro-from');
@@ -1973,7 +1973,10 @@ async function renderRecentOrders(){
   const to=toEl&&toEl.value?toEl.value:todayISO();
 
   let orders=(await idbAll('orders')).filter(o=>o.date>=from && o.date<=to);
-  if(roChannelFilter && roChannelFilter!=='all') orders=orders.filter(o=>o.channel===roChannelFilter);
+  if(roChannelFilter && roChannelFilter!=='all'){
+    if(roChannelFilter==='อื่นๆ') orders=orders.filter(o=>o.channel==='อื่นๆ' || o.channel==='คอนโด');
+    else orders=orders.filter(o=>o.channel===roChannelFilter);
+  }
   orders.sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));
 
   const el=document.getElementById('orders-recent');
@@ -1989,26 +1992,21 @@ async function renderRecentOrders(){
       <span class="or-no">#${escapeHtml(o.order_no||'-')}</span>
       <b class="or-total">${fmtMoney(o.total_sale)}</b>
       <span class="or-profit ${profit>=0?'pos':'neg'}">${fmtMoney(profit)}</span>
-      <button class="btn-ghost btn-sm or-del" onclick="event.stopPropagation();deleteOrderById('${o.id}')">ลบ</button>
+      <button class="icon-btn danger or-del" onclick="event.stopPropagation();deleteOrderById('${o.id}')" aria-label="ลบ">${ICON_DELETE}</button>
     </div>`;
   }
 
-  // เลือกช่วงเวลาผ่านปุ่มชื่อเดือน → แสดงทุกออเดอร์เรียงต่อกันเป็นลิสต์เดียว ไม่แบ่งกลุ่มใดๆ เลย (ไม่มีหัวข้อสัปดาห์/วัน คั่น)
-  if(roMonthSelected){
+  // ลิสต์เรียงต่อกันธรรมดา ไม่แบ่งกลุ่มวัน/สัปดาห์ ยกเว้นตอนเลือกช่วง "ทั้งหมด" ถึงจะแบ่งกลุ่มเป็นรายเดือนแทน
+  const isAllTime = (from==='2000-01-01' && to===todayISO());
+  if(!isAllTime){
     el.innerHTML=orders.map(orderRowHtml).join('');
     return;
   }
 
-  // นอกเหนือจากนั้น: ช่วงเวลาที่เลือกเกิน 7 วัน → จัดกลุ่มเป็นรายสัปดาห์อัตโนมัติ ไม่เกิน 7 วัน → แสดงแยกรายวัน
-  const spanDays=Math.round((new Date(to+'T00:00:00')-new Date(from+'T00:00:00'))/86400000)+1;
-  const groupByWeek=spanDays>7;
-  function groupKey(o){ return groupByWeek ? getWeekStart(o.date) : o.date; }
+  function groupKey(o){ return o.date.slice(0,7); } // YYYY-MM
   function groupLabel(key){
-    if(groupByWeek){
-      const endD=new Date(key+'T00:00:00'); endD.setDate(endD.getDate()+6);
-      return 'สัปดาห์ '+formatThaiDateShort(key)+' - '+formatThaiDateShort(toLocalISO(endD));
-    }
-    return formatThaiDateShort(key);
+    const [y,m]=key.split('-');
+    return THAI_MONTHS[Number(m)-1]+' '+y;
   }
 
   const groups={};
@@ -2075,7 +2073,7 @@ async function showOrderDetail(id){
   document.getElementById('modal-body').innerHTML=`
     <div style="margin-bottom:10px">
       <span class="badge ${cls}">${escapeHtml(order.channel)}${order.thai_plus?'<span title="Thai+ 60/40">*</span>':''}</span>
-      <div class="hint" style="margin-top:4px">${order.date}</div>
+      <div class="hint" style="margin-top:4px">${formatThaiDateShort(order.date)}</div>
     </div>
     <h3 style="margin-top:0">Order Items</h3>
     ${itemsHtml}
@@ -2093,8 +2091,8 @@ async function showOrderDetail(id){
     `}
     ${order.note ? `<h3>Note</h3><div class="hint" style="white-space:pre-wrap">${escapeHtml(order.note)}</div>` : ''}
     <div class="btn-row" style="margin-top:14px">
-      <button class="btn-secondary" onclick="closeModal();editOrderById('${order.id}')">Edit</button>
-      <button class="btn-danger" onclick="closeModal();deleteOrderById('${order.id}')">Delete This Order</button>
+      <button class="icon-btn" onclick="closeModal();editOrderById('${order.id}')" aria-label="Edit">${ICON_EDIT}</button>
+      <button class="icon-btn danger" onclick="closeModal();deleteOrderById('${order.id}')" aria-label="Delete">${ICON_DELETE}</button>
       <button class="btn-ghost" onclick="closeModal()">ปิด</button>
     </div>`;
   openModal();
@@ -2115,10 +2113,10 @@ function renderDailyFeePendingList(){
   box.innerHTML=`<div class="pl-title">พบ ${pendingDailyFees.length} รายการค่าธรรมเนียมรายวันที่ยังไม่ได้บันทึก</div>` +
     pendingDailyFees.map((f,i)=>`
       <div class="pending-card">
-        <div class="pc-info"><b>${escapeHtml(f.channel||'')}</b>${escapeHtml(f.date||'')} · ค่าคอม ${fmtMoney(f.commission)} · ค่าโฆษณา ${fmtMoney(f.ad_fee)}</div>
+        <div class="pc-info"><b>${escapeHtml(f.channel||'')}</b>${f.date?formatThaiDateShort(f.date):''} · ค่าคอม ${fmtMoney(f.commission)} · ค่าโฆษณา ${fmtMoney(f.ad_fee)}</div>
         <div class="pc-btns">
           <button type="button" class="btn-primary btn-sm" onclick="confirmPendingDailyFee(${i})">ยืนยัน</button>
-          <button type="button" class="btn-ghost btn-sm" onclick="discardPendingDailyFee(${i})">ลบ</button>
+          <button type="button" class="icon-btn danger" onclick="discardPendingDailyFee(${i})" aria-label="ลบ">${ICON_DELETE}</button>
         </div>
       </div>`).join('');
   updateHomePendingEmptyState();
@@ -2210,10 +2208,10 @@ function renderPurPendingList(){
   box.innerHTML=`<div class="pl-title">พบ ${pendingPurchases.length} ใบเสร็จที่ยังไม่ได้บันทึก</div>` +
     pendingPurchases.map((p,i)=>`
       <div class="pending-card">
-        <div class="pc-info"><b>${escapeHtml(p.store||'(ไม่ทราบร้าน)')}</b>${escapeHtml(p.date||'')} · ${(p.items||[]).length} รายการ</div>
+        <div class="pc-info"><b>${escapeHtml(p.store||'(ไม่ทราบร้าน)')}</b>${p.date?formatThaiDateShort(p.date):''} · ${(p.items||[]).length} รายการ</div>
         <div class="pc-btns">
           <button type="button" class="btn-primary btn-sm" onclick="confirmPendingPurchase(${i})">ยืนยัน</button>
-          <button type="button" class="btn-ghost btn-sm" onclick="discardPendingPurchase(${i})">ลบ</button>
+          <button type="button" class="icon-btn danger" onclick="discardPendingPurchase(${i})" aria-label="ลบ">${ICON_DELETE}</button>
         </div>
       </div>`).join('');
   updateHomePendingEmptyState();
@@ -2420,14 +2418,11 @@ async function renderRecentPurchases(){
   el.className='';
   const sum=rows.reduce((s,p)=>s+Number(p.total||0),0);
   const header=`<div class="group-header">${rows.length} รายการ · รวม ${fmtMoney(sum)}</div>`;
-  el.innerHTML=header+rows.map(p=>`<div class="list-item">
-      <div><b>${escapeHtml(p.item_name)}</b> — ${fmtMoney(p.total)}
-        <div class="meta">${p.date} · ${escapeHtml(p.category)} · ${escapeHtml(p.store||'-')}</div>
-      </div>
-      <div style="display:flex;gap:4px;flex-shrink:0">
-        <button class="btn-ghost btn-sm" onclick="editPurchaseById('${p.id}')">แก้ไข</button>
-        <button class="btn-ghost btn-sm" onclick="deletePurchaseById('${p.id}')">ลบ</button>
-      </div>
+  el.innerHTML=header+rows.map(p=>`<div class="order-row">
+      <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0"><b>${escapeHtml(p.item_name)}</b> · ${formatThaiDateShort(p.date)} · ${escapeHtml(p.category)} · ${escapeHtml(p.store||'-')}</span>
+      <b class="or-total">${fmtMoney(p.total)}</b>
+      <button class="icon-btn" onclick="editPurchaseById('${p.id}')" aria-label="แก้ไข">${ICON_EDIT}</button>
+      <button class="icon-btn danger" onclick="deletePurchaseById('${p.id}')" aria-label="ลบ">${ICON_DELETE}</button>
     </div>`).join('');
 }
 
@@ -2457,10 +2452,6 @@ async function renderPurchaseSpendDashboard(){
   });
 
   const summaryEl=document.getElementById('pur-spend-summary');
-  const grandTotal=stats.reduce((s,g)=>s+g.total,0);
-  if(summaryEl){
-    summaryEl.innerHTML=stats.map(g=>`<div class="detail-row"><span class="k">${escapeHtml(g.label)}</span><span class="v">${fmtMoney(g.total)}${g.count?` (${g.count} ครั้ง)`:''}</span></div>`).join('');
-  }
 
   const withData=stats.filter(g=>g.total>0);
   if(!withData.length){
@@ -2474,11 +2465,13 @@ async function renderPurchaseSpendDashboard(){
   canvas.style.display='';
   const centerEl=document.getElementById('donut-pur-spend-center');
   if(centerEl) centerEl.style.display='';
+  if(summaryEl) summaryEl.innerHTML='';
   drawPie('chart-pur-spend',
-    withData.map(g=>`${g.label} (${g.count} ครั้ง)`),
+    withData.map(g=>g.label),
     withData.map(g=>g.total),
     'donut-pur-spend-center',
-    `รวม ${withData.length} กลุ่ม`);
+    `รวม ${withData.length} กลุ่ม`,
+    {sliceLabels:true});
 }
 
 /* ============ DASHBOARD ============ */
@@ -2605,6 +2598,30 @@ async function renderQtyChart(items){
 // เมื่อเลือกช่วงเวลาผ่านปุ่มชื่อเดือน (Jan-Dec) ในการ์ด Orders ให้แสดงลิสต์แบบไม่แบ่งกลุ่มเป็นรายสัปดาห์ (แสดงแยกรายวันแทน แม้ช่วงจะเกิน 7 วัน)
 // ค่านี้จะถูกล้างกลับเป็น false ทันทีที่มีการเลือกช่วงเวลาแบบอื่น (พรีเซ็ต/กรอกวันที่เอง) เพื่อกลับไปใช้กฎอัตโนมัติปกติ
 let roMonthSelected=false;
+// ป๊อปอัพเลือกเดือน (ใช้แทนแถวปุ่ม Jan-Dec เดิม) — เรียกได้จากหลายหน้าโดยส่ง prefix เข้ามา
+function openMonthPickerModal(prefix){
+  const wrap=document.getElementById('month-modal-pillrow');
+  wrap.innerHTML=THAI_MONTHS.map((m,i)=>`<div class="pill" onclick="selectMonthFromModal(${i},'${prefix}')">${m}</div>`).join('');
+  document.getElementById('month-modal-overlay').style.display='flex';
+}
+function closeMonthPickerModal(){ document.getElementById('month-modal-overlay').style.display='none'; }
+function closeMonthPickerModalOnOverlay(e){ if(e.target.id==='month-modal-overlay') closeMonthPickerModal(); }
+function selectMonthFromModal(monthIndex,prefix){
+  const presetRow=document.getElementById(prefix+'-preset-pillrow');
+  if(presetRow) presetRow.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  if(prefix==='ro') roMonthSelected=true;
+  const year=new Date().getFullYear();
+  const from=toLocalISO(new Date(year,monthIndex,1));
+  const to=toLocalISO(new Date(year,monthIndex+1,0));
+  document.getElementById(prefix+'-from').value=from;
+  document.getElementById(prefix+'-to').value=to;
+  const summaryEl=document.getElementById(prefix+'-filter-summary');
+  if(summaryEl) summaryEl.textContent=THAI_MONTHS[monthIndex]+' '+year;
+  if(prefix==='ro') renderRecentOrders();
+  else if(prefix==='fin') renderFinance();
+  else if(prefix==='rp'){ renderRecentPurchases(); renderPurchaseSpendDashboard(); }
+  closeMonthPickerModal();
+}
 // อัพเดตข้อความสรุปช่วงเวลาที่เลือกไว้ (โชว์ตอนพับตัวกรองเก็บ จะได้ไม่ต้องกางดูว่าเลือกอะไรอยู่)
 function updateFilterSummary(prefix){
   const el=document.getElementById(prefix+'-filter-summary');
@@ -2697,10 +2714,8 @@ async function renderHomeSummary(){
   profitEl.textContent=fmtMoney(totalNetProfit);
   const netMiniEl=document.getElementById('home-mini-net');
   const grossMiniEl=document.getElementById('home-mini-grossprofit');
-  const netProfitMiniEl=document.getElementById('home-mini-netprofit');
   if(netMiniEl) netMiniEl.textContent=fmtMoney(totalNet);
   if(grossMiniEl) grossMiniEl.textContent=fmtMoney(totalGrossProfit);
-  if(netProfitMiniEl) netProfitMiniEl.textContent=fmtMoney(totalNetProfit);
 }
 // การ์ดจำนวนเค้กที่ขายไปแล้วทั้งหมด (ตลอดกาล นับตั้งแต่เปิดร้าน) เฉพาะหมวด "cheesecake slice" — แจกแจง set menu ออกเป็นไอเทมย่อยตามรสจริงด้วย (ใช้ breakdownSetMenuItem ตัวเดียวกับกราฟรายวัน/รายสัปดาห์โหมด "แจกแจง")
 async function renderHomeCakeCount(){
@@ -3020,14 +3035,29 @@ function drawStackedBar(canvasId,labels,datasets,onBarClick){
     }
   });
 }
-function drawPie(canvasId,labels,data,centerElId,centerLabelText){
+function drawPie(canvasId,labels,data,centerElId,centerLabelText,opts){
+  opts=opts||{};
   if(charts[canvasId]) charts[canvasId].destroy();
   const ctx=document.getElementById(canvasId).getContext('2d');
   const colors=['#fff2bf','#ddd1a8','#c2b796','#aba186','#948a77','#7d7467','#665e58'];
   charts[canvasId]=new Chart(ctx,{
     type:'doughnut',
     data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:6}]},
-    options:{cutout:'68%',responsive:true,aspectRatio:chartAspectRatio(1.6,1.15),plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},datalabels:{display:false}}}
+    options:{cutout:'68%',responsive:true,aspectRatio:chartAspectRatio(1.6,1.15),plugins:{
+      legend:{display:!opts.sliceLabels,position:'bottom',labels:{boxWidth:12,font:{size:11}}},
+      datalabels: opts.sliceLabels ? {
+        display:true,
+        clamp:true,
+        clip:false,
+        color:dctx=>{ const c=colors[dctx.dataIndex%colors.length]; return readableTextColorFor(c); },
+        font:{size:9.5,weight:'700'},
+        textAlign:'center',
+        formatter:(value,dctx)=>{
+          const lbl=truncateLabel(dctx.chart.data.labels[dctx.dataIndex],14);
+          return [lbl,fmtMoney(value)];
+        }
+      } : {display:false}
+    }}
   });
   if(centerElId){
     const el=document.getElementById(centerElId);
@@ -3225,7 +3255,7 @@ async function renderFinance(){
           <span class="or-date">${formatThaiDateShort(f.date)}</span>
           <span class="or-no">คอม ${fmtMoney(f.commission)} · โฆษณา ${fmtMoney(f.ad_fee)}</span>
           <b class="or-total">${fmtMoney(Number(f.commission||0)+Number(f.ad_fee||0))}</b>
-          <button type="button" class="btn-ghost btn-sm or-del" onclick="event.stopPropagation();deleteDailyFeeRow('${f.id}')">ลบ</button>
+          <button type="button" class="icon-btn danger or-del" onclick="event.stopPropagation();deleteDailyFeeRow('${f.id}')" aria-label="ลบ">${ICON_DELETE}</button>
         </div>`;
       }).join('');
       return `<div class="group-header">${escapeHtml(dfGroupLabel(k))} · ${grp.length} รายการ · รวม ${fmtMoney(feeSum)}</div>${rowsHtml}`;
@@ -3544,8 +3574,8 @@ function renderMenuManage(){
               <div class="meta">ราคา ${fmtMoney(m.price)} · ต้นทุน ${fmtMoney(m.cost)}</div>
             </div>
             <div style="display:flex;gap:4px;flex-shrink:0">
-              <button type="button" class="btn-ghost btn-sm" onclick="editMenuItem('${m.id}')">แก้ไข</button>
-              <button type="button" class="btn-ghost btn-sm" onclick="deleteMenuItem('${m.id}')">ลบ</button>
+              <button type="button" class="icon-btn" onclick="editMenuItem('${m.id}')" aria-label="แก้ไข">${ICON_EDIT}</button>
+              <button type="button" class="icon-btn danger" onclick="deleteMenuItem('${m.id}')" aria-label="ลบ">${ICON_DELETE}</button>
             </div>
           </div>`).join('');
       const bodyId=`mn-cat-body-${idx}`;
@@ -3624,8 +3654,8 @@ async function renderOptionManage(){
         return `<div class="list-item">
           <div>${escapeHtml(o.name)} ${o.extra_price?('+ '+fmtMoney(o.extra_price)):''}</div>
           <div style="display:flex;gap:4px;flex-shrink:0">
-            <button class="btn-ghost btn-sm" onclick="editOptionGroupRow('${o.id}')">แก้ไข</button>
-            <button class="btn-ghost btn-sm" onclick="deleteOptionGroupRow('${o.id}')">ลบ</button>
+            <button class="icon-btn" onclick="editOptionGroupRow('${o.id}')" aria-label="แก้ไข">${ICON_EDIT}</button>
+            <button class="icon-btn danger" onclick="deleteOptionGroupRow('${o.id}')" aria-label="ลบ">${ICON_DELETE}</button>
           </div>
         </div>`;
       }).join('');
