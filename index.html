@@ -96,17 +96,19 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .card-head-row h2{margin:0 !important;}
 .cake-sold-card{background:transparent;box-shadow:none;padding:8px 0;}
 .cake-bubble-wrap{display:flex;flex-direction:row;align-items:flex-start;gap:10px;padding:10px 0 4px;width:100%;box-sizing:border-box;}
-.cake-bubble-total{border-radius:50%;background:var(--pink);color:var(--pink-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;flex-shrink:0;}
+.cake-bubble-total{width:var(--cbt-size);height:var(--cbt-size);border-radius:50%;background:var(--pink);color:var(--pink-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;flex-shrink:0;}
 .cake-bubble-total .cbt-num{font-weight:800;font-family:var(--font-head);line-height:1;}
 .cake-bubble-flavors{display:flex;flex-wrap:wrap;align-content:flex-start;gap:8px;flex:1 1 0;min-width:0;}
-.cake-bubble{flex:0 0 calc(25% - 6px);max-width:calc(25% - 6px);aspect-ratio:1/1;box-sizing:border-box;padding:2px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;text-align:center;}
+.cake-bubble{flex:0 0 calc(25% - 6px);max-width:min(calc(25% - 6px),calc(var(--cbt-size) / 2));max-height:calc(var(--cbt-size) / 2);aspect-ratio:1/1;box-sizing:border-box;padding:2px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;text-align:center;}
 .cake-bubble .cb-code{letter-spacing:.3px;}
 .cake-bubble .cb-qty{font-weight:700;opacity:.92;margin-top:1px;line-height:1.25;}
-.stock-bubble-wrap{display:flex;flex-wrap:nowrap;overflow-x:auto;gap:10px;padding:6px 2px 10px;-webkit-overflow-scrolling:touch;}
-.stock-bubble{flex:0 0 62px;width:62px;height:62px;border-radius:16px;clip-path:polygon(0 0,72% 0,100% 28%,100% 100%,0 100%);display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;text-align:center;box-sizing:border-box;padding:2px;transition:transform .1s;}
+.stock-bubble-wrap{display:flex;flex-wrap:nowrap;gap:6px;padding:6px 0 4px;overflow:hidden;}
+.stock-bubble{position:relative;flex:1 1 0;min-width:0;max-width:70px;aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .1s;}
 .stock-bubble:active{transform:scale(.94);}
-.stock-bubble .stock-qty{font-weight:800;font-family:var(--font-head);line-height:1;font-size:13px;}
-.stock-bubble .stock-name{font-weight:600;opacity:.9;margin-top:2px;line-height:1.15;font-size:8.5px;}
+.stock-bubble .stock-shape{position:absolute;inset:0;width:100%;height:100%;}
+.stock-bubble .stock-label{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;pointer-events:none;padding-top:6%;}
+.stock-bubble .stock-qty{font-weight:800;font-family:var(--font-head);line-height:1;font-size:clamp(11px,3.6vw,15px);}
+.stock-bubble .stock-name{font-weight:600;opacity:.92;margin-top:2px;line-height:1.1;font-size:clamp(6.5px,2vw,8.5px);max-width:90%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 #stock-modal-overlay{align-items:center;}
 .stock-modal-circle{width:min(66vw,240px);height:min(66vw,240px);border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 10px 34px rgba(0,0,0,.28);padding:16px;box-sizing:border-box;animation:stockpop .18s ease-out;}
 @keyframes stockpop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
@@ -163,6 +165,7 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .badge.line{background:#7d7062;color:#fffefa;}
 .badge.other{background:#e6dcc0;color:#665e58;}
 .badge.condo{background:#665e58;color:#fffefa;}
+.badge.tp{border:1.5px solid #8a5a2b;}
 table{width:100%;border-collapse:collapse;font-size:13px;}
 table th,table td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--border);}
 table th{color:var(--muted);font-weight:600;font-size:11.5px;}
@@ -272,10 +275,12 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 #tab-home .cake-bubble-wrap{padding:2px 0;gap:14px;}
 #tab-home .card-head-row{margin-bottom:8px;}
 #tab-home textarea#claude-import-json{min-height:40px;}
-#tab-orders .order-row{font-size:11px;}
-#tab-orders .order-row .badge{font-size:11px;}
-#tab-orders .order-row .or-total{font-size:11px;}
-#tab-orders .order-row .or-profit{font-size:11px;}
+#tab-orders .order-row{font-size:11px;display:grid;grid-template-columns:46px 56px 44px 1fr 58px;align-items:center;column-gap:6px;}
+#tab-orders .order-row .badge{font-size:11px;text-align:center;justify-self:stretch;}
+#tab-orders .order-row .or-no{overflow:hidden;text-overflow:ellipsis;}
+#tab-orders .order-row .or-date{justify-self:start;}
+#tab-orders .order-row .or-total{font-size:11px;text-align:right;justify-self:end;margin-left:0;}
+#tab-orders .order-row .or-profit{font-size:11px;text-align:right;justify-self:end;margin-left:0;}
 </style>
 </head>
 <body>
@@ -1034,14 +1039,16 @@ function toast(msg,type){
 function fmtMoney(n){ n=Number(n)||0; return '฿'+n.toLocaleString('th-TH',{maximumFractionDigits:0}); }
 // รูปแบบเฉพาะการ์ด KPI: เอา ฿ ไปไว้ท้ายตัวเลข ตัวบาง ขนาดครึ่งหนึ่งของตัวเลข (ใช้ innerHTML เพราะต้องมี span ครอบ ฿)
 function fmtMoneyKpi(n){ n=Number(n)||0; return n.toLocaleString('th-TH',{maximumFractionDigits:0})+'<span class="kpi-currency">฿</span>'; }
-// วันที่แบบสั้นสุด "23.07" (วัน.เดือน ไม่ใส่ปี) — ใช้เฉพาะลิสต์ออเดอร์หน้า Orders
+// วันที่แบบสั้น "20 Jul" (วัน + เดือนย่อ ไม่ใส่ปี) — ใช้เฉพาะลิสต์ออเดอร์หน้า Orders
 function formatDateDDMM(iso){
   if(!iso) return '';
   const [,m,d]=iso.split('-');
-  return d+'.'+m;
+  return Number(d)+' '+THAI_MONTHS[Number(m)-1];
 }
 const ICON_EDIT='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.85 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>';
 const ICON_DELETE='<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>';
+// ซิลูเอทรูปเค้กสไลด์ (ด้านข้าง) — ใช้เป็นพื้นหลังปุ่มวงในการ์ด Today's Stock แทนวงกลม
+const CAKE_SLICE_PATH='M 12 52 L 20 14 Q 22 10 27 10 L 48 10 Q 54 10 54 16 L 54 46 Q 54 52 48 52 Z';
 // ไอคอนหมวดหมู่รายการซื้อของ — ใช้แปะหน้าชื่อไอเทมในลิสต์ Purchases ให้ดูออกไวๆ ว่าเป็นของประเภทไหน
 const PUR_CAT_ICON_PATHS={
   'วัตถุดิบ':'<path d="M6 8h12l-1 12H7L6 8z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>',
@@ -2024,9 +2031,9 @@ async function renderRecentOrders(){
     const cls=o.channel==='Grab Food'?'grab':o.channel==='Line Man'?'line':o.channel==='คอนโด'?'condo':'other';
     const profit=Number(o.gross_profit)||0;
     return `<div class="order-row clickable" onclick="showOrderDetail('${o.id}')">
-      <span class="badge ${cls}">${escapeHtml(shortChannelLabel(o.channel))}${o.thai_plus?'<span title="Thai+ 60/40">*</span>':''}</span>
-      <span class="or-date">${formatDateDDMM(o.date)}</span>
+      <span class="badge ${cls}${o.thai_plus?' tp':''}" ${o.thai_plus?'title="Thai+ 60/40"':''}>${escapeHtml(shortChannelLabel(o.channel))}</span>
       <span class="or-no">#${escapeHtml(o.order_no||'-')}</span>
+      <span class="or-date">${formatDateDDMM(o.date)}</span>
       <b class="or-total">${fmtMoney(o.total_sale)}</b>
       <span class="or-profit ${profit>=0?'pos':'neg'}">${fmtMoney(profit)}</span>
     </div>`;
@@ -2130,7 +2137,7 @@ async function showOrderDetail(id){
 
   document.getElementById('modal-body').innerHTML=`
     <div style="margin-bottom:10px">
-      <span class="badge ${cls}">${escapeHtml(order.channel)}${order.thai_plus?'<span title="Thai+ 60/40">*</span>':''}</span>
+      <span class="badge ${cls}${order.thai_plus?' tp':''}" ${order.thai_plus?'title="Thai+ 60/40"':''}>${escapeHtml(order.channel)}</span>
       <div class="hint" style="margin-top:4px">${formatThaiDateShort(order.date)}</div>
     </div>
     <h3 style="margin-top:0">Order Items</h3>
@@ -2898,8 +2905,10 @@ async function renderHomeCakeCount(){
   const rows=Object.entries(byFlavor).sort((a,b)=>b[1]-a[1]);
 
   // วงกลมใหญ่สุด = ยอดรวมทั้งหมด แสดงแค่ "xxx ชิ้น" บรรทัดเดียว (ทำให้เล็กลงกว่าเดิม)
+  // ขนาดกำหนดผ่าน CSS var --cbt-size บน wrapEl เพื่อให้วงกลมแต่ละรส (.cake-bubble) อ้างอิงมาคำนวณ max-size ไม่ให้ใหญ่เกินครึ่งได้
   const totalBubbleSize='clamp(56px, 24vw, 110px)';
-  const totalHtml=`<div class="cake-bubble-total" style="width:${totalBubbleSize};height:${totalBubbleSize}">
+  wrapEl.style.setProperty('--cbt-size', totalBubbleSize);
+  const totalHtml=`<div class="cake-bubble-total">
     <div class="cbt-num" style="font-size:clamp(12px, 5.2vw, 19px)">${total.toLocaleString('th-TH')} ชิ้น</div>
   </div>`;
 
@@ -2968,9 +2977,12 @@ async function renderTodayStock(){
     const fill=cakeFlavorFillCss(m.name) || flavorColorForMenuNameCssFallback(m.name);
     const solidForText=CAKE_CODE_COLORS[resolveCakeCode(m.name)] || (CAKE_CODE_HATCH[resolveCakeCode(m.name)]?CAKE_CODE_HATCH[resolveCakeCode(m.name)][0]:null) || '#a5705f';
     const textColor=readableTextColorFor(solidForText);
-    return `<div class="stock-bubble" style="background:${fill};color:${textColor}" onclick="openStockDetail('${m.id}')">
-      <div class="stock-qty">${qty}</div>
-      <div class="stock-name">${escapeHtml(shortName)}</div>
+    return `<div class="stock-bubble" onclick="openStockDetail('${m.id}')">
+      <svg class="stock-shape" viewBox="0 0 64 64" preserveAspectRatio="xMidYMid meet"><path d="${CAKE_SLICE_PATH}" fill="${fill}"/></svg>
+      <div class="stock-label">
+        <div class="stock-qty" style="color:${textColor}">${qty}</div>
+        <div class="stock-name" style="color:${textColor}">${escapeHtml(shortName)}</div>
+      </div>
     </div>`;
   }).join('');
 }
