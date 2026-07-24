@@ -252,7 +252,7 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-size:12.5px;}
 #tab-home .card{padding:12px 14px;margin-bottom:8px;}
 #tab-home .card h2{margin-bottom:6px;font-size:15px;}
-#tab-home .kpi-hero-grid{margin-bottom:8px;gap:8px;}
+#tab-home .kpi-hero-grid{margin-bottom:8px;gap:8px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));}
 #tab-home .kpi-hero{padding:10px 12px;}
 #tab-home .kpi-hero-plain .kpi-lbl{font-size:10.5px;margin-top:0;margin-bottom:4px;}
 #tab-home .kpi-hero-plain .kpi-val{font-size:26px;}
@@ -320,53 +320,13 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   </div>
 </div>
 
-<div class="container">
-
-  <!-- HOME TAB -->
-  <div class="tabpage active" id="tab-home">
-    <div class="kpi-hero-grid">
-      <div class="kpi-hero c1 kpi-hero-plain">
-        <div class="kpi-lbl">ยอดขายรวมทั้งหมด</div>
-        <div class="kpi-val" id="home-total-sales">0<span class="kpi-currency">฿</span></div>
-      </div>
-      <div class="kpi-hero c5 kpi-hero-plain">
-        <div class="kpi-lbl">กำไรสุทธิรวมทั้งหมด</div>
-        <div class="kpi-val" id="home-total-netprofit">0<span class="kpi-currency">฿</span></div>
-      </div>
-      <div class="kpi-hero c2 kpi-hero-plain">
-        <div class="kpi-lbl">ยอดสุทธิร้านได้รับ</div>
-        <div class="kpi-val" id="home-mini-net">0<span class="kpi-currency">฿</span></div>
-      </div>
-      <div class="kpi-hero c4 kpi-hero-plain">
-        <div class="kpi-lbl">กำไรขั้นต้น</div>
-        <div class="kpi-val" id="home-mini-grossprofit">0<span class="kpi-currency">฿</span></div>
-      </div>
+<div class="modal-overlay" id="orderform-modal-overlay" onclick="closeOrderFormModalOnOverlay(event)">
+  <div class="modal-panel" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3 id="orderform-modal-title">Add New Order</h3>
+      <button class="closebtn" onclick="closeOrderFormModal()" style="font-size:20px">×</button>
     </div>
-
-    <div class="card cake-sold-card">
-      <h2>Cake Sold</h2>
-      <div id="home-cake-bubbles" class="cake-bubble-wrap"></div>
-    </div>
-
-    <div class="card">
-      <div style="display:flex;gap:6px">
-        <textarea id="claude-import-json" placeholder='วางโค้ด JSON ที่ Claude ให้มาตรงนี้ เช่น {"orders":[...],"purchases":[...]}' style="flex:1;min-width:140px;font-family:monospace;font-size:11.5px;resize:none"></textarea>
-        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
-          <button class="btn-primary btn-sm" style="flex:1" onclick="importFromClaudeJSON()">Import</button>
-          <button class="btn-sm" style="flex:1;background:var(--seg);color:var(--pink-dark)" onclick="openCheckDataModal()">Check Data</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ORDERS TAB -->
-  <div class="tabpage" id="tab-orders">
-    <div class="card">
-      <div class="card-head-row">
-        <h2>Orders</h2>
-        <button type="button" class="btn-primary btn-sm" onclick="toggleSection(this,'order-form-body')">+ Add Order</button>
-      </div>
-      <div id="order-form-body" style="display:none">
+    <div id="order-form-body">
       <form id="order-form" onsubmit="return false">
         <input type="hidden" id="o-edit-id">
         <input type="hidden" id="o-edit-old-no">
@@ -420,9 +380,69 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="btn-row" style="margin-top:14px">
           <button class="btn-primary" onclick="saveOrder()">บันทึกออเดอร์</button>
           <button class="btn-ghost" onclick="resetOrderForm()">ล้างฟอร์ม</button>
-          <button class="btn-ghost" id="o-cancel-btn" onclick="resetOrderForm()" style="display:none">ยกเลิกแก้ไข</button>
+          <button class="btn-ghost" id="o-cancel-btn" onclick="closeOrderFormModal()" style="display:none">ยกเลิกแก้ไข</button>
         </div>
       </form>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmdelete-modal-overlay" onclick="closeConfirmDeleteModalOnOverlay(event)">
+  <div class="modal-panel" style="max-width:320px" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3>ยืนยันการลบ</h3></div>
+    <p class="hint" id="confirmdelete-modal-text" style="font-size:14px;color:var(--text)"></p>
+    <div class="btn-row" style="margin-top:14px">
+      <button type="button" class="btn-danger" onclick="_confirmDeleteAnswer(true)">ลบ</button>
+      <button type="button" class="btn-ghost" onclick="_confirmDeleteAnswer(false)">ยกเลิก</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- HOME TAB -->
+  <div class="tabpage active" id="tab-home">
+    <div class="kpi-hero-grid">
+      <div class="kpi-hero c1 kpi-hero-plain">
+        <div class="kpi-lbl">ยอดขายรวมทั้งหมด</div>
+        <div class="kpi-val" id="home-total-sales">0<span class="kpi-currency">฿</span></div>
+      </div>
+      <div class="kpi-hero c5 kpi-hero-plain">
+        <div class="kpi-lbl">กำไรสุทธิรวมทั้งหมด</div>
+        <div class="kpi-val" id="home-total-netprofit">0<span class="kpi-currency">฿</span></div>
+      </div>
+      <div class="kpi-hero c2 kpi-hero-plain">
+        <div class="kpi-lbl">ยอดสุทธิร้านได้รับ</div>
+        <div class="kpi-val" id="home-mini-net">0<span class="kpi-currency">฿</span></div>
+      </div>
+      <div class="kpi-hero c4 kpi-hero-plain">
+        <div class="kpi-lbl">กำไรขั้นต้น</div>
+        <div class="kpi-val" id="home-mini-grossprofit">0<span class="kpi-currency">฿</span></div>
+      </div>
+    </div>
+
+    <div class="card cake-sold-card">
+      <h2>Cake Sold</h2>
+      <div id="home-cake-bubbles" class="cake-bubble-wrap"></div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex;gap:6px">
+        <textarea id="claude-import-json" placeholder='วางโค้ด JSON ที่ Claude ให้มาตรงนี้ เช่น {"orders":[...],"purchases":[...]}' style="flex:1;min-width:140px;font-family:monospace;font-size:11.5px;resize:none"></textarea>
+        <div style="display:flex;flex-direction:column;gap:6px;flex-shrink:0">
+          <button class="btn-primary btn-sm" style="flex:1" onclick="importFromClaudeJSON()">Import</button>
+          <button class="btn-sm" style="flex:1;background:var(--seg);color:var(--pink-dark)" onclick="openCheckDataModal()">Check Data</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDERS TAB -->
+  <div class="tabpage" id="tab-orders">
+    <div class="card">
+      <div class="card-head-row">
+        <h2>Orders</h2>
+        <button type="button" class="btn-primary btn-sm" onclick="openAddOrderModal()">+ Add Order</button>
       </div>
 
       <div class="pillrow" id="ro-channel-pillrow" style="margin-top:10px">
@@ -550,8 +570,9 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <!-- DASHBOARD TAB -->
   <div class="tabpage" id="tab-dashboard">
     <div class="card">
-      <h2 class="collapsible-head" onclick="toggleSection(this,'d-filter-body')">Period: <span class="ft-summary" id="d-filter-summary" style="font-weight:400">ทั้งหมด</span> <span class="chevron">▾</span></h2>
-      <div id="d-filter-body" style="display:none">
+      <h2>Dashboard</h2>
+      <div class="filter-toggle" onclick="toggleSection(this,'d-filter-body')">Period: <span class="ft-summary" id="d-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
+      <div id="d-filter-body" class="filter-body" style="display:none">
       <div class="pillrow" id="d-preset-pillrow">
         <div class="pill" onclick="setRangePreset('today','d',this)">วันนี้</div>
         <div class="pill" onclick="setRangePreset('thisweek','d',this)">สัปดาห์นี้</div>
@@ -1570,7 +1591,8 @@ async function confirmPendingOrder(i){
   editingPendingOrderIndex=i;
   await saveOrder();
 }
-function discardPendingOrder(i){
+async function discardPendingOrder(i){
+  if(!(await confirmDeleteModal('ลบรายการนี้ออกจากรายการรอตรวจสอบ?'))) return;
   pendingOrders.splice(i,1);
   if(editingPendingOrderIndex===i) editingPendingOrderIndex=-1;
   renderOrderPendingList();
@@ -1840,6 +1862,8 @@ async function saveOrder(){
   renderRecentOrders();
   renderHomeSummary();
   renderHomeCakeCount();
+  closeOrderFormModal();
+  if(editId) showOrderDetail(orderId);
 }
 async function editOrderById(id){
   const orders=await idbAll('orders');
@@ -1874,12 +1898,11 @@ async function editOrderById(id){
   onThaiPlusToggle(true);
   recalcOrderTotals();
   document.getElementById('o-cancel-btn').style.display='inline-block';
-  goToTab('orders');
-  openCollapsible('order-form-body');
-  document.getElementById('order-form').scrollIntoView({behavior:'smooth',block:'start'});
+  document.getElementById('orderform-modal-title').textContent='Edit Order';
+  document.getElementById('orderform-modal-overlay').style.display='flex';
 }
 async function deleteOrderById(id){
-  if(!confirm('ลบออเดอร์นี้?')) return;
+  if(!(await confirmDeleteModal('ลบออเดอร์นี้?'))) return;
   const orders=await idbAll('orders');
   const ord=orders.find(o=>o.id===id);
   await idbDelete('orders',id);
@@ -2009,6 +2032,28 @@ function closeModalOnOverlay(e){ if(e.target.id==='modal-overlay') closeModal();
 function openCheckDataModal(){ document.getElementById('checkdata-modal-overlay').style.display='flex'; }
 function closeCheckDataModal(){ document.getElementById('checkdata-modal-overlay').style.display='none'; }
 function closeCheckDataModalOnOverlay(e){ if(e.target.id==='checkdata-modal-overlay') closeCheckDataModal(); }
+/* ============ ORDER FORM MODAL (ใช้ทั้งเพิ่มออเดอร์ใหม่ และแก้ไขออเดอร์เดิม) ============ */
+function openAddOrderModal(){
+  resetOrderForm();
+  document.getElementById('orderform-modal-title').textContent='Add New Order';
+  document.getElementById('orderform-modal-overlay').style.display='flex';
+}
+function closeOrderFormModal(){ document.getElementById('orderform-modal-overlay').style.display='none'; }
+function closeOrderFormModalOnOverlay(e){ if(e.target.id==='orderform-modal-overlay') closeOrderFormModal(); }
+/* ============ CONFIRM DELETE MODAL (ใช้แทน confirm() ของเบราว์เซอร์ ตอนกดปุ่มถังขยะทุกจุดในแอพ) ============ */
+let _confirmDeleteResolve=null;
+function confirmDeleteModal(message){
+  return new Promise(resolve=>{
+    _confirmDeleteResolve=resolve;
+    document.getElementById('confirmdelete-modal-text').textContent=message;
+    document.getElementById('confirmdelete-modal-overlay').style.display='flex';
+  });
+}
+function _confirmDeleteAnswer(val){
+  document.getElementById('confirmdelete-modal-overlay').style.display='none';
+  if(_confirmDeleteResolve){ _confirmDeleteResolve(val); _confirmDeleteResolve=null; }
+}
+function closeConfirmDeleteModalOnOverlay(e){ if(e.target.id==='confirmdelete-modal-overlay') _confirmDeleteAnswer(false); }
 const KPI_INFO={
   's-sales':{title:'ยอดขายรวม',body:'ผลรวมยอดขาย (total_sale) ของทุกออเดอร์ในช่วงเวลาที่เลือก ตามราคาขายรวมที่กรอกไว้ในแต่ละออเดอร์ ยังไม่หักค่าคอมมิชชั่น ค่าโฆษณา หรือต้นทุนสินค้าใดๆ'},
   's-profit':{title:'กำไรขั้นต้น',body:'กำไรขั้นต้น = ยอดสุทธิร้านได้รับ − ต้นทุนสินค้าต่อออเดอร์<br><br>คำนวณจากต้นทุนสินค้าต่อออร์เดอร์ ยังไม่ได้หัก "ยอดซื้อของเข้าร้าน" ทั้งหมด (เพราะของที่ซื้ออาจยังไม่ถูกขายหมด) ดูยอดซื้อของแยกไว้ด้านล่างเพื่อเทียบกระแสเงินสด'},
@@ -2107,7 +2152,8 @@ async function confirmPendingDailyFee(i){
   editingPendingDailyFeeIndex=i;
   await saveDailyFee();
 }
-function discardPendingDailyFee(i){
+async function discardPendingDailyFee(i){
+  if(!(await confirmDeleteModal('ลบรายการนี้ออกจากรายการรอตรวจสอบ?'))) return;
   pendingDailyFees.splice(i,1);
   if(editingPendingDailyFeeIndex===i) editingPendingDailyFeeIndex=-1;
   renderDailyFeePendingList();
@@ -2140,7 +2186,7 @@ async function saveDailyFee(){
   toast(editId?'แก้ไขค่าธรรมเนียมแล้ว':'บันทึกค่าธรรมเนียมแล้ว','ok');
 }
 async function deleteDailyFeeRow(id){
-  if(!confirm('ลบรายการนี้?')) return;
+  if(!(await confirmDeleteModal('ลบรายการนี้?'))) return;
   await idbDelete('daily_fees',id);
   await renderDailyFeeList();
   toast('ลบแล้ว','ok');
@@ -2245,7 +2291,8 @@ async function confirmPendingPurchase(i){
   editingPendingPurchaseIndex=i;
   await savePurchase();
 }
-function discardPendingPurchase(i){
+async function discardPendingPurchase(i){
+  if(!(await confirmDeleteModal('ลบรายการนี้ออกจากรายการรอตรวจสอบ?'))) return;
   pendingPurchases.splice(i,1);
   if(editingPendingPurchaseIndex===i) editingPendingPurchaseIndex=-1;
   renderPurPendingList();
@@ -2390,7 +2437,7 @@ async function savePurchase(){
   renderHomeCakeCount();
 }
 async function deletePurchaseById(id){
-  if(!confirm('ลบรายการนี้?')) return;
+  if(!(await confirmDeleteModal('ลบรายการนี้?'))) return;
   await idbDelete('purchases',id);
   renderRecentPurchases();
   renderPurchaseSpendDashboard();
@@ -3696,7 +3743,7 @@ function resetMenuForm(){
   document.getElementById('mn-cancel-btn').style.display='none';
 }
 async function deleteMenuItem(id){
-  if(!confirm('ลบเมนูนี้? (ไม่กระทบออเดอร์ที่บันทึกไปแล้ว)')) return;
+  if(!(await confirmDeleteModal('ลบเมนูนี้? (ไม่กระทบออเดอร์ที่บันทึกไปแล้ว)'))) return;
   await idbDelete('menu',id);
   await refreshMenuCache();
   renderMenuManage();
@@ -3733,7 +3780,7 @@ async function renderOptionManage(){
   if(dl) dl.innerHTML=getOptionGroupNames().map(g=>`<option value="${escapeHtml(g)}">`).join('');
 }
 async function deleteOptionGroupRow(id){
-  if(!confirm('ลบตัวเลือกนี้?')) return;
+  if(!(await confirmDeleteModal('ลบตัวเลือกนี้?'))) return;
   await idbDelete('option_groups',id);
   await renderOptionManage();
 }
