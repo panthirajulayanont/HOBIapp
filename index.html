@@ -1874,8 +1874,9 @@ async function saveOrder(){
     // (ใช้ order_no/date เดิมตอนโหลดมาแก้ไข เผื่อผู้ใช้แก้เลขออเดอร์เดียวกันนี้ตอนบันทึก)
     const oldNo=document.getElementById('o-edit-old-no').value;
     const oldDate=document.getElementById('o-edit-old-date').value;
+    // ลบทั้งรายการที่ผูก order_id ไว้แล้ว และรายการเก่าที่นำเข้าจาก Excel ซึ่งไม่มี order_id (จับคู่ด้วย order_no+date เดิมแทน) กันตกค้างซ้ำ
     const allItems=await idbAll('order_items');
-    for(const it of allItems.filter(x=>x.order_id===orderId)) await idbDelete('order_items',it.id);
+    for(const it of allItems.filter(x=>x.order_id===orderId || (x.order_no===oldNo && x.date===oldDate))) await idbDelete('order_items',it.id);
     const allOpts=await idbAll('order_item_options');
     for(const o of allOpts.filter(x=>x.order_no===oldNo && x.date===oldDate)) await idbDelete('order_item_options',o.id);
   }
@@ -1912,7 +1913,11 @@ async function editOrderById(id){
   const order=orders.find(o=>o.id===id);
   if(!order){ toast('ไม่พบข้อมูลออเดอร์นี้','err'); return; }
   const allItems=await idbAll('order_items');
-  const items=allItems.filter(i=>i.order_id===id);
+  // จับคู่ด้วย order_id ก่อน ถ้าไม่เจอ (เช่นออเดอร์เก่าที่นำเข้าจาก Excel ซึ่งไม่มี order_id ผูกไว้) ให้สำรองจับคู่ด้วย order_no+date แทน — เหมือนกับที่ showOrderDetail ใช้
+  let items=allItems.filter(i=>i.order_id===id);
+  if(!items.length && order.order_no){
+    items=allItems.filter(i=>i.order_no===order.order_no && i.date===order.date);
+  }
   const allOpts=await idbAll('order_item_options');
   const opts=allOpts.filter(o=>o.order_no===order.order_no && o.date===order.date);
 
@@ -1949,7 +1954,8 @@ async function deleteOrderById(id){
   const ord=orders.find(o=>o.id===id);
   await idbDelete('orders',id);
   const items=await idbAll('order_items');
-  for(const it of items.filter(x=>x.order_id===id)) await idbDelete('order_items',it.id);
+  // ลบทั้งรายการที่ผูก order_id ไว้ และรายการเก่าที่นำเข้าจาก Excel ซึ่งไม่มี order_id (จับคู่ด้วย order_no+date แทน)
+  for(const it of items.filter(x=>x.order_id===id || (ord && x.order_no===ord.order_no && x.date===ord.date))) await idbDelete('order_items',it.id);
   if(ord && ord.order_no){
     const opts=await idbAll('order_item_options');
     for(const o of opts.filter(x=>x.order_no===ord.order_no && x.date===ord.date)) await idbDelete('order_item_options',o.id);
