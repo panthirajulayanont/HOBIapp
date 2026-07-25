@@ -569,37 +569,39 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       </div>
       </div>
 
-      <div class="chart-card" style="margin-top:14px">
-        <div class="chart-card-head">
-          <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.5 4.3"/></svg></div>
-          <div class="cc-title">ยอดซื้อวัตถุดิบหลัก (ตามช่วงเวลาที่เลือกด้านบน)</div>
-          <button type="button" class="info-btn" onclick="toggleEl('hint-pur-spend')">i</button>
+      <div class="row" style="margin-top:14px;align-items:flex-start">
+        <div class="chart-card" style="margin-top:0">
+          <div class="chart-card-head">
+            <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.5 4.3"/></svg></div>
+            <div class="cc-title">ยอดซื้อวัตถุดิบหลัก (ตามช่วงเวลาที่เลือกด้านบน)</div>
+            <button type="button" class="info-btn" onclick="toggleEl('hint-pur-spend')">i</button>
+          </div>
+          <p class="hint" id="hint-pur-spend" style="display:none">ติดตามยอดซื้อของกลุ่มวัตถุดิบหลัก 5 กลุ่ม: Cream Cheese, Whipping Cream, Matcha, Houjicha, Cold Brew (จับคู่จากคำที่อยู่ในชื่อไอเทม เช่น "tavi" หรือ "brew" สำหรับ Cold Brew) — อยากเพิ่ม/แก้กลุ่มไหน บอกได้เลย</p>
+          <div class="cc-donut-wrap" id="pur-spend-donut-wrap">
+            <canvas id="chart-pur-spend"></canvas>
+            <div class="donut-center" id="donut-pur-spend-center"><div class="dc-val">฿0</div><div class="dc-lbl">รวม 5 กลุ่ม</div></div>
+          </div>
+          <div id="pur-spend-summary" style="margin-top:10px"></div>
         </div>
-        <p class="hint" id="hint-pur-spend" style="display:none">ติดตามยอดซื้อของกลุ่มวัตถุดิบหลัก 5 กลุ่ม: Cream Cheese, Whipping Cream, Matcha, Houjicha, Cold Brew (จับคู่จากคำที่อยู่ในชื่อไอเทม เช่น "tavi" หรือ "brew" สำหรับ Cold Brew) — อยากเพิ่ม/แก้กลุ่มไหน บอกได้เลย</p>
-        <div class="cc-donut-wrap" id="pur-spend-donut-wrap">
-          <canvas id="chart-pur-spend"></canvas>
-          <div class="donut-center" id="donut-pur-spend-center"><div class="dc-val">฿0</div><div class="dc-lbl">รวม 5 กลุ่ม</div></div>
-        </div>
-        <div id="pur-spend-summary" style="margin-top:10px"></div>
-      </div>
 
-      <div class="row" style="margin-top:14px">
-        <div><label>หมวดหมู่</label>
-          <select id="rp-category" onchange="renderRecentPurchases()">
-            <option value="all">ทุกหมวดหมู่</option>
-            <option value="วัตถุดิบ">วัตถุดิบ</option>
-            <option value="แพ็กเกจจิ้ง">แพ็กเกจจิ้ง</option>
-            <option value="อุปกรณ์ทำครัว">อุปกรณ์ทำครัว</option>
-            <option value="อื่นๆ">อื่นๆ</option>
-          </select>
-        </div>
-        <div><label>ค้นหาไอเทม</label><input type="text" id="rp-search" placeholder="พิมพ์คำค้นหา เช่น ครีมชีส" oninput="renderRecentPurchases()"></div>
-        <div><label>เรียงลำดับ</label>
-          <select id="rp-sort" onchange="renderRecentPurchases()">
-            <option value="date_desc">วันที่ซื้อ (ล่าสุดก่อน)</option>
-            <option value="date_asc">วันที่ซื้อ (เก่าสุดก่อน)</option>
-            <option value="name_asc">ชื่อไอเทม (ก-ฮ)</option>
-          </select>
+        <div style="flex:1 1 0;min-width:140px;display:flex;flex-direction:column;gap:10px">
+          <div><label>หมวดหมู่</label>
+            <select id="rp-category" onchange="renderRecentPurchases()">
+              <option value="all">ทุกหมวดหมู่</option>
+              <option value="วัตถุดิบ">วัตถุดิบ</option>
+              <option value="แพ็กเกจจิ้ง">แพ็กเกจจิ้ง</option>
+              <option value="อุปกรณ์ทำครัว">อุปกรณ์ทำครัว</option>
+              <option value="อื่นๆ">อื่นๆ</option>
+            </select>
+          </div>
+          <div><label>ค้นหาไอเทม</label><input type="text" id="rp-search" placeholder="พิมพ์คำค้นหา เช่น ครีมชีส" oninput="renderRecentPurchases()"></div>
+          <div><label>เรียงลำดับ</label>
+            <select id="rp-sort" onchange="renderRecentPurchases()">
+              <option value="date_desc">วันที่ซื้อ (ล่าสุดก่อน)</option>
+              <option value="date_asc">วันที่ซื้อ (เก่าสุดก่อน)</option>
+              <option value="name_asc">ชื่อไอเทม (ก-ฮ)</option>
+            </select>
+          </div>
         </div>
       </div>
       <div id="pur-recent" class="emptystate" style="margin-top:10px">ยังไม่มีข้อมูล</div>
