@@ -225,9 +225,9 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .chart-card canvas{max-height:260px;}
 .chart-card .cc-donut-wrap{position:relative;}
 .donut-center{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
-#pur-spend-donut-wrap{max-width:50%;margin:0 auto;}
-#pur-spend-donut-wrap .dc-val{font-size:7px;}
-#pur-spend-donut-wrap .dc-lbl{font-size:6px;}
+#pur-spend-donut-wrap{max-width:100%;margin:0 auto;}
+#pur-spend-donut-wrap .dc-val{font-size:10px;}
+#pur-spend-donut-wrap .dc-lbl{font-size:8.5px;}
 .donut-center .dc-val{font-size:11.2px;font-weight:800;color:var(--brown);}
 .donut-center .dc-lbl{font-size:9.5px;color:var(--muted);margin-top:1px;}
 .mini-chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-top:14px;}
@@ -285,6 +285,8 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 #tab-orders .order-row .or-date{justify-self:start;}
 #tab-orders .order-row .or-total{font-size:11px;text-align:right;justify-self:end;margin-left:0;}
 #tab-orders .order-row .or-profit{font-size:11px;text-align:right;justify-self:end;margin-left:0;}
+#tab-orders .order-row.order-summary{background:var(--butter);color:#5a4a2a;font-weight:700;border-radius:8px;cursor:default;border-bottom:none;margin-bottom:8px;}
+#tab-orders .order-row.order-summary:hover{background:var(--butter);}
 </style>
 </head>
 <body>
@@ -515,7 +517,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <div class="tabpage" id="tab-purchases">
     <div class="card">
       <div class="card-head-row">
-        <h2>Recent Purchases</h2>
+        <h2>Purchases</h2>
         <button type="button" class="btn-primary btn-sm" onclick="toggleSection(this,'pur-form-body')">+ Add Purchase</button>
       </div>
       <div id="pur-form-body" style="display:none">
@@ -573,7 +575,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="chart-card" style="margin-top:0">
           <div class="chart-card-head">
             <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.5 4.3"/></svg></div>
-            <div class="cc-title">ยอดซื้อวัตถุดิบหลัก (ตามช่วงเวลาที่เลือกด้านบน)</div>
+            <div class="cc-title">ยอดซื้อวัตถุดิบหลัก</div>
             <button type="button" class="info-btn" onclick="toggleEl('hint-pur-spend')">i</button>
           </div>
           <p class="hint" id="hint-pur-spend" style="display:none">ติดตามยอดซื้อของกลุ่มวัตถุดิบหลัก 5 กลุ่ม: Cream Cheese, Whipping Cream, Matcha, Houjicha, Cold Brew (จับคู่จากคำที่อยู่ในชื่อไอเทม เช่น "tavi" หรือ "brew" สำหรับ Cold Brew) — อยากเพิ่ม/แก้กลุ่มไหน บอกได้เลย</p>
@@ -1881,6 +1883,7 @@ async function saveOrder(){
   };
   await idbPut('orders',order);
 
+  let oldItemsSnapshot=null, oldDateForStock=null;
   if(editId){
     // กำลังแก้ไขออเดอร์เดิม — ลบรายการเมนู/ออปชั่นเก่าของออเดอร์นี้ทิ้งก่อน แล้วค่อยเพิ่มชุดใหม่ตามฟอร์ม
     // (ใช้ order_no/date เดิมตอนโหลดมาแก้ไข เผื่อผู้ใช้แก้เลขออเดอร์เดียวกันนี้ตอนบันทึก)
@@ -1888,7 +1891,10 @@ async function saveOrder(){
     const oldDate=document.getElementById('o-edit-old-date').value;
     // ลบทั้งรายการที่ผูก order_id ไว้แล้ว และรายการเก่าที่นำเข้าจาก Excel ซึ่งไม่มี order_id (จับคู่ด้วย order_no+date เดิมแทน) กันตกค้างซ้ำ
     const allItems=await idbAll('order_items');
-    for(const it of allItems.filter(x=>x.order_id===orderId || (x.order_no===oldNo && x.date===oldDate))) await idbDelete('order_items',it.id);
+    const matchedOld=allItems.filter(x=>x.order_id===orderId || (x.order_no===oldNo && x.date===oldDate));
+    oldItemsSnapshot=matchedOld.map(x=>({name:x.name,qty:x.qty})); // เก็บรายการเดิมไว้ก่อนลบ เอาไว้คำนวณส่วนต่างสต็อกวันนี้
+    oldDateForStock=oldDate;
+    for(const it of matchedOld) await idbDelete('order_items',it.id);
     const allOpts=await idbAll('order_item_options');
     for(const o of allOpts.filter(x=>x.order_no===oldNo && x.date===oldDate)) await idbDelete('order_item_options',o.id);
   }
@@ -1907,6 +1913,9 @@ async function saveOrder(){
       });
     }
   }
+  // หักสต็อก Today's Stock ให้อัตโนมัติตามส่วนต่างของออเดอร์นี้ (รายการใหม่ลบรายการเก่า) เฉพาะฝั่งที่วันที่ตรงกับวันนี้เท่านั้น
+  // ครอบคลุมทั้งบันทึกออเดอร์ใหม่ด้วยมือ, แก้ไขออเดอร์เดิม, และกดยืนยันออเดอร์ที่ import มาจาก JSON (ทุกเส้นทางผ่านฟังก์ชันนี้ทั้งหมด)
+  await applyTodayStockDeltaForOrder(order.date, blocks, oldDateForStock, oldItemsSnapshot);
   toast(editId?'แก้ไขออเดอร์แล้ว':'บันทึกออเดอร์แล้ว','ok');
   if(editingPendingOrderIndex>=0){
     pendingOrders.splice(editingPendingOrderIndex,1);
@@ -1967,11 +1976,14 @@ async function deleteOrderById(id){
   await idbDelete('orders',id);
   const items=await idbAll('order_items');
   // ลบทั้งรายการที่ผูก order_id ไว้ และรายการเก่าที่นำเข้าจาก Excel ซึ่งไม่มี order_id (จับคู่ด้วย order_no+date แทน)
-  for(const it of items.filter(x=>x.order_id===id || (ord && x.order_no===ord.order_no && x.date===ord.date))) await idbDelete('order_items',it.id);
+  const matchedItems=items.filter(x=>x.order_id===id || (ord && x.order_no===ord.order_no && x.date===ord.date));
+  for(const it of matchedItems) await idbDelete('order_items',it.id);
   if(ord && ord.order_no){
     const opts=await idbAll('order_item_options');
     for(const o of opts.filter(x=>x.order_no===ord.order_no && x.date===ord.date)) await idbDelete('order_item_options',o.id);
   }
+  // คืนสต็อกวันนี้กลับให้ ถ้าออเดอร์ที่ลบเป็นของวันนี้ (ตัดสินใจจากรายการเดิมที่เพิ่งลบไป)
+  if(ord) await applyTodayStockDeltaForOrder(null,[],ord.date,matchedItems.map(x=>({name:x.name,qty:x.qty})));
   renderRecentOrders();
   toast('ลบแล้ว','ok');
 }
@@ -2045,6 +2057,15 @@ async function renderRecentOrders(){
   if(!orders.length){ el.className='emptystate'; el.textContent='ไม่มีออเดอร์ในช่วง/เงื่อนไขที่เลือก'; return; }
   el.className='';
 
+  // แถบสรุปยอดขายรวม+กำไรรวมของทั้งลิสต์ที่กรองอยู่ ตำแหน่งตัวเลขตรงกับคอลัมน์ยอดขาย/กำไรของแต่ละแถวด้านล่าง
+  const totalSales=orders.reduce((s,o)=>s+Number(o.total_sale||0),0);
+  const totalProfit=orders.reduce((s,o)=>s+Number(o.gross_profit||0),0);
+  const summaryBar=`<div class="order-row order-summary">
+    <span style="grid-column:1 / span 3">${orders.length} ออเดอร์</span>
+    <b class="or-total">${fmtMoney(totalSales)}</b>
+    <span class="or-profit ${totalProfit>=0?'pos':'neg'}">${fmtMoney(totalProfit)}</span>
+  </div>`;
+
   function orderRowHtml(o){
     const cls=o.channel==='Grab Food'?'grab':o.channel==='Line Man'?'line':o.channel==='คอนโด'?'condo':'other';
     const profit=Number(o.gross_profit)||0;
@@ -2060,7 +2081,7 @@ async function renderRecentOrders(){
   // ลิสต์เรียงต่อกันธรรมดา ไม่แบ่งกลุ่มวัน/สัปดาห์ ยกเว้นตอนเลือกช่วง "ทั้งหมด" ถึงจะแบ่งกลุ่มเป็นรายเดือนแทน
   const isAllTime = (from==='2000-01-01' && to===todayISO());
   if(!isAllTime){
-    el.innerHTML=orders.map(orderRowHtml).join('');
+    el.innerHTML=summaryBar+orders.map(orderRowHtml).join('');
     return;
   }
 
@@ -2077,7 +2098,7 @@ async function renderRecentOrders(){
   });
   const sortedKeys=Object.keys(groups).sort((a,b)=>b.localeCompare(a));
 
-  el.innerHTML=sortedKeys.map(k=>{
+  el.innerHTML=summaryBar+sortedKeys.map(k=>{
     const grp=groups[k];
     const sum=grp.reduce((s,o)=>s+Number(o.total_sale||0),0);
     const rows=grp.map(orderRowHtml).join('');
@@ -2602,7 +2623,10 @@ async function renderRecentPurchases(){
   if(!rows.length){ el.className='emptystate'; el.textContent=searchVal?'ไม่พบไอเทมที่ตรงกับคำค้นหา':'ไม่มีรายการซื้อในช่วง/เงื่อนไขที่เลือก'; return; }
   el.className='';
   const sum=rows.reduce((s,p)=>s+Number(p.total||0),0);
-  const header=`<div class="group-header">${rows.length} รายการ · รวม ${fmtMoney(sum)}</div>`;
+  const header=`<div class="group-header" style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+    <span>${rows.length} รายการ</span>
+    <span style="font-size:15px;font-weight:800">รวม ${fmtMoney(sum)}</span>
+  </div>`;
   el.innerHTML=header+rows.map(p=>`<div class="order-row clickable" onclick="showPurchaseDetail('${p.id}')">
       ${purCategoryIconSvg(p.category)}
       <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0"><b>${escapeHtml(p.item_name)}</b></span>
@@ -2622,12 +2646,8 @@ const PURCHASE_SPEND_TRACK_GROUPS=[
 async function renderPurchaseSpendDashboard(){
   const canvas=document.getElementById('chart-pur-spend');
   if(!canvas) return;
-  const fromEl=document.getElementById('rp-from');
-  const toEl=document.getElementById('rp-to');
-  const from=fromEl&&fromEl.value?fromEl.value:'2000-01-01';
-  const to=toEl&&toEl.value?toEl.value:todayISO();
-
-  const rows=(await idbAll('purchases')).filter(p=>p.date>=from && p.date<=to);
+  // กราฟนี้แสดงยอดรวม "ตลอดกาล" เสมอ ไม่ผูกกับตัวกรองช่วงเวลาด้านบนของหน้า Purchases แล้ว
+  const rows=await idbAll('purchases');
   const stats=PURCHASE_SPEND_TRACK_GROUPS.map(g=>({label:g.label,count:0,total:0}));
   rows.forEach(p=>{
     const nameLower=(p.item_name||'').toLowerCase();
@@ -2655,7 +2675,7 @@ async function renderPurchaseSpendDashboard(){
     withData.map(g=>g.total),
     'donut-pur-spend-center',
     `รวม ${withData.length} กลุ่ม`,
-    {sliceLabels:true, small:true});
+    {sliceLabels:true, small:true, cutout:'45%'});
 }
 
 /* ============ DASHBOARD ============ */
@@ -3027,6 +3047,37 @@ async function adjustStockQty(delta){
   await setTodayStockQty(stockModalMenuId,next);
   document.getElementById('stock-modal-qty').textContent=next;
 }
+// รวมจำนวนเมนูหมวด cheesecake slice ต่อ 1 menu id จากรายการไอเทมของออเดอร์ (จับคู่ชื่อแบบ fuzzy กันชื่อสะกดไม่ตรงเป๊ะ) — ใช้คำนวณหักสต็อก Today's Stock อัตโนมัติ
+function sumCakeQtyByMenuId(items){
+  const targetCat=normCatName('cheesecake slice');
+  const map={};
+  (items||[]).forEach(it=>{
+    const qty=Number(it.qty)||0;
+    if(qty<=0) return;
+    const m=fuzzyFindMenu(it.name);
+    if(!m || normCatName(m.category)!==targetCat) return;
+    map[m.id]=(map[m.id]||0)+qty;
+  });
+  return map;
+}
+// หักสต็อก Today's Stock ให้อัตโนมัติตามส่วนต่างของออเดอร์ (รายการใหม่ - รายการเก่า) เฉพาะฝั่งที่วันที่ตรงกับวันนี้เท่านั้น
+// (ระบบนี้ติดตามสต็อกเฉพาะของ "วันนี้" — ออเดอร์วันอื่นจะไม่แตะสต็อกวันนี้เลย)
+// oldDate/oldItems ใส่ null ได้ถ้าเป็นออเดอร์ใหม่ (ไม่ใช่การแก้ไข/ลบออเดอร์เดิม)
+async function applyTodayStockDeltaForOrder(newDate,newItems,oldDate,oldItems){
+  const today=todayISO();
+  const newMap = (newDate===today) ? sumCakeQtyByMenuId(newItems) : {};
+  const oldMap = (oldDate===today) ? sumCakeQtyByMenuId(oldItems) : {};
+  const menuIds=new Set([...Object.keys(newMap),...Object.keys(oldMap)]);
+  let changed=false;
+  for(const menuId of menuIds){
+    const delta=(newMap[menuId]||0)-(oldMap[menuId]||0);
+    if(delta===0) continue;
+    const cur=getTodayStockQty(menuId);
+    await setTodayStockQty(menuId, Math.max(0,cur-delta));
+    changed=true;
+  }
+  if(changed) renderTodayStock();
+}
 // สีสำรอง (string เสมอ ใช้กับ CSS ได้) กรณีไม่ตรงทั้งโค้ดที่กำหนดตายตัวและ keyword ทั่วไป
 function flavorColorForMenuNameCssFallback(name){
   const n=normFuzzy(canonicalMenuName(name)+' '+name);
@@ -3278,7 +3329,7 @@ function drawPie(canvasId,labels,data,centerElId,centerLabelText,opts){
   charts[canvasId]=new Chart(ctx,{
     type:'doughnut',
     data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:6}]},
-    options:{cutout:'68%',responsive:true,aspectRatio:chartAspectRatio(1.6,1.15),plugins:{
+    options:{cutout:opts.cutout||'68%',responsive:true,aspectRatio:chartAspectRatio(1.6,1.15),plugins:{
       legend:{display:!opts.sliceLabels,position:'bottom',labels:{boxWidth:12,font:{size:11}}},
       datalabels: opts.sliceLabels ? {
         display:true,
