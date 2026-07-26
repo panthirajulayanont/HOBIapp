@@ -572,23 +572,6 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       </form>
       </div>
 
-      <div class="filter-toggle" onclick="toggleSection(this,'rp-filter-body')">Period: <span class="ft-summary" id="rp-filter-summary">เดือนนี้</span> <span class="chevron">▾</span></div>
-      <div id="rp-filter-body" class="filter-body" style="display:none">
-      <div class="pillrow" id="rp-preset-pillrow">
-        <div class="pill" onclick="setRangePreset('today','rp',this)">วันนี้</div>
-        <div class="pill" onclick="setRangePreset('thisweek','rp',this)">สัปดาห์นี้</div>
-        <div class="pill active" onclick="setRangePreset('month','rp',this)">เดือนนี้</div>
-        <div class="pill" onclick="setRangePreset('lastweek','rp',this)">สัปดาห์ก่อน</div>
-        <div class="pill" onclick="setRangePreset('lastmonth','rp',this)">เดือนก่อน</div>
-        <div class="pill" onclick="setRangePreset('all','rp',this)">ทั้งหมด</div>
-        <div class="pill" onclick="openMonthPickerModal('rp')">เลือกเดือน</div>
-      </div>
-      <div class="row">
-        <div><label>จากวันที่</label><input type="date" id="rp-from" onchange="renderRecentPurchases();renderPurchaseSpendDashboard();updateFilterSummary('rp')"></div>
-        <div><label>ถึงวันที่</label><input type="date" id="rp-to" onchange="renderRecentPurchases();renderPurchaseSpendDashboard();updateFilterSummary('rp')"></div>
-      </div>
-      </div>
-
       <div class="row" style="margin-top:14px;align-items:flex-start">
         <div class="chart-card" style="margin-top:0">
           <div class="chart-card-head">
@@ -604,18 +587,35 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <div id="pur-spend-summary" style="margin-top:10px"></div>
         </div>
 
-        <div style="flex:1 1 0;min-width:140px;display:flex;flex-direction:column;gap:10px">
-          <div style="display:flex;align-items:center;gap:8px"><label style="margin:0;white-space:nowrap">Category</label>
+        <div class="chart-card" style="margin-top:0;flex:1 1 0;min-width:140px;display:flex;flex-direction:column;gap:10px">
+          <div class="filter-toggle" onclick="toggleSection(this,'rp-filter-body')">Period: <span class="ft-summary" id="rp-filter-summary">เดือนนี้</span> <span class="chevron">▾</span></div>
+          <div id="rp-filter-body" class="filter-body" style="display:none">
+          <div class="pillrow" id="rp-preset-pillrow">
+            <div class="pill" onclick="setRangePreset('today','rp',this)">วันนี้</div>
+            <div class="pill" onclick="setRangePreset('thisweek','rp',this)">สัปดาห์นี้</div>
+            <div class="pill active" onclick="setRangePreset('month','rp',this)">เดือนนี้</div>
+            <div class="pill" onclick="setRangePreset('lastweek','rp',this)">สัปดาห์ก่อน</div>
+            <div class="pill" onclick="setRangePreset('lastmonth','rp',this)">เดือนก่อน</div>
+            <div class="pill" onclick="setRangePreset('all','rp',this)">ทั้งหมด</div>
+            <div class="pill" onclick="openMonthPickerModal('rp')">เลือกเดือน</div>
+          </div>
+          <div class="row">
+            <div><label>จากวันที่</label><input type="date" id="rp-from" onchange="renderRecentPurchases();renderPurchaseSpendDashboard();updateFilterSummary('rp')"></div>
+            <div><label>ถึงวันที่</label><input type="date" id="rp-to" onchange="renderRecentPurchases();renderPurchaseSpendDashboard();updateFilterSummary('rp')"></div>
+          </div>
+          </div>
+
+          <div style="display:flex;align-items:center;gap:8px"><label style="margin:0;white-space:nowrap;width:56px;flex-shrink:0">category</label>
             <select id="rp-category" onchange="renderRecentPurchases()" style="flex:1">
-              <option value="all">ทุกหมวดหมู่</option>
-              <option value="วัตถุดิบ">วัตถุดิบ</option>
-              <option value="แพ็กเกจจิ้ง">แพ็กเกจจิ้ง</option>
-              <option value="อุปกรณ์ทำครัว">อุปกรณ์ทำครัว</option>
-              <option value="อื่นๆ">อื่นๆ</option>
+              <option value="all">all</option>
+              <option value="วัตถุดิบ">ingredient</option>
+              <option value="แพ็กเกจจิ้ง">packaging</option>
+              <option value="อุปกรณ์ทำครัว">equipment</option>
+              <option value="อื่นๆ">other</option>
             </select>
           </div>
-          <div style="display:flex;align-items:center;gap:8px"><label style="margin:0;white-space:nowrap">Search item</label><input type="text" id="rp-search" placeholder="พิมพ์คำค้นหา เช่น ครีมชีส" oninput="renderRecentPurchases()" style="flex:1"></div>
-          <div style="display:flex;align-items:center;gap:8px"><label style="margin:0;white-space:nowrap">เรียงลำดับ</label>
+          <div style="display:flex;align-items:center;gap:8px"><label style="margin:0;white-space:nowrap;width:56px;flex-shrink:0">search</label><input type="text" id="rp-search" placeholder="พิมพ์คำค้นหา เช่น ครีมชีส" oninput="renderRecentPurchases()" style="flex:1"></div>
+          <div style="display:flex;align-items:center;gap:8px"><label style="margin:0;white-space:nowrap;width:56px;flex-shrink:0">sort</label>
             <select id="rp-sort" onchange="renderRecentPurchases()" style="flex:1">
               <option value="date_desc">วันที่ซื้อ (ล่าสุดก่อน)</option>
               <option value="date_asc">วันที่ซื้อ (เก่าสุดก่อน)</option>
