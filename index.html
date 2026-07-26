@@ -226,6 +226,13 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .chart-card .cc-donut-wrap{position:relative;}
 .donut-center{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
 #pur-spend-donut-wrap{max-width:100%;margin:0 auto;}
+.fin-platform-row{margin-bottom:12px;}
+.fin-platform-row:last-child{margin-bottom:0;}
+.fin-platform-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.fin-platform-sales{font-weight:700;font-family:var(--font-head);flex:1;min-width:0;font-size:13px;}
+.fin-platform-pct{font-size:12px;font-weight:800;color:var(--pink-dark);flex-shrink:0;}
+.fin-platform-bar{height:6px;border-radius:4px;background:var(--tan);overflow:hidden;}
+.fin-platform-bar-fill{height:100%;border-radius:4px;background:var(--olive);}
 #pur-spend-donut-wrap .dc-val{font-size:10px;}
 #pur-spend-donut-wrap .dc-lbl{font-size:8.5px;}
 .donut-center .dc-val{font-size:11.2px;font-weight:800;color:var(--brown);}
@@ -856,24 +863,26 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         </div>
       </div>
 
-      <div class="chart-card" style="max-width:50%">
+      <div class="chart-card">
         <div class="chart-card-head">
           <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
           <div class="cc-title">รายรับรายวัน แยกยอดสุทธิ/ค่าคอม/ค่าโฆษณา</div>
         </div>
         <canvas id="chart-fin-daily"></canvas>
       </div>
-      <div class="chart-card">
-        <div class="chart-card-head">
-          <div class="cc-icon icon-dark-bg" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="16" x2="16" y2="8"/><circle cx="9" cy="9" r=".6" fill="#fff"/><circle cx="15" cy="15" r=".6" fill="#fff"/></svg></div>
-          <div class="cc-title">ค่าธรรมเนียมคิดเป็น % ของยอดขาย แยกตามแอพ</div>
-        </div>
-        <canvas id="chart-fin-channelpct"></canvas>
-      </div>
 
-      <div class="card">
-        <h3 style="margin-top:0">Summary by Platform</h3>
-        <div id="fin-channel-summary" class="emptystate">ยังไม่มีข้อมูล</div>
+      <div class="row" style="align-items:flex-start">
+        <div class="chart-card" style="flex:1 1 0;min-width:0">
+          <div class="chart-card-head">
+            <div class="cc-icon icon-dark-bg" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="16" x2="16" y2="8"/><circle cx="9" cy="9" r=".6" fill="#fff"/><circle cx="15" cy="15" r=".6" fill="#fff"/></svg></div>
+            <div class="cc-title">ค่าธรรมเนียมคิดเป็น % ของยอดขาย</div>
+          </div>
+          <canvas id="chart-fin-channelpct"></canvas>
+        </div>
+        <div class="card" style="flex:1 1 0;min-width:0;margin-top:0">
+          <h3 style="margin-top:0">Summary by Platform</h3>
+          <div id="fin-channel-summary" class="emptystate">ยังไม่มีข้อมูล</div>
+        </div>
       </div>
 
       <div class="card">
@@ -3431,7 +3440,7 @@ function drawFinanceDailyChart(canvasId,dates,seriesDefs){
       clamp:true,
       clip:false,
       color:'#665e58',
-      font:{family:"'Amiko','Prompt',-apple-system,sans-serif",weight:'700',size:10},
+      font:{family:"'Amiko','Prompt',-apple-system,sans-serif",weight:'400',size:5},
       formatter:(v,dctx)=>fmtMoney(totals[dctx.dataIndex])
     } : {display:false}
   }));
@@ -3449,6 +3458,58 @@ function drawFinanceDailyChart(canvasId,dates,seriesDefs){
       scales:{
         x:{stacked:true,grid:{display:false},border:{display:false},ticks:{autoSkip:false,maxRotation:0,padding:6,callback:(value,index)=> index%7===0 ? formatDateDDMM(dates[index]) : ''}},
         y:{stacked:true,beginAtZero:true,grid:{color:GRID_COLOR,drawTicks:false},border:{display:false},ticks:{padding:6,stepSize:200}}
+      }
+    }
+  });
+}
+// กราฟค่าธรรมเนียมคิดเป็น % ของยอดขาย (หน้า Finance) — ค่าคอม+ค่าโฆษณาซ้อนอยู่ในแท่งเดียวต่อแอพ ไม่โชว์ตัวเลขแกน Y แต่เขียน %รวมไว้บนสุดของแท่งแทน
+function drawChannelFeeChart(canvasId,channelLabels,commPct,adPct){
+  if(charts[canvasId]) charts[canvasId].destroy();
+  const canvasEl=document.getElementById(canvasId);
+  if(!canvasEl) return;
+  const ctx=canvasEl.getContext('2d');
+  const totals=channelLabels.map((c,i)=>(commPct[i]||0)+(adPct[i]||0));
+  function topDatasetIndex(idx){ return adPct[idx]>0 ? 1 : 0; }
+  const seriesDefs=[
+    {label:'ค่าคอม',data:commPct,backgroundColor:'#aba186'},
+    {label:'ค่าโฆษณา',data:adPct,backgroundColor:'#665e58'}
+  ];
+  const datasets=seriesDefs.map((ds,di)=>({
+    type:'bar',
+    label:ds.label,
+    data:ds.data,
+    backgroundColor:ds.backgroundColor,
+    borderSkipped:false,
+    maxBarThickness:44,
+    barPercentage:.5,
+    categoryPercentage:.6,
+    borderRadius:(dctx)=> (topDatasetIndex(dctx.dataIndex)===di) ? {topLeft:6,topRight:6,bottomLeft:0,bottomRight:0} : 0,
+    datalabels: (di===1) ? {
+      display:true,
+      anchor:'end',
+      align:'top',
+      offset:2,
+      clamp:true,
+      clip:false,
+      color:'#665e58',
+      font:{family:"'Amiko','Prompt',-apple-system,sans-serif",weight:'400',size:5},
+      formatter:(v,dctx)=>totals[dctx.dataIndex].toFixed(1)+'%'
+    } : {display:false}
+  }));
+  charts[canvasId]=new Chart(ctx,{
+    type:'bar',
+    data:{labels:channelLabels,datasets},
+    options:{
+      responsive:true,
+      aspectRatio:chartAspectRatio(1.5,1.05),
+      layout:{padding:{top:18}},
+      plugins:{
+        legend:{position:'bottom',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle'}},
+        tooltip:{callbacks:{label:(dctx)=>dctx.dataset.label+' '+(Number(dctx.raw)||0).toFixed(1)+'%'}}
+      },
+      scales:{
+        x:{stacked:true,grid:{display:false},border:{display:false}},
+        y:{stacked:true,beginAtZero:true,display:false,grid:{display:false}}
       }
     }
   });
@@ -3760,27 +3821,28 @@ async function renderFinance(){
     byChannel[r.channel].ad_fee+=r.ad_fee;
   });
   const channelsPresent=channelOrder.filter(ch=>byChannel[ch]);
-  const commPct=channelsPresent.map(ch=>byChannel[ch].revenue?(byChannel[ch].commission/byChannel[ch].revenue*100):0);
-  const adPct=channelsPresent.map(ch=>byChannel[ch].revenue?(byChannel[ch].ad_fee/byChannel[ch].revenue*100):0);
-  drawChart('chart-fin-channelpct','bar',channelsPresent,[
-    {label:'ค่าคอม (% ของยอดขาย)',data:commPct,backgroundColor:'#aba186'},
-    {label:'ค่าโฆษณา (% ของยอดขาย)',data:adPct,backgroundColor:'#665e58'}
-  ],false,true);
+  // กราฟเปรียบเทียบ % ค่าธรรมเนียม แสดงแค่ Grab กับ Line (2 แอพหลักที่เทียบกันบ่อยสุด)
+  const pctChartChannels=['Grab Food','Line Man'].filter(ch=>byChannel[ch]);
+  const commPct=pctChartChannels.map(ch=>byChannel[ch].revenue?(byChannel[ch].commission/byChannel[ch].revenue*100):0);
+  const adPct=pctChartChannels.map(ch=>byChannel[ch].revenue?(byChannel[ch].ad_fee/byChannel[ch].revenue*100):0);
+  drawChannelFeeChart('chart-fin-channelpct',pctChartChannels.map(shortChannelLabel),commPct,adPct);
 
-  // สรุปตามแอพ (แสดงทุกช่องทางเสมอ)
+  // สรุปตามแอพ (แสดงทุกช่องทางเสมอ) — การ์ดกราฟิก: แถบสีแสดงสัดส่วนที่ถูกหักไป เทียบง่ายด้วยตา
   const chEl=document.getElementById('fin-channel-summary');
   if(!channelsPresent.length){ chEl.className='emptystate'; chEl.textContent='ยังไม่มีข้อมูล'; }
   else{
     chEl.className='';
     chEl.innerHTML=channelsPresent.map(ch=>{
       const c=byChannel[ch];
-      const net=c.revenue-c.commission-c.ad_fee;
       const pct=c.revenue?((c.commission+c.ad_fee)/c.revenue*100):0;
-      return `<div class="list-item">
-        <div><b>${escapeHtml(ch)}</b>
-          <div class="meta">ยอดขาย ${fmtMoney(c.revenue)} · ค่าคอม ${fmtMoney(c.commission)} · ค่าโฆษณา ${fmtMoney(c.ad_fee)} · สุทธิ ${fmtMoney(net)}</div>
+      const cls=channelBadgeClass(ch);
+      return `<div class="fin-platform-row">
+        <div class="fin-platform-top">
+          <span class="badge ${cls}">${escapeHtml(shortChannelLabel(ch))}</span>
+          <span class="fin-platform-sales">${fmtMoney(c.revenue)}</span>
+          <span class="fin-platform-pct">-${pct.toFixed(1)}%</span>
         </div>
-        <div class="meta" style="text-align:right;flex-shrink:0">หักรวม ${pct.toFixed(1)}%</div>
+        <div class="fin-platform-bar"><div class="fin-platform-bar-fill" style="width:${Math.min(100,pct)}%"></div></div>
       </div>`;
     }).join('');
   }
