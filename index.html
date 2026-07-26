@@ -2040,13 +2040,39 @@ function formatThaiDateShort(iso){
   const [y,m,d]=iso.split('-');
   return Number(d)+' '+THAI_MONTHS[Number(m)-1]+' '+y;
 }
+// ค่าคอม/ค่าโฆษณา "ที่แท้จริง" ของออเดอร์นี้ สำหรับแสดงผล (ไม่บันทึกทับข้อมูลเดิมในฐานข้อมูล คำนวณสดทุกครั้งที่แสดง)
+// ปัญหาที่แก้: ค่าคอม/โฆษณาบางแพลตฟอร์ม (เช่น LineMan) มักบันทึกรวมเป็นยอดเดียวต่อวัน (การ์ด "ค่าธรรมเนียมแพลตฟอร์มรายวัน") ไม่ได้กรอกแยกไว้ต่อออเดอร์ (o.commission/o.ad_fee=0)
+// ถ้าปล่อยไว้ กำไรต่อออเดอร์ที่โชว์ในลิสต์/หน้ารายละเอียดจะดูสูงเกินจริง (ยังไม่ได้หักค่าธรรมเนียมเลย) ทำให้สับสนเทียบกับยอดรวมหน้า Dashboard ที่คำนวณถูกอยู่แล้ว
+// วิธีแก้: ถ้าออเดอร์มีค่าคอม/โฆษณาของตัวเอง (>0) ใช้ค่านั้นตรงๆ เหมือนเดิม
+// ถ้าไม่มี แต่วันที่+ช่องทางเดียวกันมีบันทึกรวมรายวันไว้ ให้ "เฉลี่ยแบ่ง" ตามสัดส่วนยอดขาย ในกลุ่มออเดอร์วันเดียวกัน+ช่องทางเดียวกันที่ก็ไม่มีค่าคอมต่อออเดอร์เหมือนกัน (กันนับซ้ำกับออเดอร์ที่กรอกค่าคอมของตัวเองไว้แล้ว)
+function computeOrderEffectiveFees(order,allOrders,allDailyFees){
+  const ownComm=Number(order.commission)||0, ownAd=Number(order.ad_fee)||0;
+  if(ownComm>0 || ownAd>0) return {commission:ownComm, ad_fee:ownAd, allocated:false};
+  const feeRec=allDailyFees.find(f=>f.date===order.date && f.channel===order.channel);
+  if(!feeRec) return {commission:0, ad_fee:0, allocated:false};
+  const pool=allOrders.filter(o=>o.date===order.date && o.channel===order.channel && !((Number(o.commission)||0)>0 || (Number(o.ad_fee)||0)>0));
+  const poolTotal=pool.reduce((s,o)=>s+(Number(o.total_sale)||0),0);
+  if(poolTotal<=0) return {commission:0, ad_fee:0, allocated:false};
+  const share=(Number(order.total_sale)||0)/poolTotal;
+  return {commission:(Number(feeRec.commission)||0)*share, ad_fee:(Number(feeRec.ad_fee)||0)*share, allocated:true};
+}
+function computeOrderEffectiveProfit(order,allOrders,allDailyFees){
+  const fees=computeOrderEffectiveFees(order,allOrders,allDailyFees);
+  const sale=Number(order.total_sale)||0, cost=Number(order.total_cost)||0;
+  const net=sale-fees.commission-fees.ad_fee;
+  return {commission:fees.commission, ad_fee:fees.ad_fee, net, profit:net-cost, allocated:fees.allocated};
+}
 async function renderRecentOrders(){
   const fromEl=document.getElementById('ro-from');
   const toEl=document.getElementById('ro-to');
   const from=fromEl&&fromEl.value?fromEl.value:'2000-01-01';
   const to=toEl&&toEl.value?toEl.value:todayISO();
 
-  let orders=(await idbAll('orders')).filter(o=>o.date>=from && o.date<=to);
+  // โหลดออเดอร์+ค่าธรรมเนียมรายวัน "ทั้งหมด" ไว้แยกต่างหาก (ไม่ผ่านตัวกรอง) เอาไว้คำนวณเฉลี่ยแบ่งค่าคอม/โฆษณาให้แม่นยำ แม้ตอนนี้จะกรองช่วงเวลา/ช่องทางแสดงผลอยู่ก็ตาม
+  const allOrdersForFee=await idbAll('orders');
+  const allDailyFees=await idbAll('daily_fees');
+
+  let orders=allOrdersForFee.filter(o=>o.date>=from && o.date<=to);
   if(roChannelFilter && roChannelFilter!=='all'){
     if(roChannelFilter==='อื่นๆ') orders=orders.filter(o=>o.channel==='อื่นๆ' || o.channel==='คอนโด');
     else orders=orders.filter(o=>o.channel===roChannelFilter);
@@ -2059,7 +2085,7 @@ async function renderRecentOrders(){
 
   // แถบสรุปยอดขายรวม+กำไรรวมของทั้งลิสต์ที่กรองอยู่ ตำแหน่งตัวเลขตรงกับคอลัมน์ยอดขาย/กำไรของแต่ละแถวด้านล่าง
   const totalSales=orders.reduce((s,o)=>s+Number(o.total_sale||0),0);
-  const totalProfit=orders.reduce((s,o)=>s+Number(o.gross_profit||0),0);
+  const totalProfit=orders.reduce((s,o)=>s+computeOrderEffectiveProfit(o,allOrdersForFee,allDailyFees).profit,0);
   const summaryBar=`<div class="order-row order-summary">
     <span style="grid-column:1 / span 3">${orders.length} ออเดอร์</span>
     <b class="or-total">${fmtMoney(totalSales)}</b>
@@ -2068,7 +2094,7 @@ async function renderRecentOrders(){
 
   function orderRowHtml(o){
     const cls=o.channel==='Grab Food'?'grab':o.channel==='Line Man'?'line':o.channel==='คอนโด'?'condo':'other';
-    const profit=Number(o.gross_profit)||0;
+    const profit=computeOrderEffectiveProfit(o,allOrdersForFee,allDailyFees).profit;
     return `<div class="order-row clickable" onclick="showOrderDetail('${o.id}')">
       <span class="badge ${cls}${o.thai_plus?' tp':''}" ${o.thai_plus?'title="Thai+ 60/40"':''}>${escapeHtml(shortChannelLabel(o.channel))}</span>
       <span class="or-no">#${escapeHtml(o.order_no||'-')}</span>
@@ -2161,6 +2187,8 @@ async function showOrderDetail(id){
   const items=allItems.filter(i=>i.order_id===id || (i.order_no===order.order_no && i.date===order.date));
   const allOpts=await idbAll('order_item_options');
   const opts=allOpts.filter(o=>o.order_no===order.order_no && o.date===order.date);
+  const allDailyFeesForDetail=await idbAll('daily_fees');
+  const eff=computeOrderEffectiveProfit(order,orders,allDailyFeesForDetail);
 
   const cls=order.channel==='Grab Food'?'grab':order.channel==='Line Man'?'line':order.channel==='คอนโด'?'condo':'other';
   document.getElementById('modal-title').textContent='ออเดอร์ '+(order.order_no||'-');
@@ -2184,14 +2212,15 @@ async function showOrderDetail(id){
     <h3>Financial Summary</h3>
     <div class="detail-row"><span class="k">ยอดขายรวม</span><span class="v">${fmtMoney(order.total_sale)}</span></div>
     <div class="detail-row"><span class="k">ต้นทุนสินค้ารวม</span><span class="v">${fmtMoney(order.total_cost)}</span></div>
-    ${(order.commission || order.ad_fee) ? `
-    <div class="detail-row"><span class="k">ค่าคอมมิชชั่นแพลตฟอร์ม</span><span class="v">${fmtMoney(order.commission)}</span></div>
-    <div class="detail-row"><span class="k">ค่าโฆษณา/แคมเปญ</span><span class="v">${fmtMoney(order.ad_fee)}</span></div>
-    <div class="detail-row"><span class="k">ยอดสุทธิร้านได้รับ</span><span class="v">${fmtMoney(order.net_received)}</span></div>
-    <div class="detail-row"><span class="k">กำไรขั้นต้น</span><span class="v">${fmtMoney(order.gross_profit)}</span></div>
+    ${(eff.commission || eff.ad_fee) ? `
+    <div class="detail-row"><span class="k">ค่าคอมมิชชั่นแพลตฟอร์ม</span><span class="v">${fmtMoney(eff.commission)}</span></div>
+    <div class="detail-row"><span class="k">ค่าโฆษณา/แคมเปญ</span><span class="v">${fmtMoney(eff.ad_fee)}</span></div>
+    <div class="detail-row"><span class="k">ยอดสุทธิร้านได้รับ</span><span class="v">${fmtMoney(eff.net)}</span></div>
+    <div class="detail-row"><span class="k">กำไรขั้นต้น</span><span class="v">${fmtMoney(eff.profit)}</span></div>
+    ${eff.allocated ? `<p class="hint">ค่าคอม/ค่าโฆษณาแถวนี้ ประมาณจากยอด "ค่าธรรมเนียมแพลตฟอร์มรายวัน" ของวันนี้ เฉลี่ยตามสัดส่วนยอดขาย (แพลตฟอร์มมักไม่แยกให้ต่อออเดอร์)</p>` : ''}
     ` : `
     <div class="detail-row"><span class="k">กำไรขั้นต้น (ก่อนหักค่าธรรมเนียมแพลตฟอร์ม)</span><span class="v">${fmtMoney(order.total_sale-order.total_cost)}</span></div>
-    <p class="hint">ค่าคอมมิชชั่น/ค่าโฆษณาของวันนี้ดูรวมได้ที่การ์ด "ค่าธรรมเนียมแพลตฟอร์มรายวัน" ในหน้าออเดอร์</p>
+    <p class="hint">ยังไม่มีข้อมูลค่าคอมมิชชั่น/ค่าโฆษณาของวันนี้ — กรอกได้ที่การ์ด "ค่าธรรมเนียมแพลตฟอร์มรายวัน" ในหน้าออเดอร์</p>
     `}
     ${order.note ? `<h3>Note</h3><div class="hint" style="white-space:pre-wrap">${escapeHtml(order.note)}</div>` : ''}
     <div class="btn-row" style="margin-top:14px">
@@ -2983,22 +3012,24 @@ async function renderHomeCakeCount(){
 }
 
 /* ============ TODAY'S STOCK (จำนวนคงเหลือของแต่ละรสเค้กวันนี้ ปรับ +/− ได้ ผูกกับวันที่ปัจจุบันเท่านั้น) ============ */
+// เก็บทุกเรคคอร์ดของ daily_stock ไว้ (ไม่ใช่แค่ของวันนี้) เพื่อหาค่าคงเหลือ "ล่าสุด" ของแต่ละเมนู — สต็อกจะพกไปต่อวันถัดไปให้เอง ไม่รีเซ็ทเป็น 0 ทุกเที่ยงคืน จนกว่าจะมีคนกดปรับจริง
 let todayStockCache=[];
 async function refreshTodayStockCache(){
-  const all=await idbAll('daily_stock');
-  const today=todayISO();
-  todayStockCache=all.filter(s=>s.date===today);
+  todayStockCache=await idbAll('daily_stock');
 }
 function getTodayStockQty(menuId){
-  const rec=todayStockCache.find(s=>s.menu_id===menuId);
-  return rec ? (Number(rec.qty)||0) : 0;
+  // หาเรคคอร์ดล่าสุด (วันที่ไม่เกินวันนี้) ของเมนูนี้ ถ้าไม่เคยมีเลยถือว่า 0
+  const recs=todayStockCache.filter(s=>s.menu_id===menuId && s.date<=todayISO());
+  if(!recs.length) return 0;
+  recs.sort((a,b)=>b.date.localeCompare(a.date));
+  return Number(recs[0].qty)||0;
 }
 async function setTodayStockQty(menuId,qty){
   qty=Math.max(0,Math.round(qty));
   const today=todayISO();
   const id=today+'|'+menuId;
   await idbPut('daily_stock',{id,date:today,menu_id:menuId,qty});
-  const idx=todayStockCache.findIndex(s=>s.menu_id===menuId);
+  const idx=todayStockCache.findIndex(s=>s.id===id);
   if(idx>=0) todayStockCache[idx].qty=qty;
   else todayStockCache.push({id,date:today,menu_id:menuId,qty});
 }
@@ -3278,7 +3309,27 @@ async function renderDashboard(){
 if(typeof Chart!=='undefined' && typeof ChartDataLabels!=='undefined'){
   try{ Chart.register(ChartDataLabels); }catch(e){}
 }
-const GRID_COLOR='rgba(46,43,40,.06)';
+// ตั้งค่ากลางให้กราฟ Chart.js ทุกอันหน้าตาเข้าชุดกับแอพ (ฟอนต์ Amiko/Lekton, โทนครีม-น้ำตาล, tooltip โค้งมนนุ่มนวล, legend เป็นจุดกลม)
+if(typeof Chart!=='undefined'){
+  Chart.defaults.font.family="'Amiko','Prompt',-apple-system,sans-serif";
+  Chart.defaults.color='#8a7f74';
+  Chart.defaults.animation.duration=600;
+  Chart.defaults.animation.easing='easeOutQuart';
+  Chart.defaults.plugins.legend.labels.usePointStyle=true;
+  Chart.defaults.plugins.legend.labels.pointStyle='circle';
+  Chart.defaults.plugins.legend.labels.padding=14;
+  Chart.defaults.plugins.legend.labels.font={family:"'Lekton','Prompt',-apple-system,sans-serif",size:11};
+  Chart.defaults.plugins.tooltip.enabled=true;
+  Chart.defaults.plugins.tooltip.backgroundColor='#3d3733';
+  Chart.defaults.plugins.tooltip.titleColor='#fffefa';
+  Chart.defaults.plugins.tooltip.bodyColor='#fffefa';
+  Chart.defaults.plugins.tooltip.padding=10;
+  Chart.defaults.plugins.tooltip.cornerRadius=8;
+  Chart.defaults.plugins.tooltip.boxPadding=4;
+  Chart.defaults.plugins.tooltip.titleFont={family:"'Amiko','Prompt',-apple-system,sans-serif",weight:'700',size:12};
+  Chart.defaults.plugins.tooltip.bodyFont={family:"'Lekton','Prompt',-apple-system,sans-serif",size:11.5};
+}
+const GRID_COLOR='rgba(102,94,88,.10)';
 // สัดส่วนกว้าง:สูงของกราฟ ปรับตามความกว้างจอ — จอแคบ (มือถือ) ให้เตี้ยลงน้อยกว่าสัดส่วนปกติ เพื่อให้แท่ง/label อ่านง่ายขึ้น ไม่ถูกบีบจนแน่นเกินไป
 function chartAspectRatio(wide,narrow){
   const w=window.innerWidth||375;
@@ -3289,7 +3340,7 @@ function chartAspectRatio(wide,narrow){
 function drawChart(canvasId,type,labels,datasets,horizontal,showLegend){
   if(charts[canvasId]) charts[canvasId].destroy();
   const ctx=document.getElementById(canvasId).getContext('2d');
-  if(type==='bar') datasets=datasets.map(ds=>({borderRadius:5,borderSkipped:false,maxBarThickness:34,...ds}));
+  if(type==='bar') datasets=datasets.map(ds=>({borderRadius:7,borderSkipped:false,maxBarThickness:34,barPercentage:.6,categoryPercentage:.7,...ds}));
   charts[canvasId]=new Chart(ctx,{
     type,
     data:{labels,datasets},
@@ -3297,22 +3348,23 @@ function drawChart(canvasId,type,labels,datasets,horizontal,showLegend){
       indexAxis:horizontal?'y':'x',
       responsive:true,
       aspectRatio:chartAspectRatio(2.2,1.3),
-      plugins:{legend:{display:!!showLegend,position:'bottom',labels:{boxWidth:12,font:{size:11}}},datalabels:{display:false}},
-      scales:{y:{beginAtZero:true,grid:{color:GRID_COLOR}},x:{grid:{display:false}}}
+      plugins:{legend:{display:!!showLegend,position:'bottom',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle'}},datalabels:{display:false}},
+      scales:{y:{beginAtZero:true,grid:{color:GRID_COLOR,drawTicks:false},border:{display:false},ticks:{padding:6}},x:{grid:{display:false},border:{display:false},ticks:{padding:6}}}
     }
   });
 }
 function drawStackedBar(canvasId,labels,datasets,onBarClick){
   if(charts[canvasId]) charts[canvasId].destroy();
   const ctx=document.getElementById(canvasId).getContext('2d');
+  datasets=datasets.map(ds=> ds.type==='line' ? ds : ({borderRadius:6,borderSkipped:false,maxBarThickness:34,barPercentage:.6,categoryPercentage:.7,...ds}));
   charts[canvasId]=new Chart(ctx,{
     type:'bar',
     data:{labels,datasets},
     options:{
       responsive:true,
       aspectRatio:chartAspectRatio(2.2,1.3),
-      plugins:{legend:{position:'bottom',labels:{boxWidth:12,font:{size:11}}},datalabels:{display:false}},
-      scales:{x:{stacked:true,grid:{display:false}},y:{stacked:true,beginAtZero:true,grid:{color:GRID_COLOR}}},
+      plugins:{legend:{position:'bottom',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle'}},datalabels:{display:false}},
+      scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{padding:6}},y:{stacked:true,beginAtZero:true,grid:{color:GRID_COLOR,drawTicks:false},border:{display:false},ticks:{padding:6}}},
       onClick: onBarClick ? function(evt,_els,chart){
         const pts=chart.getElementsAtEventForMode(evt,'index',{intersect:false},true);
         if(pts && pts.length) onBarClick(pts[0].index);
@@ -3328,9 +3380,9 @@ function drawPie(canvasId,labels,data,centerElId,centerLabelText,opts){
   const colors=['#fff2bf','#ddd1a8','#c2b796','#aba186','#948a77','#7d7467','#665e58'];
   charts[canvasId]=new Chart(ctx,{
     type:'doughnut',
-    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fff',hoverOffset:6}]},
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:3,borderColor:'#fffefa',borderRadius:4,spacing:1,hoverOffset:8,hoverBorderColor:'#fffefa'}]},
     options:{cutout:opts.cutout||'68%',responsive:true,aspectRatio:chartAspectRatio(1.6,1.15),plugins:{
-      legend:{display:!opts.sliceLabels,position:'bottom',labels:{boxWidth:12,font:{size:11}}},
+      legend:{display:!opts.sliceLabels,position:'bottom',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle'}},
       datalabels: opts.sliceLabels ? {
         display:true,
         clamp:true,
@@ -3392,7 +3444,7 @@ function drawRankedBarChart(canvasId,items,{small=false,heightPx}={}){
   }
   charts[canvasId]=new Chart(ctx,{
     type:'bar',
-    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:small?5:7,borderSkipped:false,maxBarThickness:small?24:34}]},
+    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:small?5:7,borderSkipped:false,maxBarThickness:small?24:34,barPercentage:.68,categoryPercentage:.75}]},
     options:{
       indexAxis:'y',
       responsive:true,
@@ -3405,7 +3457,7 @@ function drawRankedBarChart(canvasId,items,{small=false,heightPx}={}){
           clamp:true,
           clip:false,
           color:dctx=>{ if(!fitsInside(dctx)) return '#665e58'; const c=colors[dctx.dataIndex]; return (typeof c==='string') ? readableTextColorFor(c) : '#fffefa'; },
-          font:{size:fontSize,weight:'700'},
+          font:{family:"'Amiko','Prompt',-apple-system,sans-serif",size:fontSize,weight:'700'},
           anchor:dctx=>fitsInside(dctx)?'center':'end',
           align:dctx=>fitsInside(dctx)?'center':'end',
           textAlign:'left',
@@ -3433,8 +3485,10 @@ function drawProfitBar(canvasId,labels,data){
   const colors=data.map(v=>v>=0?'#fff2bf':'#665e58');
   charts[canvasId]=new Chart(ctx,{
     type:'bar',
-    data:{labels,datasets:[{label:'กำไรสุทธิรายเดือน (฿)',data,backgroundColor:colors,borderRadius:6,borderSkipped:false,maxBarThickness:44}]},
+    data:{labels,datasets:[{label:'กำไรสุทธิรายเดือน (฿)',data,backgroundColor:colors,borderRadius:7,borderSkipped:false,maxBarThickness:44,barPercentage:.6,categoryPercentage:.7}]},
     options:{
+      responsive:true,
+      aspectRatio:chartAspectRatio(2.2,1.3),
       plugins:{
         legend:{display:false},
         datalabels:{
@@ -3443,11 +3497,14 @@ function drawProfitBar(canvasId,labels,data){
           align:'end',
           clamp:true,
           color:'#665e58',
-          font:{weight:'bold',size:11},
+          font:{family:"'Amiko','Prompt',-apple-system,sans-serif",weight:'bold',size:11},
           formatter:v=>v.toLocaleString('th-TH',{maximumFractionDigits:0})
         }
       },
-      scales:{y:{beginAtZero:true}}
+      scales:{
+        y:{beginAtZero:true,grid:{color:GRID_COLOR,drawTicks:false},border:{display:false},ticks:{padding:6}},
+        x:{grid:{display:false},border:{display:false},ticks:{padding:6}}
+      }
     }
   });
 }
