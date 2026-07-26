@@ -482,26 +482,27 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <div class="tabpage" id="tab-orders">
     <div class="card">
       <div class="card-head-row">
-        <h2>Orders</h2>
+        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+          <h2>Orders</h2>
+          <div class="pillrow" id="ro-channel-pillrow" style="margin:0">
+            <div class="pill active" onclick="setChannelFilter('all',this)">All</div>
+            <div class="pill" onclick="setChannelFilter('Grab Food',this)">Grab</div>
+            <div class="pill" onclick="setChannelFilter('Line Man',this)">Line</div>
+            <div class="pill" onclick="setChannelFilter('อื่นๆ',this)">อื่นๆ</div>
+          </div>
+        </div>
         <button type="button" class="btn-primary btn-sm" onclick="openAddOrderModal()">+ Add Order</button>
       </div>
 
-      <div class="pillrow" id="ro-channel-pillrow" style="margin-top:10px">
-        <div class="pill active" onclick="setChannelFilter('all',this)">All</div>
-        <div class="pill" onclick="setChannelFilter('Grab Food',this)">Grab Food</div>
-        <div class="pill" onclick="setChannelFilter('Line Man',this)">Line Man</div>
-        <div class="pill" onclick="setChannelFilter('อื่นๆ',this)">อื่นๆ</div>
-      </div>
-
-      <div class="filter-toggle" onclick="toggleSection(this,'ro-filter-body')">Period: <span class="ft-summary" id="ro-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
+      <div class="filter-toggle" onclick="toggleSection(this,'ro-filter-body')">Period: <span class="ft-summary" id="ro-filter-summary">เดือนนี้</span> <span class="chevron">▾</span></div>
       <div id="ro-filter-body" class="filter-body" style="display:none">
       <div class="pillrow" id="ro-preset-pillrow">
         <div class="pill" onclick="setRangePreset('today','ro',this)">วันนี้</div>
         <div class="pill" onclick="setRangePreset('yesterday','ro',this)">เมื่อวาน</div>
         <div class="pill" onclick="setRangePreset('thisweek','ro',this)">สัปดาห์นี้</div>
         <div class="pill" onclick="setRangePreset('lastweek','ro',this)">สัปดาห์ที่แล้ว</div>
-        <div class="pill" onclick="setRangePreset('month','ro',this)">เดือนนี้</div>
-        <div class="pill active" onclick="setRangePreset('all','ro',this)">ทั้งหมด</div>
+        <div class="pill active" onclick="setRangePreset('month','ro',this)">เดือนนี้</div>
+        <div class="pill" onclick="setRangePreset('all','ro',this)">ทั้งหมด</div>
         <div class="pill" onclick="openMonthPickerModal('ro')">เลือกเดือน</div>
       </div>
       <div class="row">
@@ -509,6 +510,17 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div><label>ถึงวันที่</label><input type="date" id="ro-to" onchange="roMonthSelected=false;renderRecentOrders();updateFilterSummary('ro')"></div>
       </div>
       </div>
+
+      <div class="chart-card" style="margin-top:10px">
+        <div class="chart-card-head">
+          <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.5 4.3"/></svg></div>
+          <div class="cc-title">สัดส่วนยอดขายตามช่องทาง</div>
+        </div>
+        <div class="cc-donut-wrap" id="ro-channel-donut-wrap">
+          <canvas id="chart-orders-channel"></canvas>
+        </div>
+      </div>
+
       <div id="orders-recent" class="emptystate" style="margin-top:10px">ยังไม่มีข้อมูล</div>
     </div>
   </div>
@@ -554,15 +566,15 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       </form>
       </div>
 
-      <div class="filter-toggle" onclick="toggleSection(this,'rp-filter-body')">Period: <span class="ft-summary" id="rp-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
+      <div class="filter-toggle" onclick="toggleSection(this,'rp-filter-body')">Period: <span class="ft-summary" id="rp-filter-summary">เดือนนี้</span> <span class="chevron">▾</span></div>
       <div id="rp-filter-body" class="filter-body" style="display:none">
       <div class="pillrow" id="rp-preset-pillrow">
         <div class="pill" onclick="setRangePreset('today','rp',this)">วันนี้</div>
         <div class="pill" onclick="setRangePreset('thisweek','rp',this)">สัปดาห์นี้</div>
-        <div class="pill" onclick="setRangePreset('month','rp',this)">เดือนนี้</div>
+        <div class="pill active" onclick="setRangePreset('month','rp',this)">เดือนนี้</div>
         <div class="pill" onclick="setRangePreset('lastweek','rp',this)">สัปดาห์ก่อน</div>
         <div class="pill" onclick="setRangePreset('lastmonth','rp',this)">เดือนก่อน</div>
-        <div class="pill active" onclick="setRangePreset('all','rp',this)">ทั้งหมด</div>
+        <div class="pill" onclick="setRangePreset('all','rp',this)">ทั้งหมด</div>
         <div class="pill" onclick="openMonthPickerModal('rp')">เลือกเดือน</div>
       </div>
       <div class="row">
@@ -798,15 +810,15 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       </div>
       </div>
 
-      <div class="filter-toggle" onclick="toggleSection(this,'fin-filter-body')">Period: <span class="ft-summary" id="fin-filter-summary">ทั้งหมด</span> <span class="chevron">▾</span></div>
+      <div class="filter-toggle" onclick="toggleSection(this,'fin-filter-body')">Period: <span class="ft-summary" id="fin-filter-summary">เดือนนี้</span> <span class="chevron">▾</span></div>
       <div id="fin-filter-body" class="filter-body" style="display:none">
       <div class="pillrow" id="fin-preset-pillrow">
         <div class="pill" onclick="setRangePreset('today','fin',this)">วันนี้</div>
         <div class="pill" onclick="setRangePreset('yesterday','fin',this)">เมื่อวาน</div>
         <div class="pill" onclick="setRangePreset('thisweek','fin',this)">สัปดาห์นี้</div>
         <div class="pill" onclick="setRangePreset('lastweek','fin',this)">สัปดาห์ที่แล้ว</div>
-        <div class="pill" onclick="setRangePreset('month','fin',this)">เดือนนี้</div>
-        <div class="pill active" onclick="setRangePreset('all','fin',this)">ทั้งหมด</div>
+        <div class="pill active" onclick="setRangePreset('month','fin',this)">เดือนนี้</div>
+        <div class="pill" onclick="setRangePreset('all','fin',this)">ทั้งหมด</div>
         <div class="pill" onclick="openMonthPickerModal('fin')">เลือกเดือน</div>
       </div>
       <div class="row">
@@ -2072,12 +2084,25 @@ async function renderRecentOrders(){
   const allOrdersForFee=await idbAll('orders');
   const allDailyFees=await idbAll('daily_fees');
 
-  let orders=allOrdersForFee.filter(o=>o.date>=from && o.date<=to);
+  const ordersInPeriod=allOrdersForFee.filter(o=>o.date>=from && o.date<=to);
+  let orders=ordersInPeriod;
   if(roChannelFilter && roChannelFilter!=='all'){
     if(roChannelFilter==='อื่นๆ') orders=orders.filter(o=>o.channel==='อื่นๆ' || o.channel==='คอนโด');
     else orders=orders.filter(o=>o.channel===roChannelFilter);
   }
   orders.sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));
+
+  // พายชาร์ทสัดส่วนยอดขายตามช่องทาง — ใช้ข้อมูล "ทั้งช่วงเวลาที่เลือก" เสมอ (ไม่ผูกกับปุ่มเลือกช่องทางด้านบน) จะได้เทียบสัดส่วนกันได้ครบทุกช่องทาง
+  const pieChannelOrder=['Grab Food','Line Man','คอนโด','อื่นๆ'];
+  const pieChannelColors={'Grab Food':'#fff2bf','Line Man':'#7d7062','คอนโด':'#665e58','อื่นๆ':'#e6dcc0'};
+  const channelStats=pieChannelOrder.map(ch=>{
+    const chOrders=ordersInPeriod.filter(o=>o.channel===ch);
+    if(!chOrders.length) return null;
+    const sales=chOrders.reduce((s,o)=>s+Number(o.total_sale||0),0);
+    const profit=chOrders.reduce((s,o)=>s+computeOrderEffectiveProfit(o,allOrdersForFee,allDailyFees).profit,0);
+    return {channel:shortChannelLabel(ch),count:chOrders.length,sales,profit,color:pieChannelColors[ch]};
+  }).filter(Boolean);
+  drawOrderChannelPie('chart-orders-channel',channelStats);
 
   const el=document.getElementById('orders-recent');
   if(!orders.length){ el.className='emptystate'; el.textContent='ไม่มีออเดอร์ในช่วง/เงื่อนไขที่เลือก'; return; }
@@ -3407,6 +3432,53 @@ function drawPie(canvasId,labels,data,centerElId,centerLabelText,opts){
     }
   }
 }
+// พายชาร์ทสัดส่วนยอดขายตามช่องทาง (หน้า Orders) — แต่ละชิ้นโชว์ชื่อช่องทาง/จำนวนออเดอร์/ยอดขาย/กำไรขั้นต้นในตัวเลย ไม่ต้องกดดูแยก
+// stats: [{channel, count, sales, profit, color}]
+function drawOrderChannelPie(canvasId,stats){
+  const canvasEl=document.getElementById(canvasId);
+  if(!canvasEl) return;
+  const wrap=canvasEl.closest('.chart-card');
+  if(charts[canvasId]){ charts[canvasId].destroy(); charts[canvasId]=null; }
+  if(!stats || !stats.length){ if(wrap) wrap.style.display='none'; return; }
+  if(wrap) wrap.style.display='';
+  const ctx=canvasEl.getContext('2d');
+  const labels=stats.map(s=>s.channel);
+  const data=stats.map(s=>s.sales);
+  const colors=stats.map(s=>s.color);
+  charts[canvasId]=new Chart(ctx,{
+    type:'doughnut',
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:3,borderColor:'#fffefa',borderRadius:4,spacing:1,hoverOffset:8,hoverBorderColor:'#fffefa'}]},
+    options:{
+      cutout:'42%',
+      responsive:true,
+      aspectRatio:chartAspectRatio(1.5,1.05),
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{
+            label:(dctx)=>{
+              const s=stats[dctx.dataIndex];
+              return [' ออเดอร์ '+s.count+' รายการ',' ยอดขาย '+fmtMoney(s.sales),' กำไรขั้นต้น '+fmtMoney(s.profit)];
+            },
+            title:(items)=>items[0]&&items[0].label
+          }
+        },
+        datalabels:{
+          display:true,
+          clamp:true,
+          clip:false,
+          color:dctx=>readableTextColorFor(colors[dctx.dataIndex]),
+          font:{size:8,weight:'700'},
+          textAlign:'center',
+          formatter:(v,dctx)=>{
+            const s=stats[dctx.dataIndex];
+            return [s.channel,s.count+' ออเดอร์',fmtMoney(s.sales),'กำไร '+fmtMoney(s.profit)];
+          }
+        }
+      }
+    }
+  });
+}
 // กราฟแท่งจัดอันดับแบบ "ชื่อ+ค่าตัวเลขอยู่ในแท่งเลย" (ตัวหนังสือขาว มีขอบดำบางๆ กันอ่านไม่ออกตอนแท่งสีอ่อน)
 // items: [{label, value, valueText, color}] เรียงมาจากมากไปน้อยแล้วจากผู้เรียก
 // ประมาณความกว้าง (px) ของข้อความคร่าวๆ พอสำหรับตัดสินใจว่าจะใส่ตัวหนังสือในแท่งได้มั้ย ไม่ต้องเป๊ะระดับ canvas.measureText
@@ -4077,12 +4149,14 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   resetDailyFeeForm();
   document.getElementById('d-from').value='2000-01-01';
   document.getElementById('d-to').value=todayISO();
-  document.getElementById('ro-from').value='2000-01-01';
-  document.getElementById('ro-to').value=todayISO();
-  document.getElementById('rp-from').value='2000-01-01';
-  document.getElementById('rp-to').value=todayISO();
-  document.getElementById('fin-from').value=todayISO();
-  document.getElementById('fin-to').value=todayISO();
+  // Orders/Purchases/Finance เปิดมาให้ default เป็น "เดือนนี้" ทุกครั้ง (ไม่ใช่ทั้งหมด/วันนี้เหมือนเดิม)
+  const __monthRange=computeRangeBounds('month');
+  document.getElementById('ro-from').value=__monthRange.from;
+  document.getElementById('ro-to').value=__monthRange.to;
+  document.getElementById('rp-from').value=__monthRange.from;
+  document.getElementById('rp-to').value=__monthRange.to;
+  document.getElementById('fin-from').value=__monthRange.from;
+  document.getElementById('fin-to').value=__monthRange.to;
   ['d','ro','rp','fin'].forEach(updateFilterSummary);
   renderRecentOrders();
   renderRecentPurchases();
