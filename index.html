@@ -233,6 +233,9 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .fin-platform-pct{font-size:12px;font-weight:800;color:var(--pink-dark);flex-shrink:0;}
 .fin-platform-bar{height:6px;border-radius:4px;background:var(--tan);overflow:hidden;}
 .fin-platform-bar-fill{height:100%;border-radius:4px;background:var(--olive);}
+.ro-channel-count-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);}
+.ro-channel-count-row:last-child{border-bottom:none;}
+.ro-channel-count-row .cnt-num{font-weight:800;font-family:var(--font-head);font-size:17px;margin-left:auto;}
 #pur-spend-donut-wrap .dc-val{font-size:10px;}
 #pur-spend-donut-wrap .dc-lbl{font-size:8.5px;}
 .donut-center .dc-val{font-size:11.2px;font-weight:800;color:var(--brown);}
@@ -517,13 +520,22 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       </div>
       </div>
 
-      <div class="chart-card" style="margin-top:10px">
-        <div class="chart-card-head">
-          <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.5 4.3"/></svg></div>
-          <div class="cc-title">สัดส่วนยอดขายตามช่องทาง</div>
+      <div class="row" style="margin-top:10px;align-items:flex-start">
+        <div class="chart-card" style="margin-top:0;flex:1 1 0;min-width:0">
+          <div class="chart-card-head">
+            <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.5 4.3"/></svg></div>
+            <div class="cc-title">สัดส่วนยอดขายตามช่องทาง</div>
+          </div>
+          <div class="cc-donut-wrap" id="ro-channel-donut-wrap">
+            <canvas id="chart-orders-channel"></canvas>
+          </div>
         </div>
-        <div class="cc-donut-wrap" id="ro-channel-donut-wrap" style="max-width:33%;margin:0 auto;">
-          <canvas id="chart-orders-channel"></canvas>
+        <div class="chart-card" style="margin-top:0;flex:1 1 0;min-width:0">
+          <div class="chart-card-head">
+            <div class="cc-icon" style="background:var(--olive)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg></div>
+            <div class="cc-title">จำนวนออเดอร์ต่อช่องทาง</div>
+          </div>
+          <div id="ro-channel-count-list" class="emptystate">ไม่มีข้อมูล</div>
         </div>
       </div>
 
@@ -579,7 +591,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
             <div class="cc-title">ยอดซื้อวัตถุดิบหลัก</div>
             <button type="button" class="info-btn" onclick="toggleEl('hint-pur-spend')">i</button>
           </div>
-          <p class="hint" id="hint-pur-spend" style="display:none">ติดตามยอดซื้อของกลุ่มวัตถุดิบหลัก 5 กลุ่ม: Cream Cheese, Whipping Cream, Matcha, Houjicha, Cold Brew (จับคู่จากคำที่อยู่ในชื่อไอเทม เช่น "tavi" หรือ "brew" สำหรับ Cold Brew) — อยากเพิ่ม/แก้กลุ่มไหน บอกได้เลย</p>
+          <p class="hint" id="hint-pur-spend" style="display:none">ติดตามยอดซื้อของกลุ่มวัตถุดิบหลัก 4 กลุ่ม: Cream Cheese, Whipping Cream, Flavoring (matcha/houjicha/ชาต่างๆ/cacao), Drinks (cold brew) — จับคู่จากคำที่อยู่ในชื่อไอเทม เช่น "tavi" หรือ "brew" สำหรับ Drinks — อยากเพิ่ม/แก้กลุ่มไหน บอกได้เลย</p>
           <div class="cc-donut-wrap" id="pur-spend-donut-wrap">
             <canvas id="chart-pur-spend"></canvas>
             <div class="donut-center" id="donut-pur-spend-center"><div class="dc-val">฿0</div></div>
@@ -2112,6 +2124,24 @@ async function renderRecentOrders(){
   }).filter(Boolean);
   drawOrderChannelPie('chart-orders-channel',channelStats);
 
+  // การ์ดขวา: จำนวนออเดอร์ต่อช่องทาง แบบสั้นๆ คลีนๆ (badge สี + ตัวเลข)
+  const countListEl=document.getElementById('ro-channel-count-list');
+  if(countListEl){
+    if(!channelStats.length){
+      countListEl.className='emptystate';
+      countListEl.textContent='ไม่มีข้อมูล';
+    }else{
+      countListEl.className='';
+      countListEl.innerHTML=channelStats.map(s=>{
+        const cls=s.channel==='Grab'?'grab':s.channel==='Line'?'line':s.channel==='คอนโด'?'condo':'other';
+        return `<div class="ro-channel-count-row">
+          <span class="badge ${cls}">${escapeHtml(s.channel)}</span>
+          <span class="cnt-num">${s.count}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+
   const el=document.getElementById('orders-recent');
   if(!orders.length){ el.className='emptystate'; el.textContent='ไม่มีออเดอร์ในช่วง/เงื่อนไขที่เลือก'; return; }
   el.className='';
@@ -2701,9 +2731,8 @@ async function renderRecentPurchases(){
 const PURCHASE_SPEND_TRACK_GROUPS=[
   {label:'Cream Cheese',keywords:['cream cheese','ครีมชีส']},
   {label:'Whipping Cream',keywords:['whipping cream','วิปปิ้งครีม','วิปครีม']},
-  {label:'Matcha',keywords:['matcha','มัทฉะ']},
-  {label:'Houjicha',keywords:['houjicha','hojicha','โฮจิฉะ']},
-  {label:'Cold Brew',keywords:['tavi','brew']}
+  {label:'Flavoring',keywords:['matcha','มัทฉะ','houjicha','hojicha','โฮจิฉะ','cacao','โกโก้','คาเคา','ชาเขียว','ชาดำ','ชาไทย','earl grey','oolong','อูหลง','ชา']},
+  {label:'Drinks',keywords:['tavi','brew']}
 ];
 async function renderPurchaseSpendDashboard(){
   const canvas=document.getElementById('chart-pur-spend');
@@ -3561,13 +3590,14 @@ function drawOrderChannelPie(canvasId,stats){
   const labels=stats.map(s=>s.channel);
   const data=stats.map(s=>s.sales);
   const colors=stats.map(s=>s.color);
+  const totalSales=data.reduce((s,v)=>s+(Number(v)||0),0);
   charts[canvasId]=new Chart(ctx,{
     type:'doughnut',
-    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:2,borderColor:'#fffefa',borderRadius:3,spacing:1,hoverOffset:6,hoverBorderColor:'#fffefa'}]},
+    data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:3,borderColor:'#fffefa',borderRadius:5,spacing:1,hoverOffset:8,hoverBorderColor:'#fffefa'}]},
     options:{
-      cutout:'22%',
+      cutout:'40%',
       responsive:true,
-      aspectRatio:chartAspectRatio(1.5,1.05),
+      aspectRatio:chartAspectRatio(1.15,.95),
       plugins:{
         legend:{display:false},
         tooltip:{
@@ -3584,12 +3614,9 @@ function drawOrderChannelPie(canvasId,stats){
           clamp:true,
           clip:false,
           color:dctx=>readableTextColorFor(colors[dctx.dataIndex]),
-          font:{size:6,weight:'700'},
+          font:{size:13,weight:'700'},
           textAlign:'center',
-          formatter:(v,dctx)=>{
-            const s=stats[dctx.dataIndex];
-            return [s.channel+','+s.count,fmtMoney(s.sales),'('+fmtMoney(s.profit)+')'];
-          }
+          formatter:(v)=> totalSales>0 ? Math.round(v/totalSales*100)+'%' : '0%'
         }
       }
     }
