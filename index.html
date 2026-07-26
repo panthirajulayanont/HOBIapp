@@ -198,7 +198,7 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .pur-cat-icon svg{width:12px;height:12px;}
 .kpi-hero .kpi-val{font-size:20px;font-weight:800;line-height:1.15;letter-spacing:-.2px;}
 .kpi-val .kpi-currency{font-size:.5em;font-weight:300;margin-left:2px;}
-.kpi-hero .kpi-lbl{font-size:11.5px;opacity:.92;margin-top:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.kpi-hero .kpi-lbl{font-size:10px;opacity:.92;margin-top:0;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
 .kpi-hero .kpi-bottom-row{min-width:0;}
 .kpi-hero.c1{background:#fff2bf;}
 .kpi-hero.c2{background:#ddd1a8;}
@@ -221,7 +221,7 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .chart-card-head{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
 .chart-card-head .cc-icon{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .chart-card-head .cc-icon svg{width:15px;height:15px;stroke:var(--pink-dark);}
-.chart-card-head .cc-title{font-size:13.5px;font-weight:700;color:var(--brown);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chart-card-head .cc-title{font-size:11.5px;font-weight:700;color:var(--brown);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .chart-card-head .cc-badge{font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;}
 .chart-card canvas{max-height:260px;}
 .chart-card .cc-donut-wrap{position:relative;}
@@ -237,6 +237,9 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .ro-channel-count-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);}
 .ro-channel-count-row:last-child{border-bottom:none;}
 .ro-channel-count-row .cnt-num{font-weight:800;font-family:var(--font-head);font-size:17px;margin-left:auto;}
+/* tooltip แบบ DOM ลอยอิสระ (ไม่ผูกกับขอบเขต canvas) กันรายละเอียดโดนตัดเวลากราฟอยู่ใกล้ขอบจอ/การ์ดแคบๆ */
+.chartjs-ext-tooltip{position:absolute;z-index:9999;background:#3d3733;color:#fffefa;padding:8px 11px;border-radius:9px;font-family:var(--font-body);font-size:12px;line-height:1.6;box-shadow:0 6px 18px rgba(0,0,0,.28);pointer-events:none;max-width:230px;white-space:normal;transition:opacity .08s;}
+.chartjs-ext-tooltip .ctt-title{font-weight:800;font-family:var(--font-head);margin-bottom:3px;font-size:12.5px;}
 #pur-spend-donut-wrap .dc-val{font-size:10px;}
 #pur-spend-donut-wrap .dc-lbl{font-size:8.5px;}
 .donut-center .dc-val{font-size:11.2px;font-weight:800;color:var(--brown);}
@@ -451,18 +454,22 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
   <div class="tabpage active" id="tab-home">
     <div class="kpi-hero-grid">
       <div class="kpi-hero c1 kpi-hero-plain">
+        <button type="button" class="kpi-info-btn" onclick="showKpiInfo('home-sales')">i</button>
         <div class="kpi-lbl">ยอดขายรวมทั้งหมด</div>
         <div class="kpi-val" id="home-total-sales">0<span class="kpi-currency">฿</span></div>
       </div>
       <div class="kpi-hero c5 kpi-hero-plain">
+        <button type="button" class="kpi-info-btn" onclick="showKpiInfo('home-netprofit')">i</button>
         <div class="kpi-lbl">กำไรสุทธิรวมทั้งหมด</div>
         <div class="kpi-val" id="home-total-netprofit">0<span class="kpi-currency">฿</span></div>
       </div>
       <div class="kpi-hero c2 kpi-hero-plain">
+        <button type="button" class="kpi-info-btn" onclick="showKpiInfo('home-net')">i</button>
         <div class="kpi-lbl">ยอดสุทธิร้านได้รับ</div>
         <div class="kpi-val" id="home-mini-net">0<span class="kpi-currency">฿</span></div>
       </div>
       <div class="kpi-hero c4 kpi-hero-plain">
+        <button type="button" class="kpi-info-btn" onclick="showKpiInfo('home-grossprofit')">i</button>
         <div class="kpi-lbl">กำไรขั้นต้น</div>
         <div class="kpi-val" id="home-mini-grossprofit">0<span class="kpi-currency">฿</span></div>
       </div>
@@ -534,7 +541,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="chart-card" style="margin-top:0;flex:1 1 0;min-width:0">
           <div class="chart-card-head">
             <div class="cc-icon" style="background:var(--olive)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8M12 8v8"/></svg></div>
-            <div class="cc-title">จำนวนออเดอร์ต่อช่องทาง</div>
+            <div class="cc-title">จำนวนออเดอร์</div>
           </div>
           <div id="ro-channel-count-list" class="emptystate">ไม่มีข้อมูล</div>
         </div>
@@ -768,6 +775,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div id="chart-topmenu-wrap" style="position:relative">
           <canvas id="chart-topmenu"></canvas>
         </div>
+        <button type="button" id="topmenu-showall-btn" class="btn-ghost btn-sm" style="margin-top:8px;display:none" onclick="toggleTopMenuShowAll()">แสดงทั้งหมด</button>
         <div class="mini-chart-grid" id="topmenu-bycat-grid"></div>
       </div>
       <div class="chart-card">
@@ -859,18 +867,22 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     <div id="fin-content" style="display:none">
       <div class="kpi-combined-row">
         <div class="kpi-hero c1" style="flex:1.4 1 150px">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('fin-revenue')">i</button>
           <div class="kpi-val" id="fin-revenue">0<span class="kpi-currency">฿</span></div>
           <div class="kpi-bottom-row"><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="2"/><circle cx="12" cy="12" r="2.3"/><path d="M6 10v4M18 10v4"/></svg></div><div class="kpi-lbl">ยอดขาย</div></div>
         </div>
         <div class="kpi-hero c2" style="flex:1.4 1 150px">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('fin-net')">i</button>
           <div class="kpi-val" id="fin-net">0<span class="kpi-currency">฿</span></div>
           <div class="kpi-bottom-row"><div class="kpi-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v2h2a1 1 0 0 1 1 1v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/><circle cx="16.5" cy="14" r="1.3"/></svg></div><div class="kpi-lbl">ยอดสุทธิร้านได้รับ</div></div>
         </div>
         <div class="kpi-mini" style="flex:1 1 130px">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('fin-comm')">i</button>
           <div class="mini-icon icon-dark-bg" style="background:var(--red)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><line x1="8" y1="16" x2="16" y2="8"/><circle cx="9" cy="9" r=".6" fill="#fff"/><circle cx="15" cy="15" r=".6" fill="#fff"/></svg></div>
           <div class="mini-body"><div class="mini-val" id="fin-commission">฿0</div><div class="mini-lbl">ค่าคอมมิชชั่นรวม</div></div>
         </div>
         <div class="kpi-mini" style="flex:1 1 130px">
+          <button type="button" class="kpi-info-btn" onclick="showKpiInfo('fin-adfee')">i</button>
           <div class="mini-icon" style="background:var(--tan)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11v2a2 2 0 0 0 2 2h1l3 5V6l-3 5H5a2 2 0 0 0-2 2z"/><path d="M13 8a4 4 0 0 1 0 8"/><path d="M17 4a9 9 0 0 1 0 16"/></svg></div>
           <div class="mini-body"><div class="mini-val" id="fin-adfee">฿0</div><div class="mini-lbl">ค่าโฆษณารวม</div></div>
         </div>
@@ -2235,7 +2247,15 @@ const KPI_INFO={
   's-comm':{title:'ค่าคอมมิชชั่น+โฆษณา',body:'ผลรวมค่าคอมมิชชั่นและค่าโฆษณาทุกช่องทาง โดยระบบจะเลือกใช้ยอดที่กรอกต่อออเดอร์ (เช่น Grab) หรือยอดรวมรายวันจากหน้าการเงิน (เช่น LineMan) แล้วแต่ว่าวันที่+ช่องทางนั้นมีบันทึกแบบไหนไว้ — เลือกใช้แหล่งเดียวต่อ วันที่+ช่องทาง เพื่อไม่ให้นับซ้ำ'},
   's-purchases':{title:'ยอดซื้อของเข้าร้าน',body:'ผลรวมยอดซื้อของเข้าร้าน (total) จากหน้าซื้อของ ในช่วงเวลาที่เลือก เป็นกระแสเงินสดจริงที่จ่ายออกไป ไม่ผูกกับว่าของนั้นถูกขายไปแล้วหรือยัง'},
   's-aov':{title:'เฉลี่ยต่อออเดอร์',body:'ยอดขายรวม ÷ จำนวนออเดอร์ทั้งหมดในช่วงเวลาที่เลือก (Average Order Value)'},
-  's-thaiplus':{title:'ยอดขาย Thai+ (60/40)',body:'ผลรวมยอดขายเฉพาะออเดอร์ที่ติ๊กแคมเปญ Thai+ (60/40) ในช่วงเวลาที่เลือก พร้อมจำนวนออเดอร์ในวงเล็บ'}
+  's-thaiplus':{title:'ยอดขาย Thai+ (60/40)',body:'ผลรวมยอดขายเฉพาะออเดอร์ที่ติ๊กแคมเปญ Thai+ (60/40) ในช่วงเวลาที่เลือก พร้อมจำนวนออเดอร์ในวงเล็บ'},
+  'home-sales':{title:'ยอดขายรวมทั้งหมด',body:'ผลรวมยอดขาย (total_sale) ของทุกออเดอร์ "ตลอดกาล" นับตั้งแต่เริ่มบันทึกข้อมูล ไม่ผูกกับช่วงเวลาใดๆ ยังไม่หักค่าคอมมิชชั่น ค่าโฆษณา หรือต้นทุนสินค้า'},
+  'home-netprofit':{title:'กำไรสุทธิรวมทั้งหมด',body:'กำไรสุทธิ = ยอดสุทธิร้านได้รับ − ยอดซื้อของเข้าร้าน คำนวณแบบ "ตลอดกาล" (ไม่ผูกกับช่วงเวลาใดๆ) หักยอดซื้อของเข้าร้านทั้งหมด จึงสะท้อนกระแสเงินสดจริงของร้านได้ใกล้เคียงที่สุด'},
+  'home-net':{title:'ยอดสุทธิร้านได้รับ',body:'ยอดขายรวม − ค่าคอมมิชชั่น − ค่าโฆษณา ทุกช่องทางรวมกัน คำนวณแบบ "ตลอดกาล" (ไม่ผูกกับช่วงเวลาใดๆ) เลือกใช้ยอดที่กรอกต่อออเดอร์หรือยอดรวมรายวัน แล้วแต่ว่าวันที่+ช่องทางนั้นมีบันทึกแบบไหนไว้ เพื่อไม่ให้นับซ้ำ'},
+  'home-grossprofit':{title:'กำไรขั้นต้น',body:'กำไรขั้นต้น = ยอดสุทธิร้านได้รับ − ต้นทุนสินค้าต่อออเดอร์ คำนวณแบบ "ตลอดกาล" (ไม่ผูกกับช่วงเวลาใดๆ)<br><br>ยังไม่ได้หัก "ยอดซื้อของเข้าร้าน" ทั้งหมด (เพราะของที่ซื้ออาจยังไม่ถูกขายหมด) ถ้าอยากดูกระแสเงินสดจริง ดูที่การ์ด "กำไรสุทธิรวมทั้งหมด" แทน'},
+  'fin-revenue':{title:'ยอดขาย',body:'ผลรวมยอดขาย (total_sale) ของออเดอร์ในช่วงเวลา/ช่องทางที่เลือกไว้ด้านบน ยังไม่หักค่าคอมมิชชั่น ค่าโฆษณา หรือต้นทุนสินค้า'},
+  'fin-net':{title:'ยอดสุทธิร้านได้รับ',body:'ยอดขาย − ค่าคอมมิชชั่น − ค่าโฆษณา ของช่วงเวลา/ช่องทางที่เลือกไว้ด้านบน เลือกใช้ยอดที่กรอกต่อออเดอร์หรือยอดรวมรายวันจากการ์ดค่าธรรมเนียมแพลตฟอร์ม แล้วแต่ว่าวันที่+ช่องทางนั้นมีบันทึกแบบไหนไว้ เพื่อไม่ให้นับซ้ำ'},
+  'fin-comm':{title:'ค่าคอมมิชชั่นรวม',body:'ผลรวมค่าคอมมิชชั่นแพลตฟอร์มของช่วงเวลา/ช่องทางที่เลือกไว้ด้านบน (จากที่กรอกต่อออเดอร์ หรือยอดรวมรายวันจากการ์ดค่าธรรมเนียมแพลตฟอร์ม แล้วแต่ว่ามีบันทึกแบบไหนไว้)'},
+  'fin-adfee':{title:'ค่าโฆษณารวม',body:'ผลรวมค่าโฆษณา/แคมเปญของช่วงเวลา/ช่องทางที่เลือกไว้ด้านบน (จากที่กรอกต่อออเดอร์ หรือยอดรวมรายวันจากการ์ดค่าธรรมเนียมแพลตฟอร์ม แล้วแต่ว่ามีบันทึกแบบไหนไว้)'}
 };
 function showKpiInfo(key){
   const info=KPI_INFO[key]; if(!info) return;
@@ -3336,18 +3356,23 @@ async function renderDashboard(){
       byMenuSale[key]=(byMenuSale[key]||0)+Number(i.line_sale||0);
       byMenuQty[key]=(byMenuQty[key]||0)+Number(i.qty||0);
     });
-    // แสดง "ทุกเมนู" เรียงจากขายดีสุดไว้บน (ไม่ตัดเหลือแค่ Top 10 แล้ว) สีแท่งกราฟไล่ตามรสชาติของเค้ก/ซอส/เครื่องดื่ม แทนสีตามหมวดหมู่
+    // เรียงเมนูทั้งหมดจากขายดีสุดไว้บน — ค่าเริ่มต้นโชว์แค่ Top 10 กันแน่นเกินไป มีปุ่ม "แสดงทั้งหมด" ให้กดขยายทีหลัง สีแท่งกราฟไล่ตามรสชาติของเค้ก/ซอส/เครื่องดื่ม แทนสีตามหมวดหมู่
     const topMenu=Object.entries(byMenuSale).sort((a,b)=>b[1]-a[1]);
     const topMenuLabels=topMenu.map(x=>findMenuShortName(x[0]));
     const topMenuSales=topMenu.map(x=>x[1]);
     const topMenuQtys=topMenu.map(x=>byMenuQty[x[0]]||0);
     const topMenuColors=topMenu.map(x=>flavorColorForMenuName(x[0],catColorMap[findMenuCategory(x[0])||'ไม่ระบุหมวดหมู่']||'#665e58'));
-    // ความสูงยืดตามจำนวนเมนูทั้งหมด กันแท่งบีบจนอ่านไม่ออกเมื่อมีหลายรายการ (ส่งเข้า drawTopMenuChart เพื่อตั้งความสูงที่ตัวห่อ canvas)
-    const topMenuHeightPx=Math.max(260,topMenu.length*30);
-    drawTopMenuChart('chart-topmenu',topMenuLabels,topMenuSales,topMenuQtys,topMenuColors,false,topMenuHeightPx);
+    __topMenuFullData={labels:topMenuLabels,sales:topMenuSales,qtys:topMenuQtys,colors:topMenuColors};
+    renderTopMenuChartWithLimit();
 
     // กราฟเล็กแยกรายหมวดหมู่ — top 5 ต่อหมวด สร้าง canvas แบบไดนามิกใหม่ทุกครั้งที่ render
-    renderTopMenuByCategoryMinis(items,catsOrdered,catColorMap);
+    // ตัดเหลือแค่ 3 หมวดแรกตามลำดับความสำคัญ + หมวดเครื่องดื่ม กันหน้าแน่นเกินไป (ตัด Whole Cake และไม่ระบุหมวดหมู่ออก)
+    const isDrinkCatName=c=>{ const n=normCatName(c); return n==='drink'||n==='drinks'||n==='เครื่องดื่ม'; };
+    const isUnspecifiedCatName=c=>{ const n=normCatName(c); return n===''||n==='ไม่ระบุหมวดหมู่'||n==='อื่นๆ'||n==='options'||n==='option'; };
+    const minisMain=catsOrdered.filter(c=>!isDrinkCatName(c)&&!isUnspecifiedCatName(c)).slice(0,3);
+    const minisDrink=catsOrdered.filter(isDrinkCatName);
+    const catsForMinis=[...minisMain,...minisDrink];
+    renderTopMenuByCategoryMinis(items,catsForMinis,catColorMap);
 
     // ยอดใช้ตัวเลือกเสริมสะสม (ย้ายมาจากหน้าตั้งค่า — นับตามช่วงเวลาที่เลือกเหมือนกราฟอื่นๆ ในหน้านี้) — สีตามกลุ่มตัวเลือก ชื่อแท่งใส่แค่ชื่อไอเทม
     const optGroupsPresent=sortCategories([...new Set(itemOpts.map(o=>o.group||'อื่นๆ'))]);
@@ -3580,6 +3605,40 @@ function drawPie(canvasId,labels,data,centerElId,centerLabelText,opts){
 }
 // พายชาร์ทสัดส่วนยอดขายตามช่องทาง (หน้า Orders) — แต่ละชิ้นโชว์ชื่อช่องทาง/จำนวนออเดอร์/ยอดขาย/กำไรขั้นต้นในตัวเลย ไม่ต้องกดดูแยก
 // stats: [{channel, count, sales, profit, color}]
+// tooltip แบบ HTML ลอยอิสระ ใช้แทน tooltip มาตรฐานของ Chart.js (ซึ่งถูกวาดลงในตัว canvas เอง เลยโดนตัดขอบเวลากราฟอยู่ในการ์ดแคบๆ ใกล้ขอบจอ)
+// วางตำแหน่งจาก DOMRect ของ canvas จริง แล้ว clamp ไม่ให้ล้นขอบจอทั้งซ้าย/ขวา
+function chartExternalTooltip(context){
+  const {chart,tooltip}=context;
+  let el=document.getElementById('chartjs-ext-tooltip');
+  if(!el){
+    el=document.createElement('div');
+    el.id='chartjs-ext-tooltip';
+    el.className='chartjs-ext-tooltip';
+    document.body.appendChild(el);
+  }
+  if(tooltip.opacity===0){ el.style.opacity='0'; return; }
+  const titleLines=tooltip.title||[];
+  const bodyLines=(tooltip.body||[]).map(b=>b.lines).flat();
+  let html='';
+  titleLines.forEach(t=>{ html+=`<div class="ctt-title">${t}</div>`; });
+  bodyLines.forEach(b=>{ html+=`<div>${b}</div>`; });
+  el.innerHTML=html;
+  const rect=chart.canvas.getBoundingClientRect();
+  const anchorX=rect.left+window.scrollX+tooltip.caretX;
+  const anchorY=rect.top+window.scrollY+tooltip.caretY;
+  el.style.opacity='1';
+  requestAnimationFrame(()=>{
+    const w=el.offsetWidth, h=el.offsetHeight;
+    const vpLeft=window.scrollX+8, vpRight=window.scrollX+window.innerWidth-8;
+    let left=anchorX-w/2;
+    if(left<vpLeft) left=vpLeft;
+    if(left+w>vpRight) left=vpRight-w;
+    let top=anchorY-h-14;
+    if(top<window.scrollY+8) top=anchorY+14;
+    el.style.left=left+'px';
+    el.style.top=top+'px';
+  });
+}
 function drawOrderChannelPie(canvasId,stats){
   const canvasEl=document.getElementById(canvasId);
   if(!canvasEl) return;
@@ -3602,6 +3661,8 @@ function drawOrderChannelPie(canvasId,stats){
       plugins:{
         legend:{display:false},
         tooltip:{
+          enabled:false,
+          external:chartExternalTooltip,
           callbacks:{
             label:(dctx)=>{
               const s=stats[dctx.dataIndex];
@@ -3690,6 +3751,25 @@ function drawRankedBarChart(canvasId,items,{small=false,heightPx}={}){
 function drawTopMenuChart(canvasId,labels,sales,qtys,colors,small,heightPx){
   const items=labels.map((lbl,i)=>({label:lbl,value:sales[i],valueText:fmtMoney(sales[i])+' · '+(qtys[i]||0)+'ชิ้น',color:colors[i]}));
   drawRankedBarChart(canvasId,items,{small,heightPx});
+}
+// การ์ด "เมนูขายดีทั้งหมด" หน้าแดชบอร์ด — ค่าเริ่มต้นโชว์แค่ Top 10 กันแท่งเยอะจนรก มีปุ่มกดขยายดูทั้งหมดทีหลังได้
+let __topMenuFullData=null;
+let __topMenuShowAll=false;
+function renderTopMenuChartWithLimit(){
+  if(!__topMenuFullData) return;
+  const {labels,sales,qtys,colors}=__topMenuFullData;
+  const n=__topMenuShowAll ? labels.length : Math.min(10,labels.length);
+  const heightPx=__topMenuShowAll ? Math.max(260,n*30) : undefined;
+  drawTopMenuChart('chart-topmenu',labels.slice(0,n),sales.slice(0,n),qtys.slice(0,n),colors.slice(0,n),false,heightPx);
+  const btn=document.getElementById('topmenu-showall-btn');
+  if(btn){
+    btn.style.display=labels.length>10 ? '' : 'none';
+    btn.textContent=__topMenuShowAll ? 'แสดงแค่ 10 อันดับแรก' : `แสดงทั้งหมด (${labels.length} เมนู)`;
+  }
+}
+function toggleTopMenuShowAll(){
+  __topMenuShowAll=!__topMenuShowAll;
+  renderTopMenuChartWithLimit();
 }
 function drawOptionUsageChart(canvasId,labels,qtys,colors){
   const items=labels.map((lbl,i)=>({label:lbl,value:qtys[i],valueText:qtys[i]+' ชิ้น',color:colors[i]}));
