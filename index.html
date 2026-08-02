@@ -182,6 +182,11 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .order-row .or-profit{flex-shrink:0;font-size:11.5px;font-weight:700;padding:2px 7px;border-radius:20px;}
 .order-row .or-profit.pos{background:#fff2bf;color:#665e58;}
 .order-row .or-profit.neg{background:rgba(102,94,88,.12);color:#665e58;}
+/* กำไร% ต่อยอดขายต่อออเดอร์ — โทนสีปรับให้กลืนกับพาเลตครีม/บัตเตอร์/โทป ของแอพ ไม่ใช้แดง/เขียวจัดจ้าน: ต่ำกว่า 0% = แดงดินโทนดิน, 0-20% = โทปกลาง (ปกติ), มากกว่า 20% = เขียวเสจอ่อน */
+.order-row .or-pct{flex-shrink:0;font-size:11px;font-weight:700;padding:2px 7px;border-radius:20px;}
+.order-row .or-pct.bad{background:rgba(179,95,74,.14);color:#b35f4a;}
+.order-row .or-pct.mid{background:rgba(102,94,88,.1);color:var(--brown);}
+.order-row .or-pct.good{background:rgba(122,140,101,.18);color:#6f7f5e;}
 .order-row .or-del{flex-shrink:0;}
 .kpi-hero-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:10px;}
 .kpi-combined-row{display:flex;flex-wrap:wrap;align-items:flex-start;gap:10px;margin-bottom:12px;}
@@ -293,12 +298,13 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 #tab-home .cake-bubble-wrap{padding:2px 0;gap:14px;}
 #tab-home .card-head-row{margin-bottom:8px;}
 #tab-home textarea#claude-import-json{min-height:40px;}
-#tab-orders .order-row{font-size:11px;display:grid;grid-template-columns:46px 56px 44px 1fr 58px;align-items:center;column-gap:6px;}
+#tab-orders .order-row{font-size:11px;display:grid;grid-template-columns:46px 56px 44px 1fr 58px 46px;align-items:center;column-gap:6px;}
 #tab-orders .order-row .badge{font-size:11px;text-align:center;justify-self:stretch;}
 #tab-orders .order-row .or-no{overflow:hidden;text-overflow:ellipsis;}
 #tab-orders .order-row .or-date{justify-self:start;}
 #tab-orders .order-row .or-total{font-size:11px;text-align:right;justify-self:end;margin-left:0;}
 #tab-orders .order-row .or-profit{font-size:11px;text-align:right;justify-self:end;margin-left:0;}
+#tab-orders .order-row .or-pct{font-size:10.5px;text-align:right;justify-self:end;margin-left:0;}
 #tab-orders .order-row.order-summary{background:var(--butter);color:#5a4a2a;font-weight:700;border-radius:8px;cursor:default;border-bottom:none;margin-bottom:8px;}
 #tab-orders .order-row.order-summary:hover{background:var(--butter);}
 </style>
@@ -2181,12 +2187,16 @@ async function renderRecentOrders(){
   function orderRowHtml(o){
     const cls=o.channel==='Grab Food'?'grab':o.channel==='Line Man'?'line':o.channel==='คอนโด'?'condo':'other';
     const profit=computeOrderEffectiveProfit(o,allOrdersForFee,allDailyFees).profit;
+    const sale=Number(o.total_sale)||0;
+    const pct=sale>0 ? (profit/sale*100) : 0;
+    const pctCls=pct<0?'bad':(pct<=20?'mid':'good');
     return `<div class="order-row clickable" onclick="showOrderDetail('${o.id}')">
       <span class="badge ${cls}${o.thai_plus?' tp':''}" ${o.thai_plus?'title="Thai+ 60/40"':''}>${escapeHtml(shortChannelLabel(o.channel))}</span>
       <span class="or-no">#${escapeHtml(o.order_no||'-')}</span>
       <span class="or-date">${formatDateDDMM(o.date)}</span>
       <b class="or-total">${fmtMoney(o.total_sale)}</b>
       <span class="or-profit ${profit>=0?'pos':'neg'}">${fmtMoney(profit)}</span>
+      <span class="or-pct ${pctCls}">${pct.toFixed(0)}%</span>
     </div>`;
   }
 
