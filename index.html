@@ -283,6 +283,23 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .filter-toggle .chevron{font-size:11px;flex-shrink:0;}
 .filter-toggle .ft-summary{font-weight:400;color:var(--pink-dark);}
 .filter-body{margin-bottom:4px;}
+/* ปุ่มเปิดปฏิทินเลือกช่วงวันที่ (แทนที่ช่องจากวันที่/ถึงวันที่แยกกัน 2 ช่อง) */
+.range-picker-field{display:flex;align-items:center;gap:8px;padding:9px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;font-size:13px;color:var(--text);}
+.range-picker-field svg{flex-shrink:0;stroke:var(--muted);}
+.range-picker-field span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+/* ปฏิทินเลือกช่วงวันที่ในโมดัล */
+.range-cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.range-cal-nav button{background:var(--tan);border:none;width:28px;height:28px;border-radius:50%;color:var(--pink-dark);font-size:15px;font-weight:700;cursor:pointer;}
+.range-cal-nav .range-cal-title{font-weight:700;font-size:14px;color:var(--brown);}
+.range-cal-dow{display:grid;grid-template-columns:repeat(7,1fr);text-align:center;font-size:10.5px;color:var(--muted);font-weight:600;margin-bottom:2px;}
+.range-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;}
+.range-cal-grid .rc-day{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12.5px;cursor:pointer;border-radius:50%;color:var(--text);}
+.range-cal-grid .rc-day.rc-empty{cursor:default;}
+.range-cal-grid .rc-day.rc-today{font-weight:800;color:var(--pink-dark);}
+.range-cal-grid .rc-day.rc-in-range{background:rgba(255,242,191,.6);border-radius:0;}
+.range-cal-grid .rc-day.rc-start{background:var(--pink-dark);color:#fffefa;border-radius:50% 0 0 50%;}
+.range-cal-grid .rc-day.rc-end{background:var(--pink-dark);color:#fffefa;border-radius:0 50% 50% 0;}
+.range-cal-grid .rc-day.rc-start.rc-end{border-radius:50%;}
 .seg{display:flex;background:#f3f1ed;border-radius:10px;padding:3px;margin-bottom:12px;}
 .seg button{flex:1;background:none;color:var(--muted);padding:8px;border-radius:8px;}
 .seg button.active{background:#fff;color:var(--pink-dark);box-shadow:0 1px 3px rgba(0,0,0,.08);}
@@ -361,6 +378,27 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <button class="closebtn" onclick="closeMonthPickerModal()" style="font-size:20px">×</button>
     </div>
     <div class="pillrow" id="month-modal-pillrow" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="range-modal-overlay" onclick="closeRangeCalendarModalOnOverlay(event)">
+  <div class="modal-panel" style="max-width:340px" onclick="event.stopPropagation()">
+    <div class="modal-header">
+      <h3>เลือกช่วงวันที่</h3>
+      <button class="closebtn" onclick="closeRangeCalendarModal()" style="font-size:20px">×</button>
+    </div>
+    <div class="range-cal-nav">
+      <button type="button" onclick="rangeCalNav(-1)">‹</button>
+      <div class="range-cal-title" id="range-cal-title"></div>
+      <button type="button" onclick="rangeCalNav(1)">›</button>
+    </div>
+    <div class="range-cal-dow"><span>อา</span><span>จ</span><span>อ</span><span>พ</span><span>พฤ</span><span>ศ</span><span>ส</span></div>
+    <div class="range-cal-grid" id="range-cal-grid"></div>
+    <p class="hint" id="range-cal-hint" style="margin-top:8px">แตะวันเริ่มต้น แล้วแตะวันสิ้นสุด</p>
+    <div class="btn-row" style="margin-top:6px">
+      <button type="button" class="btn-primary" onclick="applyRangeCalendar()">ใช้ช่วงนี้</button>
+      <button type="button" class="btn-ghost" onclick="closeRangeCalendarModal()">ยกเลิก</button>
+    </div>
   </div>
 </div>
 
@@ -528,10 +566,11 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="pill" onclick="setRangePreset('all','ro',this)">ทั้งหมด</div>
         <div class="pill" onclick="openMonthPickerModal('ro')">เลือกเดือน</div>
       </div>
-      <div class="row">
-        <div><label>จากวันที่</label><input type="date" id="ro-from" onchange="roMonthSelected=false;renderRecentOrders();updateFilterSummary('ro')"></div>
-        <div><label>ถึงวันที่</label><input type="date" id="ro-to" onchange="roMonthSelected=false;renderRecentOrders();updateFilterSummary('ro')"></div>
+      <div class="range-picker-field" onclick="openRangeCalendarModal('ro')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+        <span id="ro-range-label">เลือกช่วงวันที่</span>
       </div>
+      <input type="hidden" id="ro-from"><input type="hidden" id="ro-to">
       </div>
 
       <div class="row" style="margin-top:10px">
@@ -625,10 +664,11 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
             <div class="pill" onclick="setRangePreset('all','rp',this)">ทั้งหมด</div>
             <div class="pill" onclick="openMonthPickerModal('rp')">เลือกเดือน</div>
           </div>
-          <div class="row">
-            <div><label>จากวันที่</label><input type="date" id="rp-from" onchange="renderRecentPurchases();renderPurchaseSpendDashboard();updateFilterSummary('rp')"></div>
-            <div><label>ถึงวันที่</label><input type="date" id="rp-to" onchange="renderRecentPurchases();renderPurchaseSpendDashboard();updateFilterSummary('rp')"></div>
+          <div class="range-picker-field" onclick="openRangeCalendarModal('rp')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+            <span id="rp-range-label">เลือกช่วงวันที่</span>
           </div>
+          <input type="hidden" id="rp-from"><input type="hidden" id="rp-to">
           </div>
 
           <div style="display:flex;align-items:center;gap:8px"><label style="margin:0;white-space:nowrap;width:56px;flex-shrink:0">category</label>
@@ -669,10 +709,11 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="pill active" onclick="setRangePreset('all','d',this)">ทั้งหมด</div>
         <div class="pill" onclick="openMonthPickerModal('d')">เลือกเดือน</div>
       </div>
-      <div class="row">
-        <div><label>จากวันที่</label><input type="date" id="d-from" onchange="renderDashboard();updateFilterSummary('d')"></div>
-        <div><label>ถึงวันที่</label><input type="date" id="d-to" onchange="renderDashboard();updateFilterSummary('d')"></div>
+      <div class="range-picker-field" onclick="openRangeCalendarModal('d')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+        <span id="d-range-label">เลือกช่วงวันที่</span>
       </div>
+      <input type="hidden" id="d-from"><input type="hidden" id="d-to">
       <button class="btn-primary" style="margin-top:10px" onclick="renderDashboard()">แสดงผล</button>
       </div>
     </div>
@@ -861,10 +902,11 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="pill" onclick="setRangePreset('all','fin',this)">ทั้งหมด</div>
         <div class="pill" onclick="openMonthPickerModal('fin')">เลือกเดือน</div>
       </div>
-      <div class="row">
-        <div><label>จากวันที่</label><input type="date" id="fin-from" onchange="renderFinance();updateFilterSummary('fin')"></div>
-        <div><label>ถึงวันที่</label><input type="date" id="fin-to" onchange="renderFinance();updateFilterSummary('fin')"></div>
+      <div class="range-picker-field" onclick="openRangeCalendarModal('fin')">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4M16 3v4M3 10h18"/></svg>
+        <span id="fin-range-label">เลือกช่วงวันที่</span>
       </div>
+      <input type="hidden" id="fin-from"><input type="hidden" id="fin-to">
       <div class="pillrow" id="fin-channel-pillrow" style="margin-top:10px">
         <div class="pill active" onclick="setFinChannelFilter('all',this)">All</div>
         <div class="pill" onclick="setFinChannelFilter('Grab Food',this)">Grab Food</div>
@@ -2962,6 +3004,7 @@ function selectMonthFromModal(monthIndex,prefix){
   document.getElementById(prefix+'-to').value=to;
   const summaryEl=document.getElementById(prefix+'-filter-summary');
   if(summaryEl) summaryEl.textContent=THAI_MONTHS[monthIndex]+' '+year;
+  syncRangeLabel(prefix);
   if(prefix==='ro') renderRecentOrders();
   else if(prefix==='fin') renderFinance();
   else if(prefix==='rp'){ renderRecentPurchases(); renderPurchaseSpendDashboard(); }
@@ -2973,9 +3016,90 @@ function updateFilterSummary(prefix){
   const el=document.getElementById(prefix+'-filter-summary');
   const fromEl=document.getElementById(prefix+'-from');
   const toEl=document.getElementById(prefix+'-to');
+  syncRangeLabel(prefix);
   if(!el || !fromEl || !toEl || !fromEl.value || !toEl.value) return;
   const from=fromEl.value, to=toEl.value;
   el.textContent=(from==='2000-01-01' && to===todayISO()) ? 'ทั้งหมด' : (formatThaiDateShort(from)+' – '+formatThaiDateShort(to));
+}
+// อัพเดตข้อความบนปุ่มเปิดปฏิทินเลือกช่วงวันที่ (ในการ์ดตัวกรองที่กางอยู่) ให้ตรงกับ from/to ปัจจุบันเสมอ
+function syncRangeLabel(prefix){
+  const el=document.getElementById(prefix+'-range-label');
+  if(!el) return;
+  const fromEl=document.getElementById(prefix+'-from'), toEl=document.getElementById(prefix+'-to');
+  const from=fromEl?fromEl.value:'', to=toEl?toEl.value:'';
+  if(!from || !to){ el.textContent='เลือกช่วงวันที่'; return; }
+  el.textContent=(from==='2000-01-01' && to===todayISO()) ? 'ทั้งหมด' : (formatThaiDateShort(from)+' – '+formatThaiDateShort(to));
+}
+/* ============ ปฏิทินเลือกช่วงวันที่ (คลิกวันเริ่ม-วันจบในปฏิทินเดียว แทนกรอกวันที่ 2 ช่อง) ============ */
+let rangeCalPrefix=null, rangeCalView=new Date(), rangeCalStart=null, rangeCalEnd=null;
+function openRangeCalendarModal(prefix){
+  rangeCalPrefix=prefix;
+  const fromV=document.getElementById(prefix+'-from').value;
+  const toV=document.getElementById(prefix+'-to').value;
+  rangeCalStart=fromV||null;
+  rangeCalEnd=toV||null;
+  const base=fromV ? new Date(fromV+'T00:00:00') : new Date();
+  rangeCalView=new Date(base.getFullYear(),base.getMonth(),1);
+  renderRangeCalendar();
+  document.getElementById('range-modal-overlay').style.display='flex';
+}
+function closeRangeCalendarModal(){ document.getElementById('range-modal-overlay').style.display='none'; }
+function closeRangeCalendarModalOnOverlay(e){ if(e.target.id==='range-modal-overlay') closeRangeCalendarModal(); }
+function rangeCalNav(delta){
+  rangeCalView=new Date(rangeCalView.getFullYear(),rangeCalView.getMonth()+delta,1);
+  renderRangeCalendar();
+}
+function pickRangeDay(iso){
+  if(!rangeCalStart || rangeCalEnd){
+    // ยังไม่ได้เลือกวันเริ่ม หรือเลือกครบคู่แล้ว (กดใหม่) — เริ่มเลือกช่วงใหม่
+    rangeCalStart=iso; rangeCalEnd=null;
+  }else if(iso<rangeCalStart){
+    rangeCalEnd=rangeCalStart; rangeCalStart=iso;
+  }else{
+    rangeCalEnd=iso;
+  }
+  renderRangeCalendar();
+}
+function renderRangeCalendar(){
+  const y=rangeCalView.getFullYear(), m=rangeCalView.getMonth();
+  document.getElementById('range-cal-title').textContent=THAI_MONTHS[m]+' '+y;
+  const grid=document.getElementById('range-cal-grid');
+  const firstDow=new Date(y,m,1).getDay(); // 0=อา
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  const today=todayISO();
+  let html='';
+  for(let i=0;i<firstDow;i++) html+='<span class="rc-day rc-empty"></span>';
+  for(let d=1; d<=daysInMonth; d++){
+    const iso=toLocalISO(new Date(y,m,d));
+    let cls='rc-day';
+    if(iso===today) cls+=' rc-today';
+    if(rangeCalStart && iso===rangeCalStart) cls+=' rc-start';
+    if(rangeCalEnd && iso===rangeCalEnd) cls+=' rc-end';
+    if(rangeCalStart && rangeCalEnd && iso>rangeCalStart && iso<rangeCalEnd) cls+=' rc-in-range';
+    if(rangeCalStart && !rangeCalEnd && iso===rangeCalStart) cls+=' rc-end'; // เลือกวันเดียว โชว์เป็นวงกลมเต็มไปก่อน
+    html+=`<span class="${cls}" onclick="pickRangeDay('${iso}')">${d}</span>`;
+  }
+  grid.innerHTML=html;
+  const hint=document.getElementById('range-cal-hint');
+  if(hint) hint.textContent = (rangeCalStart && !rangeCalEnd) ? `เริ่ม ${formatThaiDateShort(rangeCalStart)} — แตะวันสิ้นสุด` : (rangeCalStart && rangeCalEnd ? `${formatThaiDateShort(rangeCalStart)} – ${formatThaiDateShort(rangeCalEnd)}` : 'แตะวันเริ่มต้น แล้วแตะวันสิ้นสุด');
+}
+function applyRangeCalendar(){
+  if(!rangeCalStart) return;
+  const prefix=rangeCalPrefix;
+  const from=rangeCalStart, to=rangeCalEnd||rangeCalStart;
+  document.getElementById(prefix+'-from').value=from;
+  document.getElementById(prefix+'-to').value=to;
+  const presetRow=document.getElementById(prefix+'-preset-pillrow');
+  if(presetRow) presetRow.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  const monthRow=document.getElementById(prefix+'-month-pillrow');
+  if(monthRow) monthRow.querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));
+  if(prefix==='ro') roMonthSelected=false;
+  updateFilterSummary(prefix);
+  if(prefix==='d') renderDashboard();
+  else if(prefix==='ro') renderRecentOrders();
+  else if(prefix==='rp'){ renderRecentPurchases(); renderPurchaseSpendDashboard(); }
+  else if(prefix==='fin') renderFinance();
+  closeRangeCalendarModal();
 }
 function setRangePreset(preset,prefix,el){
   const row=el.closest('.pillrow');
