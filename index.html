@@ -828,6 +828,13 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div><label>ค่าโฆษณา/แคมเปญรวม (฿)</label><input type="number" id="df-adfee" step="0.01" value="0"></div>
       </div>
 
+      <div class="thaiplus-box">
+        <input type="checkbox" id="df-thaiplus">
+        <label style="margin:0;font-weight:600;color:var(--pink-dark);cursor:pointer" for="df-thaiplus">ยอดนี้เฉพาะกลุ่มแคมเปญ 60/40 <button type="button" class="info-btn" onclick="event.preventDefault();event.stopPropagation();toggleEl('hint-dailyfee-thaiplus')">i</button>
+          <div class="hint" id="hint-dailyfee-thaiplus" style="margin-top:2px;font-weight:400;display:none">ติ๊กถ้ายอดค่าคอม/ค่าโฆษณาที่กรอกด้านบนเป็นยอดรวมเฉพาะออเดอร์กลุ่ม Thai+ (60/40) ของวัน+ช่องทางนี้เท่านั้น (ไม่รวมออเดอร์ปกติ) ระบบจะเฉลี่ยแบ่งให้เฉพาะออเดอร์ที่ติ๊ก Thai+ ไว้ ไม่ปนกับออเดอร์ปกติ ถ้าหน้าการเงินโชว์ยอดรวมทุกออเดอร์ปนกันไม่ต้องติ๊ก</div>
+        </label>
+      </div>
+
       <div class="form-section-label">หมายเหตุ</div>
       <input type="text" id="df-note" placeholder="เช่น อ้างอิงจากหน้าการเงินวันนี้">
 
@@ -2093,9 +2100,12 @@ function formatThaiDateShort(iso){
 function computeOrderEffectiveFees(order,allOrders,allDailyFees){
   const ownComm=Number(order.commission)||0, ownAd=Number(order.ad_fee)||0;
   if(ownComm>0 || ownAd>0) return {commission:ownComm, ad_fee:ownAd, allocated:false};
-  const feeRec=allDailyFees.find(f=>f.date===order.date && f.channel===order.channel);
+  // เฉลี่ยค่าคอม/โฆษณารวมรายวันลงแต่ละออเดอร์ตามสัดส่วนยอดขาย — แต่ต้องแยกกลุ่ม Thai+ (60/40) ออกจากออเดอร์ปกติเสมอ
+  // เพราะอัตราค่าคอมของ Thai+ คำนวณคนละแบบ ถ้าเอาไปปนกันจะเฉลี่ยผิดสัดส่วน (ดูรายละเอียดที่ checkbox "เฉพาะ Thai+" ตอนกรอก Daily Fee)
+  const orderIsTp=!!order.thai_plus;
+  const feeRec=allDailyFees.find(f=>f.date===order.date && f.channel===order.channel && !!f.thai_plus===orderIsTp);
   if(!feeRec) return {commission:0, ad_fee:0, allocated:false};
-  const pool=allOrders.filter(o=>o.date===order.date && o.channel===order.channel && !((Number(o.commission)||0)>0 || (Number(o.ad_fee)||0)>0));
+  const pool=allOrders.filter(o=>o.date===order.date && o.channel===order.channel && !!o.thai_plus===orderIsTp && !((Number(o.commission)||0)>0 || (Number(o.ad_fee)||0)>0));
   const poolTotal=pool.reduce((s,o)=>s+(Number(o.total_sale)||0),0);
   if(poolTotal<=0) return {commission:0, ad_fee:0, allocated:false};
   const share=(Number(order.total_sale)||0)/poolTotal;
@@ -2330,7 +2340,7 @@ function renderDailyFeePendingList(){
   box.innerHTML=`<div class="pl-title">พบ ${pendingDailyFees.length} รายการค่าธรรมเนียมรายวันที่ยังไม่ได้บันทึก</div>` +
     pendingDailyFees.map((f,i)=>`
       <div class="pending-card">
-        <div class="pc-info"><b>${escapeHtml(f.channel||'')}</b>${f.date?formatThaiDateShort(f.date):''} · ค่าคอม ${fmtMoney(f.commission)} · ค่าโฆษณา ${fmtMoney(f.ad_fee)}</div>
+        <div class="pc-info"><b>${escapeHtml(f.channel||'')}</b>${f.date?formatThaiDateShort(f.date):''} · ค่าคอม ${fmtMoney(f.commission)} · ค่าโฆษณา ${fmtMoney(f.ad_fee)}${f.thai_plus?' · Thai+ 60/40':''}</div>
         <div class="pc-btns">
           <button type="button" class="btn-primary btn-sm" onclick="confirmPendingDailyFee(${i})">ยืนยัน</button>
           <button type="button" class="icon-btn danger" onclick="discardPendingDailyFee(${i})" aria-label="ลบ">${ICON_DELETE}</button>
@@ -2359,6 +2369,7 @@ function fillDailyFeeForm(j){
   sel.value=[...sel.options].some(o=>o.value===ch)?ch:'อื่นๆ';
   document.getElementById('df-commission').value=Number(j.commission)||0;
   document.getElementById('df-adfee').value=Number(j.ad_fee)||0;
+  document.getElementById('df-thaiplus').checked=!!j.thai_plus;
   document.getElementById('df-note').value=j.note||'';
 }
 async function saveDailyFee(){
@@ -2366,9 +2377,10 @@ async function saveDailyFee(){
   const channel=document.getElementById('df-channel').value;
   const commission=Number(document.getElementById('df-commission').value)||0;
   const ad_fee=Number(document.getElementById('df-adfee').value)||0;
+  const thai_plus=document.getElementById('df-thaiplus').checked;
   const note=document.getElementById('df-note').value.trim();
   const editId=document.getElementById('df-edit-id').value;
-  await idbPut('daily_fees',{ id: editId||uid(), date, channel, commission, ad_fee, note });
+  await idbPut('daily_fees',{ id: editId||uid(), date, channel, commission, ad_fee, thai_plus, note });
   const wasEditing=editingPendingDailyFeeIndex>=0;
   if(wasEditing){
     pendingDailyFees.splice(editingPendingDailyFeeIndex,1);
@@ -2393,7 +2405,8 @@ function showDailyFeeDetail(id){
   document.getElementById('modal-title').textContent=f.channel||'ค่าธรรมเนียมรายวัน';
   document.getElementById('modal-body').innerHTML=`
     <div style="margin-bottom:10px">
-      <span class="badge ${cls}">${escapeHtml(f.channel||'-')}</span>
+      <span class="badge ${cls}${f.thai_plus?' tp':''}" ${f.thai_plus?'title="Thai+ 60/40"':''}>${escapeHtml(f.channel||'-')}</span>
+      ${f.thai_plus?'<span class="badge" style="margin-left:4px">เฉพาะ Thai+ 60/40</span>':''}
       <div class="hint" style="margin-top:4px">${formatThaiDateShort(f.date)}</div>
     </div>
     <div class="detail-row"><span class="k">GP (ค่าคอมมิชชั่น)</span><span class="v">${fmtMoney(f.commission)}</span></div>
@@ -2422,6 +2435,10 @@ function renderDailyFeeEditBody(id){
       <div><label>GP (฿)</label><input type="number" id="dfm-commission" step="0.01" value="${Number(f.commission)||0}"></div>
       <div><label>Ads (฿)</label><input type="number" id="dfm-adfee" step="0.01" value="${Number(f.ad_fee)||0}"></div>
     </div>
+    <div class="thaiplus-box">
+      <input type="checkbox" id="dfm-thaiplus" ${f.thai_plus?'checked':''}>
+      <label style="margin:0;font-weight:600;color:var(--pink-dark);cursor:pointer" for="dfm-thaiplus">ยอดนี้เฉพาะกลุ่มแคมเปญ 60/40</label>
+    </div>
     <div class="form-section-label">หมายเหตุ</div>
     <input type="text" id="dfm-note" value="${escapeHtml(f.note||'')}">
     <div class="btn-row" style="margin-top:14px">
@@ -2434,8 +2451,9 @@ async function saveDailyFeeFromModal(id){
   const channel=document.getElementById('dfm-channel').value;
   const commission=Number(document.getElementById('dfm-commission').value)||0;
   const ad_fee=Number(document.getElementById('dfm-adfee').value)||0;
+  const thai_plus=document.getElementById('dfm-thaiplus').checked;
   const note=document.getElementById('dfm-note').value.trim();
-  await idbPut('daily_fees',{ id, date, channel, commission, ad_fee, note });
+  await idbPut('daily_fees',{ id, date, channel, commission, ad_fee, thai_plus, note });
   await renderDailyFeeList();
   toast('แก้ไขค่าธรรมเนียมแล้ว','ok');
   showDailyFeeDetail(id);
@@ -2446,6 +2464,7 @@ function resetDailyFeeForm(){
   document.getElementById('df-channel').value='Grab Food';
   document.getElementById('df-commission').value=0;
   document.getElementById('df-adfee').value=0;
+  document.getElementById('df-thaiplus').checked=false;
   document.getElementById('df-note').value='';
   document.getElementById('df-cancel-btn').style.display='none';
 }
@@ -2996,10 +3015,11 @@ async function renderHomeSummary(){
   if(!salesEl || !profitEl) return;
   const [orders,dailyFees,pur]=await Promise.all([idbAll('orders'),idbAll('daily_fees'),idbAll('purchases')]);
 
-  const feeKey=(d,ch)=>d+'|'+ch;
-  const dailyFeeKeys=new Set(dailyFees.map(f=>feeKey(f.date,f.channel)));
+  // แยกคีย์ตาม thai_plus ด้วย เพราะบันทึกรวมรายวันของกลุ่ม Thai+ (60/40) กับกลุ่มปกติ อาจอยู่วันที่+ช่องทางเดียวกันแต่เป็นคนละก้อน — ไม่งั้นจะไปหักล้างค่าคอมต่อออเดอร์ของอีกกลุ่มผิดๆ
+  const feeKey=(d,ch,tp)=>d+'|'+ch+'|'+(tp?1:0);
+  const dailyFeeKeys=new Set(dailyFees.map(f=>feeKey(f.date,f.channel,f.thai_plus)));
   function orderFee(o){
-    return dailyFeeKeys.has(feeKey(o.date,o.channel)) ? 0 : (Number(o.commission||0)+Number(o.ad_fee||0));
+    return dailyFeeKeys.has(feeKey(o.date,o.channel,o.thai_plus)) ? 0 : (Number(o.commission||0)+Number(o.ad_fee||0));
   }
   const totalSale=orders.reduce((s,o)=>s+Number(o.total_sale||0),0);
   const totalCost=orders.reduce((s,o)=>s+Number(o.total_cost||0),0);
@@ -3225,12 +3245,13 @@ async function renderDashboard(){
   // ค่าคอม/ค่าโฆษณา: รองรับทั้ง 2 แบบพร้อมกันโดยไม่นับซ้ำ
   // - ถ้าช่องทาง+วันที่นั้นมีบันทึกรวมรายวันไว้ (daily_fees) ให้ใช้ยอดรวมนั้นแทน (เช่น LineMan ที่ดูรายออเดอร์ไม่สะดวก)
   // - ถ้าช่องทาง+วันที่นั้นไม่มีบันทึกรวมรายวัน ให้ใช้ค่าคอม/ค่าโฆษณาที่กรอกไว้ต่อออเดอร์แทน (เช่น Grab ที่เช็ครายออเดอร์ได้)
-  const feeKey=(d,ch)=>d+'|'+ch;
+  // แยกคีย์ตาม thai_plus ด้วย กันบันทึกรวมรายวันของกลุ่ม Thai+ (60/40) ไปหักล้างค่าคอมต่อออเดอร์ของกลุ่มปกติวันเดียวกันผิดๆ
+  const feeKey=(d,ch,tp)=>d+'|'+ch+'|'+(tp?1:0);
   const dailyFeeByKey={};
-  dailyFees.forEach(f=>{ const k=feeKey(f.date,f.channel); dailyFeeByKey[k]=(dailyFeeByKey[k]||0)+Number(f.commission||0)+Number(f.ad_fee||0); });
+  dailyFees.forEach(f=>{ const k=feeKey(f.date,f.channel,f.thai_plus); dailyFeeByKey[k]=(dailyFeeByKey[k]||0)+Number(f.commission||0)+Number(f.ad_fee||0); });
   const dailyFeeKeys=new Set(Object.keys(dailyFeeByKey));
   function orderFee(o){
-    return dailyFeeKeys.has(feeKey(o.date,o.channel)) ? 0 : (Number(o.commission||0)+Number(o.ad_fee||0));
+    return dailyFeeKeys.has(feeKey(o.date,o.channel,o.thai_plus)) ? 0 : (Number(o.commission||0)+Number(o.ad_fee||0));
   }
   function feeForDate(d){
     // รวมค่าธรรมเนียมของวันนั้น (ทุกช่องทาง) — ใช้สำหรับกราฟรายวัน/รายเดือน
@@ -3823,11 +3844,13 @@ async function renderFinance(){
   document.getElementById('fin-empty').style.display='none';
   document.getElementById('fin-content').style.display='block';
 
-  // รวมค่าคอม/ค่าโฆษณาแบบเดียวกับแดชบอร์ด: ถ้าวันที่+ช่องทางนั้นมีบันทึกรวมรายวันไว้แล้ว ให้ใช้ยอดรวมนั้นแทนค่าที่กรอกต่อออเดอร์ (กันนับซ้ำ)
-  const feeKey=(d,ch)=>d+'|'+ch;
+  // รวมค่าคอม/ค่าโฆษณาแบบเดียวกับแดชบอร์ด: ถ้าวันที่+ช่องทาง(+กลุ่ม Thai+)นั้นมีบันทึกรวมรายวันไว้แล้ว ให้ใช้ยอดรวมนั้นแทนค่าที่กรอกต่อออเดอร์ (กันนับซ้ำ)
+  // feeKey แยกกลุ่ม Thai+ ด้วย กันบันทึกรวมของ Thai+ ไปหักล้างค่าคอมต่อออเดอร์ของกลุ่มปกติวันเดียวกันผิดๆ ส่วน rowKey ไม่แยก เพราะแถวสรุปในตารางยังอยากรวมยอดทั้งวัน+ช่องทางไว้แถวเดียว
+  const feeKey=(d,ch,tp)=>d+'|'+ch+'|'+(tp?1:0);
+  const rowKey=(d,ch)=>d+'|'+ch;
   const dailyCommByKey={}, dailyAdByKey={};
   dailyFees.forEach(f=>{
-    const k=feeKey(f.date,f.channel);
+    const k=feeKey(f.date,f.channel,f.thai_plus);
     dailyCommByKey[k]=(dailyCommByKey[k]||0)+Number(f.commission||0);
     dailyAdByKey[k]=(dailyAdByKey[k]||0)+Number(f.ad_fee||0);
   });
@@ -3836,19 +3859,19 @@ async function renderFinance(){
   // รวมเป็นแถวต่อ (วันที่, ช่องทาง) — เก็บทุกช่องทางไว้ก่อน (ใช้เทียบช่องทางในกราฟ/สรุปตามแอพ)
   const rowMap={};
   orders.forEach(o=>{
-    const k=feeKey(o.date,o.channel);
-    if(!rowMap[k]) rowMap[k]={date:o.date, channel:o.channel, revenue:0, commission:0, ad_fee:0};
-    rowMap[k].revenue+=Number(o.total_sale||0);
-    if(!dailyFeeKeys.has(k)){
-      rowMap[k].commission+=Number(o.commission||0);
-      rowMap[k].ad_fee+=Number(o.ad_fee||0);
+    const rk=rowKey(o.date,o.channel);
+    if(!rowMap[rk]) rowMap[rk]={date:o.date, channel:o.channel, revenue:0, commission:0, ad_fee:0};
+    rowMap[rk].revenue+=Number(o.total_sale||0);
+    if(!dailyFeeKeys.has(feeKey(o.date,o.channel,o.thai_plus))){
+      rowMap[rk].commission+=Number(o.commission||0);
+      rowMap[rk].ad_fee+=Number(o.ad_fee||0);
     }
   });
   dailyFees.forEach(f=>{
-    const k=feeKey(f.date,f.channel);
-    if(!rowMap[k]) rowMap[k]={date:f.date, channel:f.channel, revenue:0, commission:0, ad_fee:0};
-    rowMap[k].commission+=Number(f.commission||0);
-    rowMap[k].ad_fee+=Number(f.ad_fee||0);
+    const rk=rowKey(f.date,f.channel);
+    if(!rowMap[rk]) rowMap[rk]={date:f.date, channel:f.channel, revenue:0, commission:0, ad_fee:0};
+    rowMap[rk].commission+=Number(f.commission||0);
+    rowMap[rk].ad_fee+=Number(f.ad_fee||0);
   });
   const rows=Object.values(rowMap).sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:(a.channel<b.channel?-1:1)));
   // rowsFiltered: เฉพาะช่องทางที่เลือก (ถ้าเลือก "ทุกช่องทาง" จะเหมือนกับ rows) — ใช้กับ KPI/กราฟรายวัน/ลิสต์รายละเอียด
@@ -3876,7 +3899,7 @@ async function renderFinance(){
     function dfRowHtml(f){
       const cls=channelBadgeClass(f.channel);
       return `<div class="order-row clickable" onclick="showDailyFeeDetail('${f.id}')">
-        <span class="badge ${cls}">${escapeHtml(shortChannelLabel(f.channel))}</span>
+        <span class="badge ${cls}${f.thai_plus?' tp':''}" ${f.thai_plus?'title="Thai+ 60/40"':''}>${escapeHtml(shortChannelLabel(f.channel))}</span>
         <span class="or-date">${formatThaiDateShort(f.date)}</span>
         <span class="or-no">GP ${fmtMoney(f.commission)} · Ads ${fmtMoney(f.ad_fee)}</span>
         <b class="or-total">${fmtMoney(Number(f.commission||0)+Number(f.ad_fee||0))}</b>
@@ -4093,11 +4116,17 @@ async function exportExcel(){
   const menu=await idbAll('menu');
   const optGroups=await idbAll('option_groups');
   const itemOpts=await idbAll('order_item_options');
+  const dailyFeesAll=await idbAll('daily_fees');
   const wb=XLSX.utils.book_new();
 
   const ordersSheet=[['วันที่','ช่องทาง','เลขออร์เดอร์','ยอดขายรวมออร์เดอร์ (฿)','ต้นทุนสินค้ารวม (฿)','ค่าคอมมิชชั่นแพลตฟอร์ม (฿)','ค่าโฆษณา/แคมเปญ (฿)','ยอดสุทธิร้านได้รับ (฿)','กำไรขั้นต้น (฿)','หมายเหตุ','Thai Plus (60/40)']]
     .concat(orders.map(o=>[o.date,o.channel,o.order_no,o.total_sale,o.total_cost,o.commission,o.ad_fee,o.net_received,o.gross_profit,o.note,o.thai_plus?'ใช่':'']));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ordersSheet),'Orders');
+
+  // เพิ่มชีท Daily_Fees (ก่อนหน้านี้ไฟล์ export ไม่มีข้อมูลค่าธรรมเนียมรวมรายวันเลย ทำให้ตรวจสอบย้อนหลังจากไฟล์ export อย่างเดียวไม่ได้)
+  const dailyFeesSheet=[['วันที่','ช่องทาง','ค่าคอมมิชชั่นแพลตฟอร์มรวม (฿)','ค่าโฆษณา/แคมเปญรวม (฿)','เฉพาะกลุ่ม Thai Plus (60/40)','หมายเหตุ']]
+    .concat(dailyFeesAll.map(f=>[f.date,f.channel,f.commission,f.ad_fee,f.thai_plus?'ใช่':'',f.note]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(dailyFeesSheet),'Daily_Fees');
 
   const itemsSheet=[['วันที่ (อ้างอิง)','เลขออร์เดอร์','ชื่อเมนู','จำนวน (ชิ้น)','ราคาต่อชิ้น (฿)','ต้นทุนต่อชิ้น (฿)','ยอดขายบรรทัด (฿)','ต้นทุนบรรทัด (฿)']]
     .concat(items.map(i=>[i.date,i.order_no,i.name,i.qty,i.unit_price,i.unit_cost,i.line_sale,i.line_cost]));
