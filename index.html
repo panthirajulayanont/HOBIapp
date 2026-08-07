@@ -3362,7 +3362,7 @@ async function renderTodayStock(){
     if(!jellyItems.length){ jellyWrap.style.display='none'; jellyWrap.innerHTML=''; }
     else{
       jellyWrap.style.display='flex';
-      const sortedJelly=jellyItems.slice().sort((a,b)=>(a.short_name||a.name).localeCompare(b.short_name||b.name));
+      const sortedJelly=jellyItems.slice().sort((a,b)=>getTodayStockQty(b.id)-getTodayStockQty(a.id));
       jellyWrap.innerHTML=sortedJelly.map(m=>{
         const qty=getTodayStockQty(m.id);
         const shortName=(m.short_name&&m.short_name.trim())?m.short_name.trim():m.name;
