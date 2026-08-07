@@ -110,6 +110,10 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .stock-item.zero .stock-shape::after{content:'';position:absolute;inset:0;background:rgba(255,255,255,.55);pointer-events:none;}
 .stock-qty{font-weight:800;font-family:var(--font-head);line-height:1;font-size:clamp(11px,3.6vw,15px);}
 .stock-name{font-weight:600;opacity:.92;margin-top:3px;line-height:1.15;text-align:center;white-space:normal;overflow-wrap:break-word;font-size:clamp(7.8px,2.4vw,10.2px);}
+.stock-total-badge{font-size:11px;font-weight:700;color:var(--muted);margin-left:6px;background:var(--tan);padding:2px 9px;border-radius:20px;vertical-align:middle;}
+/* เยลลี่กาแฟใน Today's Stock — ใช้สีกลางๆ ของตัวเอง แยกจากโทนสีรสเค้ก กันสับสน */
+.stock-item.jelly-item .stock-shape{background:#8a6247;}
+.stock-item.jelly-item .stock-qty{color:#fffefa;}
 #stock-modal-overlay{align-items:center;}
 .stock-modal-circle{width:min(66vw,240px);height:min(66vw,240px);border-radius:50%;background:var(--card);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 10px 34px rgba(0,0,0,.28);padding:16px;box-sizing:border-box;animation:stockpop .18s ease-out;}
 @keyframes stockpop{from{transform:scale(.7);opacity:0}to{transform:scale(1);opacity:1}}
@@ -535,7 +539,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
     </div>
 
     <div class="card">
-      <h2>Today's Stock</h2>
+      <h2>Today's Stock <span class="stock-total-badge" id="home-stock-total">0 pcs</span></h2>
       <div id="home-stock-wrap" class="stock-bubble-wrap"></div>
     </div>
   </div>
@@ -780,14 +784,14 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <div class="chart-card">
         <div class="chart-card-head">
           <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
-          <div class="cc-title">ยอดขายรายสัปดาห์ (เส้น = กำไรสุทธิ)</div>
+          <div class="cc-title">ยอดขายรายสัปดาห์</div>
         </div>
         <canvas id="chart-daily"></canvas>
       </div>
       <div class="chart-card">
         <div class="chart-card-head">
           <div class="cc-icon" style="background:var(--olive)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 15 10 9 14 13 20 6"/><polyline points="14 6 20 6 20 12"/></svg></div>
-          <div class="cc-title">กำไรรายเดือน (ยอดสุทธิ − ยอดซื้อของ)</div>
+          <div class="cc-title">กำไรรายเดือน (สุทธิ / ขั้นต้น)</div>
           <span id="total-profit-badge" class="cc-badge">฿0</span>
         </div>
         <canvas id="chart-monthprofit"></canvas>
@@ -1677,18 +1681,18 @@ function breakdownSetMenuItem(item, optsForItem){
     return fixedRule.components.map(c=>{
       const m=fuzzyFindMenu(c.code);
       const cat=m ? (m.category||'').trim()||'ไม่ระบุหมวดหมู่' : 'ไม่ระบุหมวดหมู่';
-      return {category:cat, qty:c.qty*qtyMult, menuName:m?m.name:c.code};
+      return {category:cat, qty:c.qty*qtyMult, menuName:m?m.name:c.code, menu_id:m?m.id:null};
     });
   }
   if(MELTY_WAKEY_TEST(n)){
     if(!optsForItem || !optsForItem.length){
       // ไม่พบข้อมูลออปชั่นที่เลือกไว้ — กันข้อมูลหาย ให้นับไว้ในหมวดของ set menu เองแทน
-      return [{category:findMenuCategory(item.name)||'ไม่ระบุหมวดหมู่', qty:Number(item.qty)||1, menuName:canonicalMenuName(item.name)}];
+      return [{category:findMenuCategory(item.name)||'ไม่ระบุหมวดหมู่', qty:Number(item.qty)||1, menuName:canonicalMenuName(item.name), menu_id:null}];
     }
     return optsForItem.map(o=>{
       const m=fuzzyFindMenu(o.option);
       const cat=m ? (m.category||'').trim()||'ไม่ระบุหมวดหมู่' : 'ไม่ระบุหมวดหมู่';
-      return {category:cat, qty:Number(o.qty)||Number(item.qty)||1, menuName:m?m.name:o.option};
+      return {category:cat, qty:Number(o.qty)||Number(item.qty)||1, menuName:m?m.name:o.option, menu_id:m?m.id:null};
     });
   }
   return null;
@@ -3276,10 +3280,17 @@ async function renderTodayStock(){
   await refreshTodayStockCache();
   const targetCat=normCatName('cheesecake slice');
   const flavors=menuCache.filter(m=>normCatName(m.category)===targetCat);
-  if(!flavors.length){ wrap.innerHTML='<div class="emptystate">ยังไม่มีเมนูหมวด cheesecake slice ในหน้าตั้งค่า</div>'; return; }
+  // เยลลี่กาแฟ (เช่น Coffee Jelly / J-CF) — เพิ่มเมนูในหน้าตั้งค่า > Menu Management โดยตั้งหมวดหมู่เป็น "Soft Jelly" แล้วจะโผล่มาที่นี่อัตโนมัติ
+  const jellyCat=normCatName('soft jelly');
+  const jellyItems=menuCache.filter(m=>normCatName(m.category)===jellyCat);
+  // ยอดรวมเค้กที่เหลือทุกรส (นับเฉพาะหมวด cheesecake slice ไม่รวมเยลลี่กาแฟ) โชว์เป็นตัวเลขข้างหัวข้อการ์ด
+  const totalCakeQty=flavors.reduce((s,m)=>s+getTodayStockQty(m.id),0);
+  const totalEl=document.getElementById('home-stock-total');
+  if(totalEl) totalEl.textContent=totalCakeQty.toLocaleString('th-TH')+' pcs';
+  if(!flavors.length && !jellyItems.length){ wrap.innerHTML='<div class="emptystate">ยังไม่มีเมนูหมวด cheesecake slice ในหน้าตั้งค่า</div>'; return; }
   // เรียงจากจำนวนคงเหลือมากไปน้อย
   const sortedFlavors=flavors.slice().sort((a,b)=>getTodayStockQty(b.id)-getTodayStockQty(a.id));
-  wrap.innerHTML=sortedFlavors.map(m=>{
+  const cakeHtml=sortedFlavors.map(m=>{
     const qty=getTodayStockQty(m.id);
     const shortName=(m.short_name&&m.short_name.trim())?m.short_name.trim():m.name;
     const fill=cakeFlavorFillCss(m.name) || flavorColorForMenuNameCssFallback(m.name);
@@ -3292,6 +3303,19 @@ async function renderTodayStock(){
       <div class="stock-name">${escapeHtml(shortName)}</div>
     </div>`;
   }).join('');
+  // เยลลี่กาแฟ เรียงตามชื่อย่อ (JCF-L มาก่อน JCF-S) ใช้สีกลางๆ ของตัวเอง ไม่ปนกับโทนสีรสเค้ก
+  const sortedJelly=jellyItems.slice().sort((a,b)=>(a.short_name||a.name).localeCompare(b.short_name||b.name));
+  const jellyHtml=sortedJelly.map(m=>{
+    const qty=getTodayStockQty(m.id);
+    const shortName=(m.short_name&&m.short_name.trim())?m.short_name.trim():m.name;
+    return `<div class="stock-item jelly-item${qty===0?' zero':''}" onclick="openStockDetail('${m.id}')">
+      <div class="stock-shape">
+        <div class="stock-qty">${qty}</div>
+      </div>
+      <div class="stock-name">${escapeHtml(shortName)}</div>
+    </div>`;
+  }).join('');
+  wrap.innerHTML=cakeHtml+jellyHtml;
 }
 let stockModalMenuId=null;
 function openStockDetail(menuId){
@@ -3316,12 +3340,23 @@ async function adjustStockQty(delta){
   document.getElementById('stock-modal-qty').textContent=next;
 }
 // รวมจำนวนเมนูหมวด cheesecake slice ต่อ 1 menu id จากรายการไอเทมของออเดอร์ (จับคู่ชื่อแบบ fuzzy กันชื่อสะกดไม่ตรงเป๊ะ) — ใช้คำนวณหักสต็อก Today's Stock อัตโนมัติ
+// เซ็ทเมนูที่มีสูตรตายตัว (เช่น Kyoto Tea Twin Set = โฮจิฉะ 1 + มัทฉะ 1) ให้แจกแจงเป็นรายรสก่อนนับ ไม่งั้นสต็อกรายรสจะไม่ถูกหักตอนขายเป็นเซ็ท
 function sumCakeQtyByMenuId(items){
   const targetCat=normCatName('cheesecake slice');
   const map={};
   (items||[]).forEach(it=>{
     const qty=Number(it.qty)||0;
     if(qty<=0) return;
+    const bd=breakdownSetMenuItem(it, it.options);
+    if(bd){
+      bd.forEach(b=>{
+        if(normCatName(b.category)!==targetCat) return;
+        const menuId=b.menu_id || (fuzzyFindMenu(b.menuName)||{}).id;
+        if(!menuId) return;
+        map[menuId]=(map[menuId]||0)+b.qty;
+      });
+      return;
+    }
     const m=fuzzyFindMenu(it.name);
     if(!m || normCatName(m.category)!==targetCat) return;
     map[m.id]=(map[m.id]||0)+qty;
@@ -3449,30 +3484,9 @@ async function renderDashboard(){
       data:weekKeys.map(wk=>(byWeekChannel[wk]&&byWeekChannel[wk][ch])||0),
       backgroundColor:channelColors[ch]
     }));
-    // กำไรสุทธิรายสัปดาห์ = (ยอดขาย − ค่าคอม/ค่าโฆษณา) ของสัปดาห์นั้น − ยอดซื้อของเข้าร้านของสัปดาห์นั้น
-    const byWeekNet={}, byWeekPurchase={};
-    Object.keys(byDateSaleAgg).forEach(d=>{
-      const wk=getWeekKey(d);
-      const dateNet=(byDateSaleAgg[d]||0)-feeForDate(d);
-      byWeekNet[wk]=(byWeekNet[wk]||0)+dateNet;
-    });
-    pur.forEach(p=>{ const wk=getWeekKey(p.date); byWeekPurchase[wk]=(byWeekPurchase[wk]||0)+Number(p.total||0); });
-    const netProfitLine={
-      type:'line',
-      order:0,
-      label:'กำไรสุทธิ',
-      data:weekKeys.map(wk=>(byWeekNet[wk]||0)-(byWeekPurchase[wk]||0)),
-      borderColor:'#665e58',
-      backgroundColor:'#665e58',
-      borderWidth:2.5,
-      pointRadius:3,
-      pointBackgroundColor:'#665e58',
-      tension:.3,
-      fill:false
-    };
-    drawStackedBar('chart-daily',weekLabels,[...stackDatasets,netProfitLine]);
+    drawStackedBar('chart-daily',weekLabels,stackDatasets);
 
-    // monthly profit = (ยอดขาย - ค่าคอม/ค่าโฆษณา ต่อวัน) รวมทั้งเดือน - ยอดซื้อของทั้งเดือน
+    // monthly profit = (ยอดขาย - ค่าคอม/ค่าโฆษณา ต่อวัน) รวมทั้งเดือน - ยอดซื้อของทั้งเดือน (กำไรสุทธิ)
     // รวมที่ระดับวันก่อน (feeForDate คิดเป็นรายวัน ไม่ใช่รายออเดอร์) แล้วค่อยรวมขึ้นเป็นเดือน กันนับค่าธรรมเนียมซ้ำเวลาวันเดียวกันมีหลายออเดอร์
     const byMonthNet={};
     Object.keys(byDateSaleAgg).forEach(d=>{
@@ -3482,10 +3496,14 @@ async function renderDashboard(){
     });
     const byMonthPurchase={};
     pur.forEach(p=>{ const mo=p.date.slice(0,7); byMonthPurchase[mo]=(byMonthPurchase[mo]||0)+Number(p.total||0); });
-    const allMonths=[...new Set([...Object.keys(byMonthNet),...Object.keys(byMonthPurchase)])].sort();
+    // กำไรขั้นต้นรายเดือน = ยอดสุทธิของเดือน − ต้นทุนสินค้ารวมของเดือน (สูตรเดียวกับการ์ด "กำไรขั้นต้น" หน้า Home/Dashboard)
+    const byMonthCost={};
+    Object.keys(byDateCostAgg).forEach(d=>{ const mo=d.slice(0,7); byMonthCost[mo]=(byMonthCost[mo]||0)+(byDateCostAgg[d]||0); });
+    const allMonths=[...new Set([...Object.keys(byMonthNet),...Object.keys(byMonthPurchase),...Object.keys(byMonthCost)])].sort();
     const monthLabels=allMonths.map(mo=>{ const [y,m]=mo.split('-'); return THAI_MONTHS[Number(m)-1]+' '+y; });
-    const monthProfit=allMonths.map(mo=>(byMonthNet[mo]||0)-(byMonthPurchase[mo]||0));
-    drawProfitBar('chart-monthprofit',monthLabels,monthProfit);
+    const monthNetProfit=allMonths.map(mo=>(byMonthNet[mo]||0)-(byMonthPurchase[mo]||0));
+    const monthGrossProfit=allMonths.map(mo=>(byMonthNet[mo]||0)-(byMonthCost[mo]||0));
+    drawProfitBar('chart-monthprofit',monthLabels,monthNetProfit,monthGrossProfit);
 
     // by channel
     const byChannel={};
@@ -3583,7 +3601,7 @@ function chartAspectRatio(wide,narrow){
 function drawChart(canvasId,type,labels,datasets,horizontal,showLegend){
   if(charts[canvasId]) charts[canvasId].destroy();
   const ctx=document.getElementById(canvasId).getContext('2d');
-  if(type==='bar') datasets=datasets.map(ds=>({borderRadius:7,borderSkipped:false,maxBarThickness:34,barPercentage:.6,categoryPercentage:.7,...ds}));
+  if(type==='bar') datasets=datasets.map(ds=>({borderRadius:horizontal?{topLeft:0,bottomLeft:0,topRight:7,bottomRight:7}:{topLeft:7,topRight:7,bottomLeft:0,bottomRight:0},borderSkipped:false,maxBarThickness:34,barPercentage:.6,categoryPercentage:.7,...ds}));
   charts[canvasId]=new Chart(ctx,{
     type,
     data:{labels,datasets},
@@ -3599,7 +3617,16 @@ function drawChart(canvasId,type,labels,datasets,horizontal,showLegend){
 function drawStackedBar(canvasId,labels,datasets,onBarClick){
   if(charts[canvasId]) charts[canvasId].destroy();
   const ctx=document.getElementById(canvasId).getContext('2d');
-  datasets=datasets.map(ds=> ds.type==='line' ? ds : ({borderRadius:6,borderSkipped:false,maxBarThickness:34,barPercentage:.6,categoryPercentage:.7,...ds}));
+  // ปาดมุมโค้งเฉพาะขอบบนของ "สีที่อยู่บนสุดที่ไม่ใช่ 0" ของแต่ละแท่ง (ไม่ปาดทุกสีในแท่งเดียวกัน กันดูเป็นรอยหยักกลางแท่ง)
+  const barDatasetIdxs=datasets.map((ds,i)=>ds.type!=='line'?i:null).filter(i=>i!==null);
+  function topBarDatasetIndex(dataIdx){
+    for(let k=barDatasetIdxs.length-1;k>=0;k--){ const di=barDatasetIdxs[k]; if(Number(datasets[di].data[dataIdx])>0) return di; }
+    return barDatasetIdxs[0];
+  }
+  datasets=datasets.map((ds,di)=> ds.type==='line' ? ds : ({
+    borderSkipped:false,maxBarThickness:34,barPercentage:.6,categoryPercentage:.7,...ds,
+    borderRadius:(dctx)=> (topBarDatasetIndex(dctx.dataIndex)===di) ? {topLeft:6,topRight:6,bottomLeft:0,bottomRight:0} : 0
+  }));
   charts[canvasId]=new Chart(ctx,{
     type:'bar',
     data:{labels,datasets},
@@ -3876,7 +3903,7 @@ function drawRankedBarChart(canvasId,items,{small=false,heightPx}={}){
   }
   charts[canvasId]=new Chart(ctx,{
     type:'bar',
-    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:small?5:7,borderSkipped:false,maxBarThickness:small?24:34,barPercentage:.68,categoryPercentage:.75}]},
+    data:{labels,datasets:[{data,backgroundColor:colors,borderRadius:{topLeft:0,bottomLeft:0,topRight:small?5:7,bottomRight:small?5:7},borderSkipped:false,maxBarThickness:small?24:34,barPercentage:.68,categoryPercentage:.75}]},
     options:{
       indexAxis:'y',
       responsive:true,
@@ -3930,27 +3957,36 @@ function drawOptionUsageChart(canvasId,labels,qtys,colors){
   const items=labels.map((lbl,i)=>({label:lbl,value:qtys[i],valueText:qtys[i]+' ชิ้น',color:colors[i]}));
   drawRankedBarChart(canvasId,items);
 }
-function drawProfitBar(canvasId,labels,data){
+// เดิมมีแท่งเดียว (กำไรสุทธิ) ตอนนี้แสดง 2 แท่งข้างๆ กันต่อเดือน: กำไรสุทธิ + กำไรขั้นต้น (ไม่ใช่ stacked — ปาดมุมโค้งเฉพาะขอบที่ไกลจาก 0 ของแต่ละแท่ง กันเคสค่าติดลบ (ขาดทุน) ปาดมุมผิดด้าน)
+function drawProfitBar(canvasId,labels,netData,grossData){
   if(charts[canvasId]) charts[canvasId].destroy();
   const ctx=document.getElementById(canvasId).getContext('2d');
-  const colors=data.map(v=>v>=0?'#fff2bf':'#665e58');
+  function farEndRadius(v,r){ return v>=0 ? {topLeft:r,topRight:r,bottomLeft:0,bottomRight:0} : {topLeft:0,topRight:0,bottomLeft:r,bottomRight:r}; }
+  const netColors=netData.map(v=>v>=0?'#fff2bf':'#665e58');
+  const grossColors=grossData.map(v=>v>=0?'#c9bc8f':'#a89b8c');
+  const datasets=[
+    {
+      label:'กำไรสุทธิ',data:netData,backgroundColor:netColors,borderSkipped:false,
+      maxBarThickness:34,barPercentage:.7,categoryPercentage:.75,
+      borderRadius:(dctx)=>farEndRadius(Number(netData[dctx.dataIndex])||0,7),
+      datalabels:{display:true,anchor:'end',align:'end',clamp:true,color:'#665e58',font:{family:"'Amiko','Prompt',-apple-system,sans-serif",weight:'bold',size:10},formatter:v=>v.toLocaleString('th-TH',{maximumFractionDigits:0})}
+    },
+    {
+      label:'กำไรขั้นต้น',data:grossData,backgroundColor:grossColors,borderSkipped:false,
+      maxBarThickness:34,barPercentage:.7,categoryPercentage:.75,
+      borderRadius:(dctx)=>farEndRadius(Number(grossData[dctx.dataIndex])||0,7),
+      datalabels:{display:true,anchor:'end',align:'end',clamp:true,color:'#665e58',font:{family:"'Amiko','Prompt',-apple-system,sans-serif",weight:'bold',size:10},formatter:v=>v.toLocaleString('th-TH',{maximumFractionDigits:0})}
+    }
+  ];
   charts[canvasId]=new Chart(ctx,{
     type:'bar',
-    data:{labels,datasets:[{label:'กำไรสุทธิรายเดือน (฿)',data,backgroundColor:colors,borderRadius:7,borderSkipped:false,maxBarThickness:44,barPercentage:.6,categoryPercentage:.7}]},
+    data:{labels,datasets},
     options:{
       responsive:true,
       aspectRatio:chartAspectRatio(2.2,1.3),
+      layout:{padding:{top:18}},
       plugins:{
-        legend:{display:false},
-        datalabels:{
-          display:true,
-          anchor:'end',
-          align:'end',
-          clamp:true,
-          color:'#665e58',
-          font:{family:"'Amiko','Prompt',-apple-system,sans-serif",weight:'bold',size:11},
-          formatter:v=>v.toLocaleString('th-TH',{maximumFractionDigits:0})
-        }
+        legend:{position:'bottom',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle'}}
       },
       scales:{
         y:{beginAtZero:true,grid:{color:GRID_COLOR,drawTicks:false},border:{display:false},ticks:{padding:6}},
