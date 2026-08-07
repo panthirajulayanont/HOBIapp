@@ -485,12 +485,13 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 </div>
 
 <div class="modal-overlay" id="confirmdup-modal-overlay" onclick="closeConfirmDupModalOnOverlay(event)">
-  <div class="modal-panel" style="max-width:320px" onclick="event.stopPropagation()">
+  <div class="modal-panel" style="max-width:340px" onclick="event.stopPropagation()">
     <div class="modal-header"><h3>อาจบันทึกซ้ำ</h3></div>
     <p class="hint" id="confirmdup-modal-text" style="font-size:14px;color:var(--text)"></p>
-    <div class="btn-row" style="margin-top:14px">
-      <button type="button" class="btn-primary" onclick="_confirmDupAnswer(true)">บันทึกต่อ</button>
-      <button type="button" class="btn-ghost" onclick="_confirmDupAnswer(false)">ยกเลิก</button>
+    <div class="btn-row" style="margin-top:14px;flex-direction:column">
+      <button type="button" class="btn-primary" style="width:100%" onclick="_confirmDupAnswer('merge')">รวมค่าคอม/ค่าโฆษณาเข้าออเดอร์เดิม (ไม่แตะรายการเมนู)</button>
+      <button type="button" class="btn-secondary" style="width:100%" onclick="_confirmDupAnswer('new')">บันทึกแยกเป็นออเดอร์ใหม่</button>
+      <button type="button" class="btn-ghost" style="width:100%" onclick="_confirmDupAnswer('cancel')">ยกเลิก</button>
     </div>
   </div>
 </div>
@@ -1979,13 +1980,6 @@ async function saveOrder(){
       options:opts
     };
   }).filter(it=>it.name);
-  if(!blocks.length){ toast('กรุณาเพิ่มอย่างน้อย 1 เมนู','err'); return; }
-
-  const outOfStockPicked=blocks.flatMap(b=>b.options).filter(o=>isOutOfStock(getOptionStock(o.group,o.option)));
-  if(outOfStockPicked.length){
-    const names=outOfStockPicked.map(o=>o.option).join(', ');
-    if(!confirm(`ตัวเลือกนี้ถูกมาร์คว่าหมดสต็อก: ${names}\nยืนยันบันทึกต่อหรือไม่?`)) return;
-  }
 
   const editId=document.getElementById('o-edit-id').value;
   const orderId=editId||uid();
@@ -2007,13 +2001,46 @@ async function saveOrder(){
 
   // กันบันทึกออเดอร์ซ้ำโดยไม่ตั้งใจ (เช่น วาง JSON ซ้ำ หรือกดยืนยันซ้ำ) — เช็คเฉพาะตอนมีเลขออเดอร์
   // เทียบด้วย เลขออเดอร์ + วันที่ + ช่องทาง กับออเดอร์เดิมที่มีอยู่แล้ว (ไม่นับตัวเองตอนกำลังแก้ไข)
+  // เช็คจุดนี้ก่อนเช็คจำนวนเมนู เพราะบางครั้งข้อมูลที่นำเข้ามาเป็นแค่ค่าคอม/ค่าโฆษณาของออเดอร์ที่มีอยู่แล้ว
+  // (เช่นแคปหน้า Grab ดูค่าคอมต่อออเดอร์ ซึ่งไม่มีรายการเมนูมาด้วยเลย) ต้องให้เลือก "รวมเข้าออเดอร์เดิม" ได้แม้ไม่มีเมนูในฟอร์ม
+  let dup=null;
   if(order.order_no){
     const existingOrders=await idbAll('orders');
-    const dup=existingOrders.find(o=>o.id!==orderId && o.order_no===order.order_no && o.date===order.date && o.channel===order.channel);
-    if(dup){
-      const proceed=await confirmDupModal(`พบออเดอร์เลข ${dup.order_no} ช่องทาง ${dup.channel} วันที่ ${formatDateDDMM(dup.date)} อยู่แล้วในระบบ อาจกำลังบันทึกซ้ำ ยืนยันบันทึกต่อหรือไม่?`);
-      if(!proceed) return;
+    dup=existingOrders.find(o=>o.id!==orderId && o.order_no===order.order_no && o.date===order.date && o.channel===order.channel);
+  }
+  if(dup){
+    const action=await confirmDupModal(`พบออเดอร์เลข ${dup.order_no} ช่องทาง ${dup.channel} วันที่ ${formatDateDDMM(dup.date)} อยู่แล้วในระบบ เลือกวิธีบันทึก:`);
+    if(action==='cancel') return;
+    if(action==='merge'){
+      // อัพเดทค่าคอม/ค่าโฆษณา/ยอดขาย (เฉพาะที่มีค่าจริงและของเดิมยังไม่มี) เข้าออเดอร์เดิมที่มีรายการเมนูอยู่แล้ว โดยไม่แตะรายการเมนูเดิมเลย
+      const patched={...dup};
+      if(order.commission>0) patched.commission=order.commission;
+      if(order.ad_fee>0) patched.ad_fee=order.ad_fee;
+      if(!dup.total_sale && order.total_sale>0) patched.total_sale=order.total_sale;
+      if(order.thai_plus && !dup.thai_plus) patched.thai_plus=true;
+      if(order.note && !patched.note) patched.note=order.note;
+      await idbPut('orders',patched);
+      toast('รวมค่าคอม/ค่าโฆษณาเข้าออเดอร์เดิมแล้ว','ok');
+      if(editingPendingOrderIndex>=0){
+        pendingOrders.splice(editingPendingOrderIndex,1);
+        editingPendingOrderIndex=-1;
+        renderOrderPendingList();
+      }
+      resetOrderForm();
+      renderRecentOrders();
+      renderHomeSummary();
+      closeOrderFormModal();
+      return;
     }
+    // action==='new' — ตกลงจะบันทึกแยกเป็นออเดอร์ใหม่จริงๆ ปล่อยให้ไหลต่อไปตามปกติด้านล่าง
+  }
+
+  if(!blocks.length){ toast('กรุณาเพิ่มอย่างน้อย 1 เมนู','err'); return; }
+
+  const outOfStockPicked=blocks.flatMap(b=>b.options).filter(o=>isOutOfStock(getOptionStock(o.group,o.option)));
+  if(outOfStockPicked.length){
+    const names=outOfStockPicked.map(o=>o.option).join(', ');
+    if(!confirm(`ตัวเลือกนี้ถูกมาร์คว่าหมดสต็อก: ${names}\nยืนยันบันทึกต่อหรือไม่?`)) return;
   }
 
   await idbPut('orders',order);
@@ -2346,7 +2373,7 @@ function _confirmDupAnswer(val){
   document.getElementById('confirmdup-modal-overlay').style.display='none';
   if(_confirmDupResolve){ _confirmDupResolve(val); _confirmDupResolve=null; }
 }
-function closeConfirmDupModalOnOverlay(e){ if(e.target.id==='confirmdup-modal-overlay') _confirmDupAnswer(false); }
+function closeConfirmDupModalOnOverlay(e){ if(e.target.id==='confirmdup-modal-overlay') _confirmDupAnswer('cancel'); }
 const KPI_INFO={
   's-sales':{title:'ยอดขายรวม',body:'ผลรวมยอดขาย (total_sale) ของทุกออเดอร์ในช่วงเวลาที่เลือก ตามราคาขายรวมที่กรอกไว้ในแต่ละออเดอร์ ยังไม่หักค่าคอมมิชชั่น ค่าโฆษณา หรือต้นทุนสินค้าใดๆ'},
   's-profit':{title:'กำไรขั้นต้น',body:'กำไรขั้นต้น = ยอดสุทธิร้านได้รับ − ต้นทุนสินค้าต่อออเดอร์<br><br>คำนวณจากต้นทุนสินค้าต่อออร์เดอร์ ยังไม่ได้หัก "ยอดซื้อของเข้าร้าน" ทั้งหมด (เพราะของที่ซื้ออาจยังไม่ถูกขายหมด) ดูยอดซื้อของแยกไว้ด้านล่างเพื่อเทียบกระแสเงินสด'},
