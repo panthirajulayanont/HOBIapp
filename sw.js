@@ -5,7 +5,7 @@
 //            (ตรานั้นจะโผล่มาเฉพาะตอนที่เบราว์เซอร์มองว่าเป็นแค่ "shortcut" ไม่ใช่แอพที่ติดตั้งจริง)
 //        (2) แคชไฟล์ CDN หลัก ๆ ไว้ ทำให้เปิดแอพครั้งต่อ ๆ ไปเร็วขึ้นมาก และเปิดได้แม้เน็ตหลุดชั่วคราว
 
-const CACHE_NAME = 'hobi-app-v2';
+const CACHE_NAME = 'hobi-app-v3'; // เพิ่มเลขเวอร์ชันทุกครั้งที่อัพเดท index.html ตัวใหญ่ๆ เพื่อบังคับให้เครื่องที่ติดตั้งแอพไว้แล้วเคลียร์แคชเก่าแล้วโหลดของใหม่ทั้งชุด (กันหน้าจอค้างเวอร์ชันเก่าปนกับใหม่)
 
 const PRECACHE_URLS = [
   './',
@@ -52,6 +52,27 @@ self.addEventListener('fetch', (event) => {
     return; // ปล่อยผ่านไปที่เน็ตเวิร์กตามปกติ ไม่ intercept
   }
 
+  // ตัวหน้าแอพเอง (index.html / navigation) — ขอของจากเน็ตเวิร์กก่อนเสมอ (network-first) ไม่ใช่ cache-first
+  // เพราะไฟล์นี้แก้บ่อยที่สุด ถ้าใช้ cache-first แบบไฟล์อื่น ผู้ใช้ที่เพิ่งเปิดแอพค้างไว้ (ไม่ได้ปิดแอพเลย)
+  // อาจเจอปัญหาโค้ดเก่ากับใหม่ปนกันตอน service worker อัพเดทเบื้องหลัง กลายเป็น error "already been declared"
+  // ถ้าออนไลน์ปกติจะได้ของใหม่ล่าสุดทุกครั้ง ถ้าออฟไลน์ค่อย fallback ไปใช้แคชเก่า
+  const isPage = req.mode === 'navigate' || req.destination === 'document';
+  if (isPage) {
+    event.respondWith(
+      fetch(req)
+        .then((resp) => {
+          if (resp && resp.status === 200) {
+            const clone = resp.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(req, clone));
+          }
+          return resp;
+        })
+        .catch(() => caches.match(req))
+    );
+    return;
+  }
+
+  // ไฟล์อื่นๆ (CDN, ไอคอน ฯลฯ) ยังใช้ cache-first + อัพเดทเบื้องหลังเหมือนเดิม เพราะแทบไม่เปลี่ยน เอาความเร็วไว้ก่อน
   event.respondWith(
     caches.match(req).then((cached) => {
       const network = fetch(req)
