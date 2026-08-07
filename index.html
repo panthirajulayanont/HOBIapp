@@ -1160,6 +1160,10 @@ function toast(msg,type){
   t.textContent=msg; t.className='toast show'+(type?' '+type:'');
   clearTimeout(t._h); t._h=setTimeout(()=>t.className='toast',2600);
 }
+// เน็ตทั่วแอพ — เดิมถ้ามี error เกิดขึ้นกลางฟังก์ชันไหน (เช่นกดปุ่มแล้ว "ไม่มีอะไรเกิดขึ้นเลย")
+// จะไม่มีอะไรบอกผู้ใช้เลยว่าพัง ตรงนี้ดักไว้ให้ขึ้น toast แจ้งเสมอ จะได้รู้ทันทีว่ามีจุดผิดพลาด
+window.addEventListener('error',e=>{ console.error(e.error||e.message); toast('เกิดข้อผิดพลาด: '+(e.error&&e.error.message?e.error.message:e.message),'err'); });
+window.addEventListener('unhandledrejection',e=>{ console.error(e.reason); toast('เกิดข้อผิดพลาด: '+(e.reason&&e.reason.message?e.reason.message:e.reason),'err'); });
 function fmtMoney(n){ n=Number(n)||0; return '฿'+n.toLocaleString('th-TH',{maximumFractionDigits:0}); }
 // รูปแบบเฉพาะการ์ด KPI: เอา ฿ ไปไว้ท้ายตัวเลข ตัวบาง ขนาดครึ่งหนึ่งของตัวเลข (ใช้ innerHTML เพราะต้องมี span ครอบ ฿)
 function fmtMoneyKpi(n){ n=Number(n)||0; return n.toLocaleString('th-TH',{maximumFractionDigits:0})+'<span class="kpi-currency">฿</span>'; }
@@ -1326,7 +1330,11 @@ async function idbAll(storeName){
 }
 async function idbPut(storeName,obj){
   if(isCloudActive()){
-    await cloudCollection(storeName).doc(String(obj.id)).set(obj);
+    // Firestore .set() ปฏิเสธ field ที่ค่าเป็น undefined ทั้ง document (ทำให้เขียนไม่ผ่านแบบเงียบๆ ถ้าไม่ดักไว้)
+    // กันไว้ตรงนี้จุดเดียวครอบคลุมทุก store แทนที่จะต้องระวังทีละจุดที่เรียก idbPut
+    const cleanObj={};
+    Object.keys(obj).forEach(k=>{ if(obj[k]!==undefined) cleanObj[k]=obj[k]; });
+    await cloudCollection(storeName).doc(String(obj.id)).set(cleanObj);
     return;
   }
   return idbPutLocal(storeName,obj);
@@ -4482,14 +4490,20 @@ async function saveMenuItem(){
   const existing=editId ? menuCache.find(m=>m.id===editId) : null;
   const item={
     id: editId || uid(),
-    code: existing ? existing.code : undefined,
     name,
     short_name: document.getElementById('mn-short').value.trim(),
     category: document.getElementById('mn-category').value.trim(),
     price, cost,
     cost_pct: price>0 ? Math.round((cost/price)*10000)/100 : 0
   };
-  await idbPut('menu',item);
+  if(existing && existing.code!==undefined) item.code=existing.code; // เก็บ code เดิมไว้ตอนแก้ไข ถ้าเป็นเมนูใหม่ไม่ต้องใส่ key นี้เลย (ค่า undefined ทำให้ Firestore เขียนไม่ผ่านตอนเปิด Cloud Sync)
+  try{
+    await idbPut('menu',item);
+  }catch(err){
+    console.error(err);
+    toast('บันทึกเมนูไม่สำเร็จ: '+(err&&err.message?err.message:err),'err');
+    return;
+  }
   await refreshMenuCache();
   renderMenuManage();
   resetMenuForm();
