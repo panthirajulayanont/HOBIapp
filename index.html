@@ -103,7 +103,7 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 .cake-bubble .cb-code{letter-spacing:.3px;}
 .cake-bubble .cb-qty{font-weight:700;opacity:.92;margin-top:1px;line-height:1.25;}
 .stock-bubble-wrap{display:flex;flex-wrap:nowrap;align-items:flex-start;gap:6px;padding:6px 0 4px;overflow:hidden;}
-.stock-item{display:flex;flex-direction:column;align-items:center;flex:1 1 0;min-width:0;max-width:70px;cursor:pointer;}
+.stock-item{display:flex;flex-direction:column;align-items:center;flex:0 0 auto;min-width:0;max-width:70px;cursor:pointer;}
 .stock-shape{position:relative;width:100%;aspect-ratio:1/1;border-radius:20%;display:flex;align-items:center;justify-content:center;transition:transform .1s;overflow:hidden;}
 .stock-item:active .stock-shape{transform:scale(.94);}
 .stock-item.zero .stock-shape{max-width:75%;}
@@ -927,7 +927,6 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         <div class="pill active" onclick="setFinChannelFilter('all',this)">All</div>
         <div class="pill" onclick="setFinChannelFilter('Grab Food',this)">Grab Food</div>
         <div class="pill" onclick="setFinChannelFilter('Line Man',this)">Line Man</div>
-        <div class="pill" onclick="setFinChannelFilter('คอนโด',this)">คอนโด</div>
         <div class="pill" onclick="setFinChannelFilter('อื่นๆ',this)">อื่นๆ</div>
       </div>
       </div>
@@ -3333,6 +3332,10 @@ async function renderTodayStock(){
   const totalCakeQty=flavors.reduce((s,m)=>s+getTodayStockQty(m.id),0);
   const totalEl=document.getElementById('home-stock-total');
   if(totalEl) totalEl.textContent=totalCakeQty.toLocaleString('th-TH')+' pcs';
+  // ขนาดกล่องต่อชิ้น คำนวณจากจำนวนรสเค้ก (แถวหลัก) แล้วให้เยลลี่ใช้ขนาดเดียวกัน แม้เยลลี่จะมีแค่ 1-2 ชิ้นในแถวของตัวเอง
+  // จะได้ไม่ขยายเต็มแถวจนใหญ่กว่าเค้ก — ใช้ % (ไม่ใช่ px คงที่) กับ min() เทียบ max 70px เดิม จะได้ย่อ/ขยายตามหน้าจอเองอัตโนมัติ
+  const cellPct = flavors.length ? (100/flavors.length) : 100;
+  const cellWidthStyle = `width:min(${cellPct}%,70px)`;
   if(!flavors.length){ wrap.innerHTML='<div class="emptystate">ยังไม่มีเมนูหมวด cheesecake slice ในหน้าตั้งค่า</div>'; }
   else{
     // เรียงจากจำนวนคงเหลือมากไปน้อย
@@ -3343,7 +3346,7 @@ async function renderTodayStock(){
       const fill=cakeFlavorFillCss(m.name) || flavorColorForMenuNameCssFallback(m.name);
       const solidForText=CAKE_CODE_COLORS[resolveCakeCode(m.name)] || (CAKE_CODE_HATCH[resolveCakeCode(m.name)]?CAKE_CODE_HATCH[resolveCakeCode(m.name)][0]:null) || '#a5705f';
       const textColor=readableTextColorFor(solidForText);
-      return `<div class="stock-item${qty===0?' zero':''}" onclick="openStockDetail('${m.id}')">
+      return `<div class="stock-item${qty===0?' zero':''}" style="${cellWidthStyle}" onclick="openStockDetail('${m.id}')">
         <div class="stock-shape" style="background:${fill}">
           <div class="stock-qty" style="color:${textColor}">${qty}</div>
         </div>
@@ -3360,7 +3363,7 @@ async function renderTodayStock(){
       jellyWrap.innerHTML=sortedJelly.map(m=>{
         const qty=getTodayStockQty(m.id);
         const shortName=(m.short_name&&m.short_name.trim())?m.short_name.trim():m.name;
-        return `<div class="stock-item jelly-item${qty===0?' zero':''}" onclick="openStockDetail('${m.id}')">
+        return `<div class="stock-item jelly-item${qty===0?' zero':''}" style="${cellWidthStyle}" onclick="openStockDetail('${m.id}')">
           <div class="stock-shape">
             <div class="stock-qty">${qty}</div>
           </div>
@@ -4098,7 +4101,8 @@ async function renderFinance(){
   });
   const rows=Object.values(rowMap).sort((a,b)=> a.date<b.date?1:(a.date>b.date?-1:(a.channel<b.channel?-1:1)));
   // rowsFiltered: เฉพาะช่องทางที่เลือก (ถ้าเลือก "ทุกช่องทาง" จะเหมือนกับ rows) — ใช้กับ KPI/กราฟรายวัน/ลิสต์รายละเอียด
-  const rowsFiltered=chFilter==='all'?rows:rows.filter(r=>r.channel===chFilter);
+  // ช่องทาง "คอนโด" รวมเข้ากับ "อื่นๆ" ในตัวกรอง (เหมือนหน้า Orders) — badge ของแต่ละแถวยังโชว์ป้ายคอนโดแยกได้ตามเดิม
+  const rowsFiltered=chFilter==='all'?rows:(chFilter==='อื่นๆ'?rows.filter(r=>r.channel==='อื่นๆ'||r.channel==='คอนโด'):rows.filter(r=>r.channel===chFilter));
 
   const totalRevenue=rowsFiltered.reduce((s,r)=>s+r.revenue,0);
   const totalCommission=rowsFiltered.reduce((s,r)=>s+r.commission,0);
@@ -4113,7 +4117,7 @@ async function renderFinance(){
   // ============ Daily Fee Entries: รายการดิบที่บันทึกไว้ (แก้ไข/ลบได้) กรองตามช่วงเวลา+ช่องทางเดียวกับด้านบน ============
   // ไม่แบ่งกลุ่มวัน/สัปดาห์แล้ว เรียงต่อกันเป็นลิสต์เดียว ยกเว้นตอนเลือกช่วง "ทั้งหมด" ถึงจะแบ่งกลุ่มเป็นรายเดือนแทน (ระบบเดียวกับหน้า Orders)
   const dfIsAllTime = (from==='2000-01-01' && to===todayISO());
-  const dfEntries=(chFilter==='all'?dailyFees:dailyFees.filter(f=>f.channel===chFilter))
+  const dfEntries=(chFilter==='all'?dailyFees:(chFilter==='อื่นๆ'?dailyFees.filter(f=>f.channel==='อื่นๆ'||f.channel==='คอนโด'):dailyFees.filter(f=>f.channel===chFilter)))
     .slice().sort((a,b)=>(b.date+b.channel).localeCompare(a.date+a.channel));
   const dfListEl=document.getElementById('dailyfee-list');
   if(!dfEntries.length){ dfListEl.className='emptystate'; dfListEl.textContent='ยังไม่มีข้อมูล'; }
