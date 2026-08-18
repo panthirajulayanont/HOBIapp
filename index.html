@@ -230,17 +230,23 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .chart-card-head{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap;}
 .chart-card-head .cc-icon{width:28px;height:28px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .chart-card-head .cc-icon svg{width:15px;height:15px;stroke:var(--pink-dark);}
-.chart-card-head .cc-title{font-size:11.5px;font-weight:700;color:var(--brown);flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.chart-card-head .cc-title{font-size:11.5px;font-weight:700;color:var(--brown);flex:1;min-width:0;line-height:1.25;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;}
 .chart-card-head .cc-badge{font-size:12px;font-weight:800;padding:4px 10px;border-radius:20px;}
 .chart-card canvas{max-height:260px;}
 .chart-card .cc-donut-wrap{position:relative;}
 .donut-center{position:absolute;top:44%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;}
 #pur-spend-donut-wrap{max-width:100%;margin:0 auto;}
+/* กราฟที่เลื่อนซ้าย-ขวาได้ด้วยนิ้ว (แท่งเยอะ) — ตัว inner กว้างตามจำนวนแท่งจริง (ตั้งผ่าน JS), ตัว wrap ครอบตัดความกว้างการ์ดไว้แล้วให้ scroll แนวนอน */
+.chart-scroll-wrap{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;scrollbar-width:thin;}
+.chart-scroll-wrap::-webkit-scrollbar{height:5px;}
+.chart-scroll-wrap::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+.chart-scroll-inner{height:260px;}
+@media(min-width:420px){.chart-scroll-inner{height:340px;}}
 .fin-platform-row{margin-bottom:12px;}
 .fin-platform-row:last-child{margin-bottom:0;}
 .fin-platform-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
-.fin-platform-sales{font-weight:700;font-family:var(--font-head);flex:1;min-width:0;font-size:13px;}
-.fin-platform-pct{font-size:12px;font-weight:800;color:var(--pink-dark);flex-shrink:0;}
+.fin-platform-sales{font-weight:700;font-family:var(--font-head);flex:1;min-width:0;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.fin-platform-pct{font-size:12px;font-weight:800;color:var(--pink-dark);flex-shrink:0;white-space:nowrap;}
 .fin-platform-bar{height:6px;border-radius:4px;background:var(--tan);overflow:hidden;}
 .fin-platform-bar-fill{height:100%;border-radius:4px;background:var(--olive);}
 .ro-channel-count-row{display:flex;align-items:center;gap:8px;padding:9px 0;border-bottom:1px solid var(--border);}
@@ -799,7 +805,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
           <div class="cc-title">ยอดขายรายสัปดาห์</div>
         </div>
-        <canvas id="chart-daily"></canvas>
+        <div class="chart-scroll-wrap" id="chart-daily-scroll"><div class="chart-scroll-inner" id="chart-daily-inner"><canvas id="chart-daily"></canvas></div></div>
       </div>
       <div class="chart-card">
         <div class="chart-card-head">
@@ -807,7 +813,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <div class="cc-title">กำไรรายเดือน (สุทธิ / ขั้นต้น)</div>
           <span id="total-profit-badge" class="cc-badge">฿0</span>
         </div>
-        <canvas id="chart-monthprofit"></canvas>
+        <div class="chart-scroll-wrap" id="chart-monthprofit-scroll"><div class="chart-scroll-inner" id="chart-monthprofit-inner"><canvas id="chart-monthprofit"></canvas></div></div>
       </div>
       <div class="row">
         <div class="chart-card">
@@ -964,7 +970,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="20" x2="6" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="18" y1="20" x2="18" y2="14"/></svg></div>
           <div class="cc-title">รายรับรายวัน แยกยอดสุทธิ/ค่าคอม/ค่าโฆษณา</div>
         </div>
-        <canvas id="chart-fin-daily"></canvas>
+        <div class="chart-scroll-wrap" id="chart-fin-daily-scroll"><div class="chart-scroll-inner" id="chart-fin-daily-inner"><canvas id="chart-fin-daily"></canvas></div></div>
       </div>
 
       <div class="row">
@@ -3700,8 +3706,72 @@ function drawChart(canvasId,type,labels,datasets,horizontal,showLegend){
     }
   });
 }
+/* ============ กราฟที่ลากนิ้วเลื่อนซ้าย-ขวาได้ (ใช้กับกราฟแท่งที่มีหลายแท่งตามช่วงเวลา) ============
+   แนวคิด: ตัว "inner" (ห่อ canvas) กว้างเท่ากับจำนวนแท่ง x พิกเซลต่อแท่งที่กำหนด ไม่ใช่ยืดหดตามการ์ด
+   ตัว "wrap" ครอบตัดความกว้างไว้เท่าการ์ด + overflow-x:auto ให้ลากดูได้ Chart.js (responsive:true) จะ resize
+   canvas ตาม inner เองอัตโนมัติ ทำให้กราฟกว้างกว่าที่เห็น เลื่อนดูได้ครบทุกแท่งโดยไม่ต้องหมุนป้ายวันที่ให้เอียง */
+function sizeChartScrollInner(wrapId,innerId,numBars,pxPerBar){
+  const wrap=document.getElementById(wrapId), inner=document.getElementById(innerId);
+  if(!wrap||!inner) return;
+  const wrapW=wrap.clientWidth||300;
+  const wantW=Math.max(1,numBars)*pxPerBar;
+  inner.style.width=Math.max(wrapW,wantW)+'px';
+}
+// หา max/min ของค่าที่ "มองเห็นอยู่จริง" ในกรอบที่เลื่อนมาตอนนี้ (ไม่ใช่สูงสุดของข้อมูลทั้งหมด) ใช้ปรับสเกลแกน Y ให้สัมพันธ์กับแท่งที่เห็น
+function chartVisibleMinMax(chart,startIdx,endIdx,stacked){
+  const datasets=(chart.data.datasets||[]).filter(d=>d.type!=='line');
+  let max=0,min=0;
+  for(let i=startIdx;i<=endIdx;i++){
+    if(stacked){
+      let pos=0,neg=0;
+      datasets.forEach(ds=>{ const v=Number(ds.data[i])||0; if(v>=0) pos+=v; else neg+=v; });
+      if(pos>max) max=pos;
+      if(neg<min) min=neg;
+    }else{
+      datasets.forEach(ds=>{ const v=Number(ds.data[i])||0; if(v>max) max=v; if(v<min) min=v; });
+    }
+  }
+  return {max,min};
+}
+const _chartScrollBound={};
+function rescaleChartToVisible(wrap,canvasId,stacked){
+  const chart=charts[canvasId];
+  if(!chart || !chart.options || !chart.options.scales || !chart.options.scales.y) return;
+  const n=(chart.data.labels||[]).length;
+  if(!n) return;
+  const totalW=wrap.scrollWidth||1;
+  const barW=totalW/n;
+  const startIdx=Math.max(0,Math.floor(wrap.scrollLeft/barW));
+  const endIdx=Math.max(startIdx,Math.min(n-1,Math.ceil((wrap.scrollLeft+wrap.clientWidth)/barW)-1));
+  const {max,min}=chartVisibleMinMax(chart,startIdx,endIdx,stacked);
+  chart.options.scales.y.max = max>0 ? max*1.18 : undefined;
+  chart.options.scales.y.min = min<0 ? min*1.15 : undefined;
+  chart.update('none');
+}
+function attachChartHScroll(wrapId,canvasId,stacked){
+  const wrap=document.getElementById(wrapId);
+  if(!wrap || _chartScrollBound[wrapId]) return;
+  _chartScrollBound[wrapId]=true;
+  let raf=null;
+  wrap.addEventListener('scroll',()=>{
+    if(raf) return;
+    raf=requestAnimationFrame(()=>{ raf=null; rescaleChartToVisible(wrap,canvasId,stacked); });
+  },{passive:true});
+}
+// เรียกหลังสร้างกราฟเสร็จ: เลื่อนไปสุดขวา (ข้อมูลล่าสุด) เป็นค่าเริ่มต้น แล้วปรับสเกล Y ให้ตรงกับที่เห็นทันที
+function initChartScrollView(wrapId,canvasId,stacked){
+  const wrap=document.getElementById(wrapId);
+  attachChartHScroll(wrapId,canvasId,stacked);
+  if(!wrap) return;
+  requestAnimationFrame(()=>{
+    wrap.scrollLeft=wrap.scrollWidth;
+    rescaleChartToVisible(wrap,canvasId,stacked);
+  });
+}
 function drawStackedBar(canvasId,labels,datasets,onBarClick){
   if(charts[canvasId]) charts[canvasId].destroy();
+  const scrollWrapId=canvasId+'-scroll', scrollInnerId=canvasId+'-inner';
+  sizeChartScrollInner(scrollWrapId,scrollInnerId,labels.length,72);
   const ctx=document.getElementById(canvasId).getContext('2d');
   // ปาดมุมโค้งเฉพาะขอบบนของ "สีที่อยู่บนสุดที่ไม่ใช่ 0" ของแต่ละแท่ง (ไม่ปาดทุกสีในแท่งเดียวกัน กันดูเป็นรอยหยักกลางแท่ง)
   const barDatasetIdxs=datasets.map((ds,i)=>ds.type!=='line'?i:null).filter(i=>i!==null);
@@ -3718,9 +3788,12 @@ function drawStackedBar(canvasId,labels,datasets,onBarClick){
     data:{labels,datasets},
     options:{
       responsive:true,
-      aspectRatio:chartAspectRatio(2.2,1.3),
+      maintainAspectRatio:false,
       plugins:{legend:{position:'bottom',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle'}},datalabels:{display:false}},
-      scales:{x:{stacked:true,grid:{display:false},border:{display:false},ticks:{padding:6}},y:{stacked:true,beginAtZero:true,grid:{color:GRID_COLOR,drawTicks:false},border:{display:false},ticks:{padding:6}}},
+      scales:{
+        x:{stacked:true,grid:{display:false},border:{display:false},ticks:{padding:6,maxRotation:0,minRotation:0,autoSkip:false,font:{size:9}}},
+        y:{stacked:true,beginAtZero:true,grid:{color:GRID_COLOR,drawTicks:false},border:{display:false},ticks:{padding:6}}
+      },
       onClick: onBarClick ? function(evt,_els,chart){
         const pts=chart.getElementsAtEventForMode(evt,'index',{intersect:false},true);
         if(pts && pts.length) onBarClick(pts[0].index);
@@ -3728,6 +3801,7 @@ function drawStackedBar(canvasId,labels,datasets,onBarClick){
       onHover: onBarClick ? function(evt,els){ if(evt.native && evt.native.target) evt.native.target.style.cursor = els.length?'pointer':'default'; } : undefined
     }
   });
+  initChartScrollView(scrollWrapId,canvasId,true);
 }
 // กราฟรายรับรายวันหน้า Finance (แท่งสแตก 3 ชั้น: ยอดสุทธิ/ค่าคอม/ค่าโฆษณา)
 // - แกน x โชว์วันที่แบบย่อ "1 Jul" แค่ทุกๆ 7 แท่ง (ไม่งั้นแน่นเกินไป) ส่วนวันที่เต็มดูได้ตอนเอาเมาส์ชี้ที่แท่ง (tooltip)
@@ -3738,6 +3812,8 @@ function drawFinanceDailyChart(canvasId,dates,seriesDefs){
   if(charts[canvasId]) charts[canvasId].destroy();
   const canvasEl=document.getElementById(canvasId);
   if(!canvasEl) return;
+  const scrollWrapId=canvasId+'-scroll', scrollInnerId=canvasId+'-inner';
+  sizeChartScrollInner(scrollWrapId,scrollInnerId,dates.length,44);
   const ctx=canvasEl.getContext('2d');
   const n=seriesDefs.length;
   const totals=dates.map((d,i)=>seriesDefs.reduce((s,ds)=>s+(Number(ds.data[i])||0),0));
@@ -3772,18 +3848,20 @@ function drawFinanceDailyChart(canvasId,dates,seriesDefs){
     data:{labels:dates,datasets},
     options:{
       responsive:true,
-      aspectRatio:chartAspectRatio(2.2,1.3),
+      maintainAspectRatio:false,
       layout:{padding:{top:18}},
       plugins:{
         legend:{position:'bottom',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle'}},
         tooltip:{callbacks:{ title:(items)=> items[0] ? formatThaiDateShort(dates[items[0].dataIndex]) : '' }}
       },
       scales:{
-        x:{stacked:true,grid:{display:false},border:{display:false},ticks:{autoSkip:false,maxRotation:0,padding:6,callback:(value,index)=> index%7===0 ? formatDateDDMM(dates[index]) : ''}},
+        // เดิมโชว์วันที่แค่ทุกๆ 7 แท่งเพราะพื้นที่ไม่พอ ตอนนี้เลื่อนดูได้แล้วเลยโชว์ทุกวันไปเลย ไม่ต้องข้าม
+        x:{stacked:true,grid:{display:false},border:{display:false},ticks:{autoSkip:false,maxRotation:0,minRotation:0,padding:6,font:{size:9},callback:(value,index)=>formatDateDDMM(dates[index])}},
         y:{stacked:true,beginAtZero:true,grid:{color:GRID_COLOR,drawTicks:false},border:{display:false},ticks:{padding:6,stepSize:200}}
       }
     }
   });
+  initChartScrollView(scrollWrapId,canvasId,true);
 }
 // กราฟค่าธรรมเนียมคิดเป็น % ของยอดขาย (หน้า Finance) — ค่าคอม+ค่าโฆษณาซ้อนอยู่ในแท่งเดียวต่อแอพ ไม่โชว์ตัวเลขแกน Y แต่เขียน %รวมไว้บนสุดของแท่งแทน
 function drawChannelFeeChart(canvasId,channelLabels,commPct,adPct){
@@ -3845,7 +3923,7 @@ function drawPie(canvasId,labels,data,centerElId,centerLabelText,opts){
   charts[canvasId]=new Chart(ctx,{
     type:'doughnut',
     data:{labels,datasets:[{data,backgroundColor:colors,borderWidth:3,borderColor:'#fffefa',borderRadius:4,spacing:1,hoverOffset:8,hoverBorderColor:'#fffefa'}]},
-    options:{cutout:opts.cutout||'68%',responsive:true,aspectRatio:chartAspectRatio(1.6,1.15),plugins:{
+    options:{cutout:opts.cutout||'58%',responsive:true,aspectRatio:chartAspectRatio(1.6,1.15),plugins:{
       legend:{display:!opts.sliceLabels,position:'bottom',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle'}},
       datalabels: opts.sliceLabels ? {
         display:true,
@@ -3940,7 +4018,11 @@ function drawOrderChannelPie(canvasId,stats){
           }
         },
         datalabels:{
-          display:true,
+          // ซ่อนป้าย % ของชิ้นเล็กมาก (ต่ำกว่า 6%) กันตัวเลขทับกันเวลาชิ้นเล็กๆ อยู่ติดกันหลายชิ้น — ดูยอดแบบเต็มได้จาก tooltip แทน
+          display:(dctx)=>{
+            const v=Number(dctx.dataset.data[dctx.dataIndex])||0;
+            return totalSales>0 && (v/totalSales*100)>=6;
+          },
           clamp:true,
           clip:false,
           color:dctx=>readableTextColorFor(colors[dctx.dataIndex]),
@@ -4046,6 +4128,8 @@ function drawOptionUsageChart(canvasId,labels,qtys,colors){
 // เดิมมีแท่งเดียว (กำไรสุทธิ) ตอนนี้แสดง 2 แท่งข้างๆ กันต่อเดือน: กำไรสุทธิ + กำไรขั้นต้น (ไม่ใช่ stacked — ปาดมุมโค้งเฉพาะขอบที่ไกลจาก 0 ของแต่ละแท่ง กันเคสค่าติดลบ (ขาดทุน) ปาดมุมผิดด้าน)
 function drawProfitBar(canvasId,labels,netData,grossData){
   if(charts[canvasId]) charts[canvasId].destroy();
+  const scrollWrapId=canvasId+'-scroll', scrollInnerId=canvasId+'-inner';
+  sizeChartScrollInner(scrollWrapId,scrollInnerId,labels.length,86);
   const ctx=document.getElementById(canvasId).getContext('2d');
   function farEndRadius(v,r){ return v>=0 ? {topLeft:r,topRight:r,bottomLeft:0,bottomRight:0} : {topLeft:0,topRight:0,bottomLeft:r,bottomRight:r}; }
   const netColors=netData.map(v=>v>=0?'#fff2bf':'#665e58');
@@ -4055,13 +4139,16 @@ function drawProfitBar(canvasId,labels,netData,grossData){
       label:'กำไรสุทธิ',data:netData,backgroundColor:netColors,borderSkipped:false,
       maxBarThickness:34,barPercentage:.7,categoryPercentage:.75,
       borderRadius:(dctx)=>farEndRadius(Number(netData[dctx.dataIndex])||0,7),
+      // แท่งกำไรสุทธิ: ตัวเลขอยู่นอกแท่ง (เหนือ/ใต้ปลายแท่ง) เหมือนเดิม
       datalabels:{display:true,anchor:'end',align:'end',clamp:true,color:'#665e58',font:{family:"'Amiko','Prompt',-apple-system,sans-serif",weight:'bold',size:10},formatter:v=>v.toLocaleString('th-TH',{maximumFractionDigits:0})}
     },
     {
       label:'กำไรขั้นต้น',data:grossData,backgroundColor:grossColors,borderSkipped:false,
       maxBarThickness:34,barPercentage:.7,categoryPercentage:.75,
       borderRadius:(dctx)=>farEndRadius(Number(grossData[dctx.dataIndex])||0,7),
-      datalabels:{display:true,anchor:'end',align:'end',clamp:true,color:'#665e58',font:{family:"'Amiko','Prompt',-apple-system,sans-serif",weight:'bold',size:10},formatter:v=>v.toLocaleString('th-TH',{maximumFractionDigits:0})}
+      // แท่งกำไรขั้นต้น: ย้ายตัวเลขเข้าไป "ใน" แท่งแทน (align:'start' ดันเข้าด้านใน) กันทับกับตัวเลขกำไรสุทธิที่อยู่ข้างๆ
+      // ตอนค่าใกล้กันมาก ใช้สีให้อ่านออกตามสีพื้นหลังแท่ง (readableTextColorFor)
+      datalabels:{display:true,anchor:'end',align:'start',clamp:true,color:(dctx)=>readableTextColorFor(grossColors[dctx.dataIndex]),font:{family:"'Amiko','Prompt',-apple-system,sans-serif",weight:'bold',size:9},formatter:v=>v.toLocaleString('th-TH',{maximumFractionDigits:0})}
     }
   ];
   charts[canvasId]=new Chart(ctx,{
@@ -4069,17 +4156,18 @@ function drawProfitBar(canvasId,labels,netData,grossData){
     data:{labels,datasets},
     options:{
       responsive:true,
-      aspectRatio:chartAspectRatio(2.2,1.3),
+      maintainAspectRatio:false,
       layout:{padding:{top:18}},
       plugins:{
         legend:{position:'bottom',labels:{boxWidth:9,usePointStyle:true,pointStyle:'circle'}}
       },
       scales:{
         y:{beginAtZero:true,grid:{color:GRID_COLOR,drawTicks:false},border:{display:false},ticks:{padding:6}},
-        x:{grid:{display:false},border:{display:false},ticks:{padding:6}}
+        x:{grid:{display:false},border:{display:false},ticks:{padding:6,maxRotation:0,minRotation:0,autoSkip:false,font:{size:9}}}
       }
     }
   });
+  initChartScrollView(scrollWrapId,canvasId,false);
 }
 
 /* ============ FINANCE (การเงิน) ============ */
@@ -4228,7 +4316,7 @@ async function renderFinance(){
         <div class="fin-platform-top">
           <span class="badge ${cls}">${escapeHtml(shortChannelLabel(ch))}</span>
           <span class="fin-platform-sales">${fmtMoney(c.revenue)}</span>
-          <span class="fin-platform-pct">-${pct.toFixed(1)}%</span>
+          <span class="fin-platform-pct">${pct.toFixed(1)}%</span>
         </div>
         <div class="fin-platform-bar"><div class="fin-platform-bar-fill" style="width:${Math.min(100,pct)}%"></div></div>
       </div>`;
