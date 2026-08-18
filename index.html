@@ -319,13 +319,15 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
 #tab-home .cake-bubble-wrap{padding:2px 0;gap:14px;}
 #tab-home .card-head-row{margin-bottom:8px;}
 #tab-home textarea#claude-import-json{min-height:40px;}
-#tab-orders .order-row{font-size:11px;display:grid;grid-template-columns:46px 56px 44px 1fr 58px 46px;align-items:center;column-gap:6px;}
-#tab-orders .order-row .badge{font-size:11px;text-align:center;justify-self:stretch;}
+#tab-orders .order-row{font-size:11px;display:grid;grid-template-columns:40px 50px 40px 1fr 54px 40px;align-items:center;column-gap:5px;}
+/* grid item ทุกช่องต้อง min-width:0 กันตัวเลขยาวๆ (ยอดหลักพัน) ดันกริดล้นขอบการ์ดบนมือถือจอแคบ — ไม่งั้นคอลัมน์ขวาสุด (or-pct) จะโดนตัดหายไปเงียบๆ */
+#tab-orders .order-row > *{min-width:0;}
+#tab-orders .order-row .badge{font-size:10.5px;text-align:center;justify-self:stretch;overflow:hidden;text-overflow:ellipsis;padding-left:4px;padding-right:4px;}
 #tab-orders .order-row .or-no{overflow:hidden;text-overflow:ellipsis;}
-#tab-orders .order-row .or-date{justify-self:start;}
-#tab-orders .order-row .or-total{font-size:11px;text-align:right;justify-self:end;margin-left:0;}
-#tab-orders .order-row .or-profit{font-size:11px;text-align:right;justify-self:end;margin-left:0;}
-#tab-orders .order-row .or-pct{font-size:10.5px;text-align:right;justify-self:end;margin-left:0;}
+#tab-orders .order-row .or-date{justify-self:start;overflow:hidden;text-overflow:ellipsis;}
+#tab-orders .order-row .or-total{font-size:11px;text-align:right;justify-self:end;margin-left:0;overflow:hidden;text-overflow:ellipsis;}
+#tab-orders .order-row .or-profit{font-size:11px;text-align:right;justify-self:end;margin-left:0;overflow:hidden;text-overflow:ellipsis;}
+#tab-orders .order-row .or-pct{font-size:10.5px;text-align:right;justify-self:end;margin-left:0;overflow:hidden;text-overflow:ellipsis;}
 #tab-orders .order-row.order-summary{background:var(--butter);color:#5a4a2a;font-weight:700;border-radius:8px;cursor:default;border-bottom:none;margin-bottom:8px;}
 #tab-orders .order-row.order-summary:hover{background:var(--butter);}
 </style>
