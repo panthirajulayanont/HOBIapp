@@ -1789,7 +1789,13 @@ function breakdownSetMenuItem(item, optsForItem){
     // คูณด้วย qtyMult (จำนวนเซ็ทในบรรทัดนี้) เสมอ เผื่อกรณีขายหลายเซ็ทรสเดียวกันในบรรทัดเดียว (qty>1) แต่บันทึกตัวเลือกไว้แค่ชุดเดียว ไม่งั้นจะนับต่ำกว่าจริง
     return optsForItem.map(o=>{
       const m=fuzzyFindMenu(o.option);
-      const cat=m ? (m.category||'').trim()||'ไม่ระบุหมวดหมู่' : 'ไม่ระบุหมวดหมู่';
+      // หาหมวดหมู่จาก "ชื่อกลุ่มตัวเลือก" (o.group) เป็นหลักก่อน เช่น "Choose the Melty Cake" -> เค้ก, "Choose the Wawkey Bottle" -> เครื่องดื่ม
+      // แม่นยำกว่าการเทียบชื่อรสกับเมนูเดี่ยว เพราะบางรสในเซ็ทอาจไม่มีขายแยกเดี่ยวๆ เลย ทำให้หาหมวดหมู่ไม่เจอแล้วตกหล่นไปเงียบๆ
+      const groupNorm=normFuzzy(o.group);
+      let cat;
+      if(groupNorm.includes('cake')||groupNorm.includes('เค้ก')) cat='cheesecake slice';
+      else if(groupNorm.includes('bottle')||groupNorm.includes('drink')||groupNorm.includes('เครื่องดื่ม')||groupNorm.includes('beverage')) cat='drinks';
+      else cat = m ? ((m.category||'').trim()||'ไม่ระบุหมวดหมู่') : 'ไม่ระบุหมวดหมู่';
       return {category:cat, qty:(Number(o.qty)||1)*qtyMult, menuName:m?m.name:o.option, menu_id:m?m.id:null};
     });
   }
