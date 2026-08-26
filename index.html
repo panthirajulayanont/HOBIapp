@@ -1019,10 +1019,12 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <p class="hint">ดาวน์โหลดข้อมูลทั้งหมดในแอพตอนนี้เป็นไฟล์ .xlsx (Orders / Order_Items / Purchases / Menu) — ไฟล์นี้เป็นข้อมูลล้วนๆ ไม่มีสูตร/แดชบอร์ดแบบไฟล์เดิม เพราะแดชบอร์ดอยู่ในแอพนี้แล้ว</p>
       <h3>Cross-Device Sync / Cloud Sync (Settings)</h3>
       <p class="hint">เชื่อมต่อ Firebase (ฟรี) เพื่อให้กรอกข้อมูลจากมือถือหรือคอมก็ได้ ข้อมูล sync กันอัตโนมัติแบบเรียลไทม์ — ขั้นตอนตั้งค่าละเอียดทั้งหมดอยู่ในหัวข้อ "Cross-Device Sync (Cloud Sync)" ด้านล่างในหน้านี้ (กดปุ่ม i ตรงนั้น)</p>
+      <h3>Order Cost Settings (Settings)</h3>
+      <p class="hint">ต้นทุนคงที่ต่อออเดอร์ (เช่น ค่าถุง) ตั้งไว้ที่นี่ครั้งเดียว ระบบจะบวกเข้าต้นทุนของทุกออเดอร์ที่บันทึกใหม่ให้อัตโนมัติ</p>
       <h3>Main Menu (Settings)</h3>
       <p class="hint">รายชื่อเมนูที่ร้านขาย ใช้เป็นตัวเลือก dropdown (แบ่งตามหมวดหมู่) ตอนกรอกออเดอร์ในหน้าแรก ตั้งราคาขาย/ต้นทุนไว้ที่นี่เพื่อให้ระบบคำนวณกำไรอัตโนมัติ</p>
       <h3>Options Menu (Settings)</h3>
-      <p class="hint">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน</p>
+      <p class="hint">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน ถ้าตัวเลือกไหนมีต้นทุนวัตถุดิบของตัวเอง (เช่น ไข่มุก) ใส่ไว้ในช่อง "ต้นทุนเพิ่ม" ระบบจะบวกเข้ากับต้นทุนเมนูหลักให้อัตโนมัติ</p>
       </div>
     </div>
 
@@ -1086,6 +1088,14 @@ service cloud.firestore {
     </div>
 
     <div class="card">
+      <h2>Order Cost Settings <button type="button" class="info-btn" onclick="toggleEl('hint-order-cost-settings')">i</button></h2>
+      <p class="hint" id="hint-order-cost-settings" style="display:none">ต้นทุนคงที่ที่เกิดขึ้นทุกออเดอร์ (เช่น ค่าถุง/บรรจุภัณฑ์) ระบบจะบวกเข้าต้นทุนของทุกออเดอร์ที่บันทึกใหม่โดยอัตโนมัติ (ไม่กระทบออเดอร์เก่าที่บันทึกไปแล้ว ต้องแก้ไข/บันทึกซ้ำถึงจะอัพเดท)</p>
+      <label>ค่าถุงต่อออเดอร์ (฿)</label>
+      <input type="number" id="set-bag-cost" value="5" step="0.01">
+      <div class="btn-row"><button class="btn-secondary" onclick="saveAppSettings()">บันทึกการตั้งค่า</button></div>
+    </div>
+
+    <div class="card">
       <h2>Main Menu <button type="button" class="info-btn" onclick="toggleEl('hint-menu-manage')">i</button></h2>
       <p class="hint" id="hint-menu-manage" style="display:none">รายชื่อเมนูที่ร้านขาย ใช้เป็นตัวเลือก dropdown (แบ่งตามหมวดหมู่) ตอนกรอกออเดอร์ในหน้าแรก ตั้งราคาขาย/ต้นทุนไว้ที่นี่เพื่อให้ระบบคำนวณกำไรอัตโนมัติ</p>
       <div id="menu-manage-list"></div>
@@ -1117,7 +1127,7 @@ service cloud.firestore {
 
     <div class="card">
       <h2>Options Menu <button type="button" class="info-btn" onclick="toggleEl('hint-option-groups')">i</button></h2>
-      <p class="hint" id="hint-option-groups" style="display:none">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน</p>
+      <p class="hint" id="hint-option-groups" style="display:none">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน "ต้นทุนเพิ่ม" คือต้นทุนวัตถุดิบของตัวเลือกนั้น (ถ้ามี) ระบบจะบวกเข้ากับต้นทุนเมนูหลักอัตโนมัติตอนคำนวณกำไรของออเดอร์ที่เลือกตัวเลือกนี้</p>
       <div id="opt-manage-list"></div>
       <div class="subcard">
         <h3 class="collapsible-head" onclick="toggleSection(this,'opt-add-form-body')">Add Option <span class="chevron">▾</span></h3>
@@ -1130,7 +1140,7 @@ service cloud.firestore {
         </div>
         <div class="row">
           <div><label>ราคาเพิ่ม (฿)</label><input type="number" id="og-price" value="0" step="0.01"></div>
-          <div></div>
+          <div><label>ต้นทุนเพิ่ม (฿)</label><input type="number" id="og-cost" value="0" step="0.01"></div>
         </div>
         <label>เมนูที่ผูกด้วย (ถ้ามี)</label>
         <input type="text" id="og-linked" placeholder="เช่น Black cold brew, Milky cold brew">
@@ -1229,7 +1239,7 @@ function switchTab(name,btn){
   if(name==='dashboard') renderDashboard();
   if(name==='finance'){ renderDailyFeeList(); }
   if(name==='purchases'){ refreshPurItemNameCache(); renderPurchaseSpendDashboard(); }
-  if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); updateSyncStatusUI(); renderMergeRulesList(); }
+  if(name==='settings'){ refreshDbStats(); renderMenuManage(); renderOptionManage(); updateSyncStatusUI(); renderMergeRulesList(); refreshAppSettings(); }
 }
 
 // เมื่อขนาดหน้าจอเปลี่ยน (เช่น หมุนจอ/ปรับขนาดหน้าต่าง) ให้วาดกราฟของแท็บที่เปิดอยู่ใหม่ เพื่อให้สัดส่วนกว้าง:สูงเหมาะกับขนาดจอปัจจุบัน
@@ -1248,7 +1258,7 @@ window.addEventListener('resize',()=>{
 let db;
 function openDB(){
   return new Promise((resolve,reject)=>{
-    const req=indexedDB.open('hobiDB',4);
+    const req=indexedDB.open('hobiDB',5);
     req.onupgradeneeded=(e)=>{
       const d=e.target.result;
       if(!d.objectStoreNames.contains('orders')){
@@ -1285,6 +1295,10 @@ function openDB(){
       if(!d.objectStoreNames.contains('daily_stock')){
         const s=d.createObjectStore('daily_stock',{keyPath:'id'});
         s.createIndex('date','date',{unique:false});
+      }
+      // ตั้งค่าคงที่ของแอพ (เช่น ค่าถุงต่อออเดอร์) — เก็บเป็น record เดียว id:'main' เพื่อให้ sync ข้ามเครื่องผ่าน Cloud Sync ได้เหมือนข้อมูลอื่นๆ
+      if(!d.objectStoreNames.contains('app_settings')){
+        d.createObjectStore('app_settings',{keyPath:'id'});
       }
     };
     req.onsuccess=(e)=>{ db=e.target.result; resolve(db); };
@@ -1493,7 +1507,7 @@ async function refreshAllViews(){
 async function migrateLocalToCloud(){
   if(!isCloudActive()){ toast('ต้อง sign in Cloud Sync ก่อนถึงจะอัพโหลดได้','err'); return; }
   if(!confirm('อัพโหลดข้อมูลทั้งหมดในเครื่องนี้ขึ้นคลาวด์? (ถ้าคลาวด์มีข้อมูล id ซ้ำอยู่แล้วจะถูกเขียนทับด้วยข้อมูลในเครื่อง)')) return;
-  const stores=['menu','orders','order_items','purchases','option_groups','order_item_options'];
+  const stores=['menu','orders','order_items','purchases','option_groups','order_item_options','app_settings'];
   let total=0;
   try{
     for(const s of stores){
@@ -1506,6 +1520,22 @@ async function migrateLocalToCloud(){
     console.error(err);
     toast('อัพโหลดไม่สำเร็จ: '+err.message,'err');
   }
+}
+
+/* ============ APP SETTINGS (ต้นทุนคงที่ต่อออเดอร์ ฯลฯ) ============ */
+let appSettings={bag_cost:5};
+async function refreshAppSettings(){
+  const rows=await idbAll('app_settings');
+  const rec=rows.find(r=>r.id==='main');
+  appSettings={bag_cost: rec && rec.bag_cost!=null ? Number(rec.bag_cost) : 5};
+  const el=document.getElementById('set-bag-cost');
+  if(el) el.value=appSettings.bag_cost;
+}
+async function saveAppSettings(){
+  const bagCost=Number(document.getElementById('set-bag-cost').value);
+  await idbPut('app_settings',{id:'main', bag_cost:isNaN(bagCost)?0:bagCost});
+  await refreshAppSettings();
+  toast('บันทึกการตั้งค่าแล้ว','ok');
 }
 
 /* ============ MENU LOOKUP ============ */
@@ -1543,7 +1573,17 @@ function findItemCost(name,optsForItem){
       return s+(m?Number(m.cost)||0:0);
     },0);
   }
-  return findMenuCost(name);
+  // ไอเทมทั่วไป: ต้นทุนหลักของเมนู + ต้นทุนเพิ่มของตัวเลือกที่ตั้งค่าไว้ (เช่น ท็อปปิ้ง/ไข่มุก ที่มีต้นทุนวัตถุดิบของตัวเอง)
+  let cost=findMenuCost(name);
+  if(optsForItem && optsForItem.length){
+    cost += optsForItem.reduce((s,o)=>s+findOptionCost(o.group,o.option)*(Number(o.qty)||1),0);
+  }
+  return cost;
+}
+// ต้นทุนเพิ่มของตัวเลือก 1 รายการ (ตั้งค่าไว้ในหน้า Settings > Options Menu) — คืน 0 ถ้าไม่พบหรือไม่ได้ตั้งค่าไว้
+function findOptionCost(group,optionName){
+  const o=optionCache.find(x=>x.group===group && x.name===optionName);
+  return o? Number(o.cost)||0 : 0;
 }
 function findMenuPrice(name){
   const m=fuzzyFindMenu(name);
@@ -1897,7 +1937,7 @@ function onThaiPlusToggle(silent){
   }
 }
 function recalcOrderTotals(){
-  let totalSale=0, totalCost=0;
+  let totalSale=0, totalCost=0, itemCount=0;
   document.querySelectorAll('#o-items .itemblock').forEach(block=>{
     const r=block.querySelector('.itemrow');
     const nameEl=r&&r.querySelector('.name');
@@ -1906,12 +1946,16 @@ function recalcOrderTotals(){
     const qty=Number(r.querySelector('.qty').value)||0;
     const price=Number(r.querySelector('.price').value)||0;
     totalSale+=qty*price;
+    itemCount++;
     const optsForItem=[...block.querySelectorAll('.opt-list .itemrow')].map(o=>({
       group:o.querySelector('.opt-group')?.value,
-      option:o.querySelector('.opt-name')?.value
+      option:o.querySelector('.opt-name')?.value,
+      qty:Number(o.querySelector('.opt-qty')?.value)||1
     })).filter(o=>o.group && o.option);
     totalCost+=qty*findItemCost(name,optsForItem);
   });
+  // ต้นทุนคงที่ต่อออเดอร์ (เช่น ค่าถุง) บวกเข้าครั้งเดียวต่อออเดอร์ ไม่ใช่ต่อไอเทม — ใส่เฉพาะตอนมีอย่างน้อย 1 เมนูในออเดอร์
+  if(itemCount>0) totalCost += Number(appSettings.bag_cost)||0;
   if(!orderManualTotalEdited) document.getElementById('o-total-sale').value=totalSale.toFixed(2);
   document.getElementById('o-total-cost').value=totalCost.toFixed(2);
   recalcNetProfit();
@@ -2064,7 +2108,7 @@ async function saveOrder(){
   }
 
   for(const it of blocks){
-    const cost=findMenuCost(it.name);
+    const cost=findItemCost(it.name,it.options);
     await idbPut('order_items',{
       id:uid(), order_id:orderId, date:order.date, order_no:order.order_no,
       name:it.name, qty:it.qty, unit_price:it.unit_price, unit_cost:cost,
@@ -4353,7 +4397,8 @@ async function importExcel(){
         const r=rows[i]; if(!r||!r[0]||!r[1]) continue;
         await idbPut('option_groups',{
           id:uid(), group:String(r[0]).trim(), name:String(r[1]).trim(),
-          extra_price:Number(r[2])||0, stock_status:r[3]||'มีสต็อก', linked_menu:r[4]||''
+          extra_price:Number(r[2])||0, stock_status:r[3]||'มีสต็อก', linked_menu:r[4]||'',
+          cost:Number(r[5])||0
         });
         counts.options++;
       }
@@ -4410,8 +4455,8 @@ async function exportExcel(){
     .concat(menu.map(m=>[m.code,m.name,m.category,m.price,m.cost,m.cost_pct,m.short_name]));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(menuSheet),'Menu');
 
-  const optSheet=[['กลุ่มออปชั่น','ชื่อออปชั่น','ราคาเพิ่ม (฿)','สถานะสต็อกใน Grab','เมนูที่ผูกด้วย']]
-    .concat(optGroups.map(o=>[o.group,o.name,o.extra_price,o.stock_status,o.linked_menu]));
+  const optSheet=[['กลุ่มออปชั่น','ชื่อออปชั่น','ราคาเพิ่ม (฿)','สถานะสต็อกใน Grab','เมนูที่ผูกด้วย','ต้นทุนเพิ่ม (฿)']]
+    .concat(optGroups.map(o=>[o.group,o.name,o.extra_price,o.stock_status,o.linked_menu,o.cost||0]));
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(optSheet),'Option_Groups');
 
   const itemOptSheet=[['วันที่','เลขออร์เดอร์','เมนูหลักที่สั่ง','กลุ่มออปชั่น','ออปชั่นที่เลือก','จำนวนที่ใช้']]
@@ -4598,7 +4643,7 @@ async function renderOptionManage(){
       const optsInGroup=getOptionsForGroup(g);
       const rows=optsInGroup.map(o=>{
         return `<div class="list-item">
-          <div>${escapeHtml(o.name)} ${o.extra_price?('+ '+fmtMoney(o.extra_price)):''}</div>
+          <div>${escapeHtml(o.name)} ${o.extra_price?('+ '+fmtMoney(o.extra_price)):''}${o.cost?(' <span style="color:var(--muted)">(ต้นทุน '+fmtMoney(o.cost)+')</span>'):''}</div>
           <div style="display:flex;gap:4px;flex-shrink:0">
             <button class="icon-btn" onclick="editOptionGroupRow('${o.id}')" aria-label="แก้ไข">${ICON_EDIT}</button>
             <button class="icon-btn danger" onclick="deleteOptionGroupRow('${o.id}')" aria-label="ลบ">${ICON_DELETE}</button>
@@ -4629,6 +4674,7 @@ async function addOptionGroupManual(){
   await idbPut('option_groups',{
     id: editId || uid(), group, name,
     extra_price:Number(document.getElementById('og-price').value)||0,
+    cost:Number(document.getElementById('og-cost').value)||0,
     stock_status: existing ? (existing.stock_status||'มีสต็อก') : 'มีสต็อก',
     linked_menu:document.getElementById('og-linked').value.trim()
   });
@@ -4642,6 +4688,7 @@ function editOptionGroupRow(id){
   document.getElementById('og-group').value=o.group||'';
   document.getElementById('og-name').value=o.name||'';
   document.getElementById('og-price').value=o.extra_price||0;
+  document.getElementById('og-cost').value=o.cost||0;
   document.getElementById('og-linked').value=o.linked_menu||'';
   document.getElementById('og-cancel-btn').style.display='inline-block';
   openCollapsible('opt-add-form-body');
@@ -4652,6 +4699,7 @@ function resetOptionForm(){
   document.getElementById('og-group').value='';
   document.getElementById('og-name').value='';
   document.getElementById('og-price').value='0';
+  document.getElementById('og-cost').value='0';
   document.getElementById('og-linked').value='';
   document.getElementById('og-cancel-btn').style.display='none';
 }
@@ -4673,6 +4721,7 @@ window.addEventListener('DOMContentLoaded',async ()=>{
   }
   await refreshMenuCache();
   await refreshOptionCache();
+  await refreshAppSettings();
   await refreshPurItemNameCache();
   resetOrderForm();
   resetPurForm();
