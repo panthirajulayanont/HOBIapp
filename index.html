@@ -1090,9 +1090,14 @@ service cloud.firestore {
     <div class="card">
       <h2>Order Cost Settings <button type="button" class="info-btn" onclick="toggleEl('hint-order-cost-settings')">i</button></h2>
       <p class="hint" id="hint-order-cost-settings" style="display:none">ต้นทุนคงที่ที่เกิดขึ้นทุกออเดอร์ (เช่น ค่าถุง/บรรจุภัณฑ์) ระบบจะบวกเข้าต้นทุนของทุกออเดอร์ที่บันทึกใหม่โดยอัตโนมัติ (ไม่กระทบออเดอร์เก่าที่บันทึกไปแล้ว ต้องแก้ไข/บันทึกซ้ำถึงจะอัพเดท)</p>
-      <label>ค่าถุงต่อออเดอร์ (฿)</label>
-      <input type="number" id="set-bag-cost" value="5" step="0.01">
-      <div class="btn-row"><button class="btn-secondary" onclick="saveAppSettings()">บันทึกการตั้งค่า</button></div>
+      <div class="subcard">
+        <h3 class="collapsible-head" onclick="toggleSection(this,'order-cost-settings-body')">ค่าถุงต่อออเดอร์: <span id="set-bag-cost-summary">฿5</span> <span class="chevron">▾</span></h3>
+        <div id="order-cost-settings-body" style="display:none">
+          <label>ค่าถุงต่อออเดอร์ (฿)</label>
+          <input type="number" id="set-bag-cost" value="5" step="0.01">
+          <div class="btn-row"><button class="btn-secondary" onclick="saveAppSettings()">บันทึกการตั้งค่า</button></div>
+        </div>
+      </div>
     </div>
 
     <div class="card">
@@ -1224,6 +1229,13 @@ function openCollapsible(bodyId){
   body.style.display='block';
   const head=body.previousElementSibling;
   if(head){ const chev=head.querySelector('.chevron'); if(chev) chev.textContent='▴'; }
+}
+function closeCollapsible(bodyId){
+  const body=document.getElementById(bodyId);
+  if(!body) return;
+  body.style.display='none';
+  const head=body.previousElementSibling;
+  if(head){ const chev=head.querySelector('.chevron'); if(chev) chev.textContent='▾'; }
 }
 function toLocalISO(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function todayISO(){ return toLocalISO(new Date()); }
@@ -1530,11 +1542,14 @@ async function refreshAppSettings(){
   appSettings={bag_cost: rec && rec.bag_cost!=null ? Number(rec.bag_cost) : 5};
   const el=document.getElementById('set-bag-cost');
   if(el) el.value=appSettings.bag_cost;
+  const summaryEl=document.getElementById('set-bag-cost-summary');
+  if(summaryEl) summaryEl.textContent='฿'+appSettings.bag_cost;
 }
 async function saveAppSettings(){
   const bagCost=Number(document.getElementById('set-bag-cost').value);
   await idbPut('app_settings',{id:'main', bag_cost:isNaN(bagCost)?0:bagCost});
   await refreshAppSettings();
+  closeCollapsible('order-cost-settings-body'); // พับเก็บกลับหลังบันทึก การ์ดจะได้ไม่ดูใหญ่เทอะทะ
   toast('บันทึกการตั้งค่าแล้ว','ok');
 }
 
@@ -2469,6 +2484,14 @@ async function showOrderDetail(id){
     </div>`;
   }).join('') : '<div class="emptystate">ไม่มีข้อมูลรายการเมนู</div>';
 
+  // แจกแจงต้นทุนสินค้ารวม: ต้นทุนต่อไอเทม (ที่คำนวณรวมตัวเลือกไว้แล้วตอนบันทึก) + ส่วนต่างที่เหลือ (ค่าคงที่ต่อออเดอร์ เช่น ค่าถุง หรือกรณีแก้ยอดรวมด้วยมือ)
+  const itemCostSum=items.reduce((s,it)=>s+(Number(it.line_cost)||0),0);
+  const otherCost=(Number(order.total_cost)||0)-itemCostSum;
+  const costBreakdownRows=(items.length ? items.map(it=>
+    `<div class="detail-row" style="padding:4px 0;font-size:12.5px"><span class="k">${escapeHtml(it.name)} × ${it.qty} (${fmtMoney(it.unit_cost)}/ชิ้น)</span><span class="v">${fmtMoney(it.line_cost)}</span></div>`
+  ).join('') : '') + (Math.abs(otherCost)>0.005 ?
+    `<div class="detail-row" style="padding:4px 0;font-size:12.5px"><span class="k">ต้นทุนคงที่ต่อออเดอร์ (เช่น ค่าถุง) / ส่วนต่างที่ปรับด้วยมือ</span><span class="v">${fmtMoney(otherCost)}</span></div>` : '');
+
   document.getElementById('modal-body').innerHTML=`
     <div style="margin-bottom:10px">
       <span class="badge ${cls}${order.thai_plus?' tp':''}" ${order.thai_plus?'title="Thai+ 60/40"':''}>${escapeHtml(order.channel)}</span>
@@ -2478,7 +2501,8 @@ async function showOrderDetail(id){
     ${itemsHtml}
     <h3>Financial Summary</h3>
     <div class="detail-row"><span class="k">ยอดขายรวม</span><span class="v">${fmtMoney(order.total_sale)}</span></div>
-    <div class="detail-row"><span class="k">ต้นทุนสินค้ารวม</span><span class="v">${fmtMoney(order.total_cost)}</span></div>
+    <div class="detail-row clickable" style="cursor:pointer" onclick="toggleSection(this,'order-cost-breakdown')"><span class="k">ต้นทุนสินค้ารวม <span class="chevron" style="font-size:10px">▾</span></span><span class="v">${fmtMoney(order.total_cost)}</span></div>
+    <div id="order-cost-breakdown" style="display:none;margin-bottom:4px">${costBreakdownRows || '<div class="hint">ไม่มีรายละเอียดต้นทุน</div>'}</div>
     ${(eff.commission || eff.ad_fee) ? `
     <div class="detail-row"><span class="k">ค่าคอมมิชชั่นแพลตฟอร์ม</span><span class="v">${fmtMoney(eff.commission)}</span></div>
     <div class="detail-row"><span class="k">ค่าโฆษณา/แคมเปญ</span><span class="v">${fmtMoney(eff.ad_fee)}</span></div>
