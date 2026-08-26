@@ -1777,14 +1777,20 @@ function breakdownSetMenuItem(item, optsForItem){
     });
   }
   if(MELTY_WAKEY_TEST(n)){
+    const qtyMult=Number(item.qty)||1;
     if(!optsForItem || !optsForItem.length){
-      // ไม่พบข้อมูลออปชั่นที่เลือกไว้ — กันข้อมูลหาย ให้นับไว้ในหมวดของ set menu เองแทน
-      return [{category:findMenuCategory(item.name)||'ไม่ระบุหมวดหมู่', qty:Number(item.qty)||1, menuName:canonicalMenuName(item.name), menu_id:null}];
+      // ไม่พบข้อมูลออปชั่นที่เลือกไว้ (เช่น import มาจากรูปที่ไม่มีรายละเอียดตัวเลือก) — โครงสร้างเซ็ทนี้คงที่คือ 1 เซ็ท = เค้ก 1 ชิ้น + เครื่องดื่ม 1 แก้วเสมอ
+      // นับรวมยอด "เค้ก" และ "เครื่องดื่ม" ไว้ก่อนแม้ไม่รู้รสที่แน่ชัด ดีกว่าปล่อยให้ตกหล่นไปเงียบๆ ในหมวด "set menu" ที่ไม่ถูกนับที่ไหนเลย
+      return [
+        {category:'cheesecake slice', qty:qtyMult, menuName:'Melty Wakey (ไม่ระบุรสเค้ก)', menu_id:null},
+        {category:'drinks', qty:qtyMult, menuName:'Melty Wakey (ไม่ระบุรสเครื่องดื่ม)', menu_id:null}
+      ];
     }
+    // คูณด้วย qtyMult (จำนวนเซ็ทในบรรทัดนี้) เสมอ เผื่อกรณีขายหลายเซ็ทรสเดียวกันในบรรทัดเดียว (qty>1) แต่บันทึกตัวเลือกไว้แค่ชุดเดียว ไม่งั้นจะนับต่ำกว่าจริง
     return optsForItem.map(o=>{
       const m=fuzzyFindMenu(o.option);
       const cat=m ? (m.category||'').trim()||'ไม่ระบุหมวดหมู่' : 'ไม่ระบุหมวดหมู่';
-      return {category:cat, qty:Number(o.qty)||Number(item.qty)||1, menuName:m?m.name:o.option, menu_id:m?m.id:null};
+      return {category:cat, qty:(Number(o.qty)||1)*qtyMult, menuName:m?m.name:o.option, menu_id:m?m.id:null};
     });
   }
   return null;
