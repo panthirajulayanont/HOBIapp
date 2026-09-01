@@ -3158,9 +3158,11 @@ async function renderRecentPurchases(){
 const PURCHASE_SPEND_TRACK_GROUPS=[
   {label:'Cream Cheese',keywords:['cream cheese','ครีมชีส']},
   {label:'Whipping Cream',keywords:['whipping cream','วิปปิ้งครีม','วิปครีม']},
-  {label:'Flavoring',keywords:['matcha','มัทฉะ','houjicha','hojicha','โฮจิฉะ','cacao','โกโก้','คาเคา','ชาเขียว','ชาดำ','ชาไทย','earl grey','oolong','อูหลง','ชา','pistachio','พิสตาชิโอ']},
+  {label:'Flavoring',keywords:['matcha','มัทฉะ','houjicha','hojicha','โฮจิฉะ','cacao','โกโก้','คาเคา','ชาเขียว','ชาดำ','ชาไทย','earl grey','oolong','อูหลง','ceylon','ซีลอน','ชา','pistachio','พิสตาชิโอ']},
   {label:'Drinks',keywords:['tavi','brew']}
 ];
+// ตัดช่องว่าง/ขีด/underscore ออกก่อนเทียบ กันชื่อไอเทมที่เว้นวรรคไม่เหมือนกัน (เช่น "Hoji Cha" vs "hojicha") ไม่ match กันเพราะตัวอักษรเป๊ะๆ ไม่ตรง
+function normalizeIngredientText(s){ return (s||'').toString().toLowerCase().replace(/[\s\-_]+/g,''); }
 // กลุ่มย่อยภายใน Flavoring — เอาไว้รวมไอเทมที่เป็นวัตถุดิบชนิดเดียวกันแต่คนละชื่อ/คนละขนาดบรรจุเข้าด้วยกัน (เช่น "Mini Pure Matcha", "Mini Pure Matcha 50g", "Mini Pure Matcha Plus" → รวมเป็น "Matcha" ก้อนเดียว)
 // อยากเพิ่ม/แก้กลุ่มไหน บอกได้เลย
 const FLAVORING_SUBGROUPS=[
@@ -3170,13 +3172,14 @@ const FLAVORING_SUBGROUPS=[
   {label:'Thai Tea',keywords:['ชาไทย']},
   {label:'Black Tea',keywords:['ชาดำ']},
   {label:'Green Tea',keywords:['ชาเขียว']},
-  {label:'Earl Grey',keywords:['earl grey']},
+  {label:'Earl Grey',keywords:['earlgrey']},
   {label:'Oolong',keywords:['oolong','อูหลง']},
+  {label:'Ceylon',keywords:['ceylon','ซีลอน']},
   {label:'Pistachio',keywords:['pistachio','พิสตาชิโอ']}
 ];
 function classifyFlavoringBucket(itemName){
-  const n=(itemName||'').toLowerCase();
-  const found=FLAVORING_SUBGROUPS.find(g=>g.keywords.some(kw=>n.includes(kw.toLowerCase())));
+  const n=normalizeIngredientText(itemName);
+  const found=FLAVORING_SUBGROUPS.find(g=>g.keywords.some(kw=>n.includes(normalizeIngredientText(kw))));
   return found ? found.label : 'อื่นๆ';
 }
 async function renderPurchaseSpendDashboard(){
@@ -3188,8 +3191,8 @@ async function renderPurchaseSpendDashboard(){
   const stats=PURCHASE_SPEND_TRACK_GROUPS.map(g=>({label:g.label,count:0,total:0}));
   rows.forEach(p=>{
     if((p.category||'วัตถุดิบ')!=='วัตถุดิบ') return; // กันของที่ไม่ใช่วัตถุดิบ (เช่น อุปกรณ์ทำครัว/แพ็กเกจจิ้ง) หลุดเข้ามาแค่เพราะชื่อมีคำพ้อง
-    const nameLower=(p.item_name||'').toLowerCase();
-    const gi=PURCHASE_SPEND_TRACK_GROUPS.findIndex(g=>g.keywords.some(kw=>nameLower.includes(kw.toLowerCase())));
+    const nameNorm=normalizeIngredientText(p.item_name);
+    const gi=PURCHASE_SPEND_TRACK_GROUPS.findIndex(g=>g.keywords.some(kw=>nameNorm.includes(normalizeIngredientText(kw))));
     if(gi>=0){ stats[gi].count++; stats[gi].total+=Number(p.total||0); }
   });
 
@@ -3219,8 +3222,8 @@ async function renderPurchaseSpendDashboard(){
 function purchasesMatchingKeywords(rows,keywords){
   return rows.filter(p=>{
     if((p.category||'วัตถุดิบ')!=='วัตถุดิบ') return false; // กันของที่ไม่ใช่วัตถุดิบ (เช่น อุปกรณ์ทำครัว/แพ็กเกจจิ้ง) หลุดเข้ามาแค่เพราะชื่อมีคำพ้อง
-    const n=(p.item_name||'').toLowerCase();
-    return keywords.some(kw=>n.includes(kw.toLowerCase()));
+    const n=normalizeIngredientText(p.item_name);
+    return keywords.some(kw=>n.includes(normalizeIngredientText(kw)));
   });
 }
 // สรุปสถิติราคาต่อหน่วยของกลุ่มวัตถุดิบ 1 กลุ่ม (เฉลี่ยทุกครั้งที่เคยซื้อ + ราคาครั้งล่าสุด) — ใช้กับการ์ด Cream Cheese/Whipping Cream
@@ -3268,8 +3271,9 @@ function renderFlavoringBreakdown(rows,keywords){
   });
   const bucketNames=Object.keys(byBucket);
   if(!bucketNames.length){ el.innerHTML='<div class="emptystate">ยังไม่พบไอเทมที่ตรงกับกลุ่ม Flavoring</div>'; return; }
-  el.innerHTML=bucketNames.sort((a,b)=>a.localeCompare(b,'th')).map(label=>{
-    const withGrams=byBucket[label].filter(p=>p.grams && Number(p.unit_price)>0);
+  el.innerHTML=bucketNames.sort((a,b)=>a.localeCompare(b,'th')).map((label,idx)=>{
+    const list=byBucket[label];
+    const withGrams=list.filter(p=>p.grams && Number(p.unit_price)>0);
     let priceLine;
     if(!withGrams.length){
       priceLine='ไม่พบน้ำหนักในชื่อไอเทม';
@@ -3286,7 +3290,23 @@ function renderFlavoringBreakdown(rows,keywords){
       const latestPerGram=Number(latest.unit_price)/latest.grams;
       priceLine=`เฉลี่ย ${fmtGramPrice(avgPerGram)}/ก. · ล่าสุด ${fmtGramPrice(latestPerGram)}/ก.`;
     }
-    return `<div class="list-item"><div>${escapeHtml(label)}</div><div style="text-align:right;font-size:12px;color:var(--muted);flex-shrink:0">${priceLine}</div></div>`;
+    // กดหัวข้อกางดูรายการไอเทมย่อยที่ถูกรวมเข้ากลุ่มนี้ได้ — ตอบคำถามว่า "เอาอันไหนมาคิดบ้าง"
+    const sortedList=[...list].sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id));
+    const detailRows=sortedList.map(p=>{
+      const perGram=(p.grams && Number(p.unit_price)>0) ? (Number(p.unit_price)/p.grams) : null;
+      return `<div class="list-item">
+        <div>${escapeHtml(p.item_name)}<div class="meta">${formatDateDDMM(p.date)} · ซื้อ ${p.qty||1}${p.unit?(' '+escapeHtml(p.unit)):''}</div></div>
+        <div style="text-align:right;font-size:12px;color:var(--muted);flex-shrink:0">${perGram!=null?(fmtGramPrice(perGram)+'/ก. · '):(p.grams?'':'ไม่พบน้ำหนัก · ')}${fmtMoney(p.unit_price)}</div>
+      </div>`;
+    }).join('');
+    const bodyId=`ing-flavor-body-${idx}`;
+    return `<div class="cat-group">
+      <div class="cat-head" onclick="toggleSection(this,'${bodyId}')">
+        <span>${escapeHtml(label)} <span class="meta">(${list.length}) · ${priceLine}</span></span>
+        <span class="chevron">▾</span>
+      </div>
+      <div id="${bodyId}" class="cat-body" style="display:none">${detailRows}</div>
+    </div>`;
   }).join('');
 }
 async function renderMainIngredientCards(){
