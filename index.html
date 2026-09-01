@@ -1806,17 +1806,43 @@ function breakdownSetMenuItem(item, optsForItem){
     // คูณด้วย qtyMult (จำนวนเซ็ทในบรรทัดนี้) เสมอ เผื่อกรณีขายหลายเซ็ทรสเดียวกันในบรรทัดเดียว (qty>1) แต่บันทึกตัวเลือกไว้แค่ชุดเดียว ไม่งั้นจะนับต่ำกว่าจริง
     return optsForItem.map(o=>{
       const m=fuzzyFindMenu(o.option);
-      // หาหมวดหมู่จาก "ชื่อกลุ่มตัวเลือก" (o.group) เป็นหลักก่อน เช่น "Choose the Melty Cake" -> เค้ก, "Choose the Wawkey Bottle" -> เครื่องดื่ม
-      // แม่นยำกว่าการเทียบชื่อรสกับเมนูเดี่ยว เพราะบางรสในเซ็ทอาจไม่มีขายแยกเดี่ยวๆ เลย ทำให้หาหมวดหมู่ไม่เจอแล้วตกหล่นไปเงียบๆ
+      // ลำดับความสำคัญของการหาหมวดหมู่: (1) ถ้าจับคู่เจอเมนูจริงใน Main Menu ที่มีหมวดหมู่ตั้งไว้ชัดเจนแล้ว ให้เชื่อหมวดหมู่จริงของเมนูนั้นเป็นหลักเสมอ
+      // (2) ถ้าจับคู่ไม่เจอเลย (เช่น รสในเซ็ทไม่มีขายแยกเดี่ยว ไม่มีเมนูให้เทียบ) ค่อย fallback ไปเดาจาก "ชื่อกลุ่มตัวเลือก" แทน (เช่น "Choose the Melty Cake" -> เค้ก)
+      // เดิมให้ชื่อกลุ่มมาก่อนเสมอ ทำให้ถ้าตัวเลือกที่เลือกดันไปจับคู่ชื่อตรงกับเมนูอื่นที่ไม่ใช่เค้ก (เช่น topping ที่ชื่อพ้องกัน) จะถูก force เป็น cheesecake slice ผิดๆ ทั้งที่รู้หมวดหมู่จริงอยู่แล้ว
       const groupNorm=normFuzzy(o.group);
       let cat;
-      if(groupNorm.includes('cake')||groupNorm.includes('เค้ก')) cat='cheesecake slice';
-      else if(groupNorm.includes('bottle')||groupNorm.includes('drink')||groupNorm.includes('เครื่องดื่ม')||groupNorm.includes('beverage')) cat='drinks';
-      else cat = m ? ((m.category||'').trim()||'ไม่ระบุหมวดหมู่') : 'ไม่ระบุหมวดหมู่';
+      if(m && (m.category||'').trim()){
+        cat=(m.category||'').trim();
+      }else if(groupNorm.includes('cake')||groupNorm.includes('เค้ก')){
+        cat='cheesecake slice';
+      }else if(groupNorm.includes('bottle')||groupNorm.includes('drink')||groupNorm.includes('เครื่องดื่ม')||groupNorm.includes('beverage')){
+        cat='drinks';
+      }else{
+        cat='ไม่ระบุหมวดหมู่';
+      }
       return {category:cat, qty:(Number(o.qty)||1)*qtyMult, menuName:m?m.name:o.option, menu_id:m?m.id:null};
     });
   }
   return null;
+}
+// สร้าง index 2 แบบพร้อมกันจาก order_item_options เพื่อจับคู่ "ออปชั่นที่เลือก" กับ order_item แต่ละบรรทัดให้ถูกต้อง:
+// - byId: จับคู่ด้วย order_item_id ตรงตัว (แม่นยำ 100% ไม่มีทางชนกับบรรทัดอื่น) ใช้กับข้อมูลที่บันทึกตั้งแต่มีฟิลด์นี้เป็นต้นไป
+// - byKey: จับคู่ด้วย "วันที่+เลขออเดอร์+ชื่อเมนู" (แบบเดิม) ใช้เป็น fallback สำหรับข้อมูลเก่าก่อนหน้านี้/นำเข้าจาก Excel ที่ไม่มี order_item_id
+// เหตุผลที่ต้องมี byId: ถ้าออเดอร์เดียวมีเมนูชื่อซ้ำกัน 2 บรรทัดขึ้นไป (เช่น Melty Wakey Set 2 ที่คนละรส) การจับคู่ด้วยชื่อเมนูอย่างเดียวจะทำให้ออปชั่นของทั้ง 2 บรรทัดถูกรวมปนกันเป็นก้อนเดียว
+function buildOrderItemOptsIndex(allOpts){
+  const byId={}, byKey={};
+  (allOpts||[]).forEach(o=>{
+    if(o.order_item_id){ (byId[o.order_item_id]=byId[o.order_item_id]||[]).push(o); }
+    const k=o.date+'|'+o.order_no+'|'+o.main_menu;
+    (byKey[k]=byKey[k]||[]).push(o);
+  });
+  return {byId,byKey};
+}
+// หาออปชั่นของ order_item 1 บรรทัด จาก index ที่สร้างด้วย buildOrderItemOptsIndex — ใช้ order_item_id ก่อนเสมอถ้ามี ไม่งั้นค่อย fallback ไปจับคู่ด้วยชื่อเมนู
+function getOptsForOrderItem(item, idx){
+  if(item.id && idx.byId[item.id] && idx.byId[item.id].length) return idx.byId[item.id];
+  const k=item.date+'|'+item.order_no+'|'+item.name;
+  return idx.byKey[k]||[];
 }
 
 /* ============ OPTION GROUPS / STOCK ============ */
@@ -2206,14 +2232,17 @@ async function saveOrder(){
 
   for(const it of blocks){
     const cost=findItemCost(it.name,it.options);
+    const orderItemId=uid();
     await idbPut('order_items',{
-      id:uid(), order_id:orderId, date:order.date, order_no:order.order_no,
+      id:orderItemId, order_id:orderId, date:order.date, order_no:order.order_no,
       name:it.name, qty:it.qty, unit_price:it.unit_price, unit_cost:cost,
       line_sale:it.qty*it.unit_price, line_cost:it.qty*cost
     });
     for(const o of it.options){
       await idbPut('order_item_options',{
-        id:uid(), order_no:order.order_no, date:order.date, main_menu:it.name,
+        // order_item_id ผูกกับ id ของ order_items บรรทัดนี้โดยตรง กันออปชั่นปนกันเวลาในออเดอร์เดียวมีเมนูชื่อซ้ำกัน 2 บรรทัดขึ้นไป (เช่น Melty Wakey Set 2 ที่คนละรส)
+        // main_menu/order_no/date ยังเก็บไว้เป็น fallback สำหรับอ่านข้อมูลเก่าที่บันทึกไว้ก่อนหน้านี้ (ยังไม่มี order_item_id)
+        id:uid(), order_item_id:orderItemId, order_no:order.order_no, date:order.date, main_menu:it.name,
         group:o.group, option:o.option, qty:o.qty
       });
     }
@@ -2257,8 +2286,9 @@ async function editOrderById(id){
   document.getElementById('o-orderno').value=order.order_no||'';
   document.getElementById('o-note').value=order.note||'';
   document.getElementById('o-items').innerHTML='';
+  const optsIdxForEdit=buildOrderItemOptsIndex(opts);
   items.forEach(it=>{
-    const itOpts=opts.filter(o=>o.main_menu===it.name).map(o=>({group:o.group,option:o.option,qty:o.qty}));
+    const itOpts=getOptsForOrderItem(it,optsIdxForEdit).map(o=>({group:o.group,option:o.option,qty:o.qty}));
     addOrderItemRow(it.name,it.qty,it.unit_price,itOpts);
   });
   if(!items.length) addOrderItemRow();
@@ -2560,8 +2590,9 @@ async function showOrderDetail(id){
   const cls=order.channel==='Grab Food'?'grab':order.channel==='Line Man'?'line':order.channel==='คอนโด'?'condo':'other';
   document.getElementById('modal-title').textContent='ออเดอร์ '+(order.order_no||'-');
 
+  const optsIdxForDetail=buildOrderItemOptsIndex(opts);
   const itemsHtml=items.length ? items.map(it=>{
-    const itOpts=opts.filter(o=>o.main_menu===it.name);
+    const itOpts=getOptsForOrderItem(it,optsIdxForDetail);
     const optHtml=itOpts.length ? `<div class="hint" style="margin-left:10px">↳ ${itOpts.map(o=>escapeHtml(o.group+': '+o.option+(o.qty>1?' x'+o.qty:''))).join(' · ')}</div>` : '';
     return `<div style="margin-bottom:6px">
       <div class="detail-row"><span class="k">${escapeHtml(it.name)} × ${it.qty}</span><span class="v">${fmtMoney(it.line_sale)}</span></div>
@@ -3142,19 +3173,14 @@ function qtyChartBackToWeekly(){
 }
 async function renderQtyChart(items){
   dashQtyItemsCache=items;
-  let optsByKey=null;
+  let optsIdx=null;
   if(qtyChartMode==='decomposed'){
     const allOpts=await idbAll('order_item_options');
-    optsByKey={};
-    allOpts.forEach(o=>{
-      const k=o.date+'|'+o.order_no+'|'+o.main_menu;
-      (optsByKey[k]=optsByKey[k]||[]).push(o);
-    });
+    optsIdx=buildOrderItemOptsIndex(allOpts);
   }
   function itemBreakdown(i){
     if(qtyChartMode!=='decomposed') return null;
-    const key=i.date+'|'+i.order_no+'|'+i.name;
-    return breakdownSetMenuItem(i, optsByKey[key]||[]);
+    return breakdownSetMenuItem(i, getOptsForOrderItem(i,optsIdx));
   }
 
   // ภาพรวมรายสัปดาห์ (ค่าเริ่มต้น) หรือแจกแจงรายวันภายในสัปดาห์ที่คลิกไป (drill-down)
@@ -3405,17 +3431,12 @@ async function renderHomeCakeCount(){
   const wrapEl=document.getElementById('home-cake-bubbles');
   if(!wrapEl) return;
   const [items,allOpts]=await Promise.all([idbAll('order_items'),idbAll('order_item_options')]);
-  const optsByKey={};
-  allOpts.forEach(o=>{
-    const k=o.date+'|'+o.order_no+'|'+o.main_menu;
-    (optsByKey[k]=optsByKey[k]||[]).push(o);
-  });
+  const optsIdx=buildOrderItemOptsIndex(allOpts);
   const targetCat=normCatName('cheesecake slice');
   const byFlavor={};
   let total=0;
   items.forEach(i=>{
-    const key=i.date+'|'+i.order_no+'|'+i.name;
-    const bd=breakdownSetMenuItem(i, optsByKey[key]||[]);
+    const bd=breakdownSetMenuItem(i, getOptsForOrderItem(i,optsIdx));
     if(bd){
       bd.forEach(b=>{
         if(normCatName(b.category)===targetCat){
@@ -3701,18 +3722,13 @@ async function renderDashboard(){
   document.getElementById('s-thaiplus').textContent=fmtMoney(thaiPlusOrders.reduce((s,o)=>s+Number(o.total_sale||0),0))+(thaiPlusOrders.length?` (${thaiPlusOrders.length} ออเดอร์)`:'');
 
   // จำนวนชิ้น/ขวด/ถ้วยรวมตามหมวดหมู่ (เค้ก/เครื่องดื่ม/ท็อปปิ้ง) ในช่วงเวลาที่เลือก — เซ็ทเมนูถูกแจงเป็นรสย่อยผ่าน breakdownSetMenuItem ก่อนนับ (เหมือนการ์ด Cake Sold หน้า Home)
-  const optsByKeyForCat={};
-  itemOpts.forEach(o=>{
-    const k=o.date+'|'+o.order_no+'|'+o.main_menu;
-    (optsByKeyForCat[k]=optsByKeyForCat[k]||[]).push(o);
-  });
+  const optsIdxForCat=buildOrderItemOptsIndex(itemOpts);
   const isCakeCat=c=>normCatName(c)==='cheesecakeslice';
   const isDrinkCat=c=>{ const n=normCatName(c); return n==='drink'||n==='drinks'||n==='เครื่องดื่ม'; };
   const isToppingCat=c=>{ const n=normCatName(c); return n==='topping'||n==='toppings'||n==='ท็อปปิ้ง'; };
   let cakeQty=0, drinkQty=0, toppingQty=0;
   items.forEach(i=>{
-    const key=i.date+'|'+i.order_no+'|'+i.name;
-    const bd=breakdownSetMenuItem(i, optsByKeyForCat[key]||[]);
+    const bd=breakdownSetMenuItem(i, getOptsForOrderItem(i,optsIdxForCat));
     if(bd){
       bd.forEach(b=>{
         const q=Number(b.qty)||0;
