@@ -4674,6 +4674,8 @@ async function findOrdersWithMissingSetOptions(){
   allItems.forEach(it=>{
     const n=normFuzzy(canonicalMenuName(it.name));
     if(!MELTY_WAKEY_TEST(n)) return;
+    // ข้ามรายการ "สรุปรวม" ที่ตั้งใจลงเป็นยอดรวมทั้งเดือน/ทั้งช่วง (เลขออเดอร์มีคำว่า SUMMARY) — รายการแบบนี้ไม่มีข้อมูลรสต่อออเดอร์ให้กู้คืนได้อยู่แล้วโดยธรรมชาติ ไม่ใช่บั๊ก ไม่ต้องฟ้องให้ไปแก้
+    if(/summary/i.test(it.order_no||'')) return;
     if(!getOptsForOrderItem(it,optsIdx).length) problems.push(it);
   });
   if(!problems.length){
