@@ -1061,6 +1061,11 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <div id="merge-rules-list" class="hint" style="margin-bottom:8px"></div>
       <div class="btn-row"><button class="btn-secondary" onclick="runItemNameCleanup()">Run Cleanup Now</button></div>
 
+      <h3>Find Orders Missing Set-Menu Options <button type="button" class="info-btn" onclick="toggleEl('hint-missing-opts')">i</button></h3>
+      <p class="hint" id="hint-missing-opts" style="display:none">สแกนหาออเดอร์ที่สั่งเซ็ทเมนู (เช่น Melty Wakey Set, Kyoto Tea Twins) แต่ระบบหารสที่เลือกไว้ไม่เจอ (เช่นขึ้น "ไม่ระบุรสเค้ก" ในการ์ด Cake Sold หน้า Home) — ส่วนใหญ่เป็นออเดอร์เก่าที่บันทึกไว้ก่อนมีการแก้บั๊กจับคู่ตัวเลือก กดปุ่มด้านล่างเพื่อหารายชื่อออเดอร์ที่ต้องเปิดไปแก้/เลือกรสใหม่แล้ว Save ซ้ำ</p>
+      <div class="btn-row"><button class="btn-secondary" onclick="findOrdersWithMissingSetOptions()">Scan Now</button></div>
+      <div id="missing-opts-result" style="margin-top:8px"></div>
+
       <h3 style="color:var(--red)">Delete All Data</h3>
       <div class="warn-box">ระบบจะดาวน์โหลดไฟล์ Excel สำรองข้อมูลปัจจุบันให้อัตโนมัติก่อนลบทุกครั้ง และต้องพิมพ์ยืนยันให้ตรงก่อนปุ่มลบถึงจะกดได้ เพื่อกันเผลอกดโดน</div>
       <label>พิมพ์คำว่า <b>ลบทั้งหมด</b> เพื่อยืนยัน</label>
@@ -4656,6 +4661,32 @@ async function refreshDbStats(){
   const orders=await idbAll('orders'); const pur=await idbAll('purchases'); const menu=await idbAll('menu');
   const opts=await idbAll('option_groups');
   document.getElementById('db-stats').textContent=`ออเดอร์: ${orders.length} รายการ · ซื้อของ: ${pur.length} รายการ · เมนู: ${menu.length} รายการ · ตัวเลือก: ${opts.length} รายการ`;
+}
+// สแกนหา order_items ที่เป็นเซ็ทเมนู (มีสูตรแจกแจงรสตายตัว เช่น Melty Wakey/Kyoto/Bestseller) แต่หาออปชั่นที่เลือกไว้ไม่เจอเลย (ระบบเลยไปนับเป็น "ไม่ระบุรส" ในการ์ด Cake Sold/แดชบอร์ด)
+// ส่วนใหญ่เป็นออเดอร์เก่าที่บันทึกไว้ก่อนมีการผูก order_item_id — ให้ผู้ใช้กดเปิดแก้ไขแต่ละออเดอร์ตรงๆ แทนการไล่หาเองทีละอัน
+async function findOrdersWithMissingSetOptions(){
+  const resultEl=document.getElementById('missing-opts-result');
+  resultEl.innerHTML='<div class="hint">กำลังสแกน...</div>';
+  const [allItems,allOpts,allOrders]=await Promise.all([idbAll('order_items'),idbAll('order_item_options'),idbAll('orders')]);
+  const optsIdx=buildOrderItemOptsIndex(allOpts);
+  const problems=[];
+  allItems.forEach(it=>{
+    const n=normFuzzy(canonicalMenuName(it.name));
+    const isRecognizedSet=FIXED_SET_RULES.some(r=>r.test(n))||MELTY_WAKEY_TEST(n);
+    if(!isRecognizedSet) return;
+    if(!getOptsForOrderItem(it,optsIdx).length) problems.push(it);
+  });
+  if(!problems.length){
+    resultEl.innerHTML='<div class="emptystate">ไม่พบออเดอร์ที่ขาดข้อมูลตัวเลือกของเซ็ทเมนู</div>';
+    return;
+  }
+  resultEl.innerHTML=`<p class="hint">พบ ${problems.length} รายการ — กดเปิดแก้ไข เลือกรสให้ถูกต้อง แล้ว Save ซ้ำเพื่อแก้ให้ตรง</p>`+problems.map(it=>{
+    const ord=allOrders.find(o=>o.id===it.order_id || (o.order_no===it.order_no && o.date===it.date));
+    return `<div class="list-item">
+      <div>${escapeHtml(it.name)} — ${escapeHtml(it.order_no||'(ไม่มีเลขออเดอร์)')} · ${escapeHtml(formatDateDDMM(it.date))}</div>
+      <button class="btn-ghost btn-sm" ${ord?`onclick="editOrderById('${ord.id}')"`:'disabled'}>เปิดแก้ไข</button>
+    </div>`;
+  }).join('');
 }
 
 /* ============ MERGE DUPLICATE PURCHASE ITEM NAMES ============ */
