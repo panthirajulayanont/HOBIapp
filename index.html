@@ -177,10 +177,6 @@ table th{color:var(--muted);font-weight:600;font-size:11.5px;}
 .list-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border);}
 .list-item:last-child{border-bottom:none;}
 .list-item .meta{font-size:12px;color:var(--muted);}
-#ing-card-flavoring-list{display:flex;flex-wrap:wrap;gap:8px;}
-.ing-mini-card{border-radius:12px;padding:8px 12px;flex:1 1 150px;min-width:130px;}
-.ing-mini-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.ing-mini-price{font-size:11px;opacity:.85;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .order-row{display:flex;align-items:center;gap:7px;padding:9px 2px 5px;border-bottom:1px solid var(--border);cursor:pointer;font-size:12.5px;white-space:nowrap;overflow:hidden;}
 .order-row:last-child{border-bottom:none;}
 .order-row:hover{background:#fff9df;border-radius:8px;}
@@ -731,19 +727,11 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <p class="hint" id="hint-ing-wc" style="display:none">ราคาเฉลี่ยและราคาล่าสุดต่อหน่วยของวัตถุดิบ Whipping Cream คำนวณจากประวัติการซื้อทั้งหมด</p>
           <div id="ing-card-wc" style="margin-top:6px"></div>
         </div>
-        <div class="chart-card" style="margin-top:0;flex:1 1 0;min-width:0">
-          <div class="chart-card-head">
-            <div class="cc-title">Pistachio Butter</div>
-            <button type="button" class="info-btn" onclick="toggleEl('hint-ing-pistachio')">i</button>
-          </div>
-          <p class="hint" id="hint-ing-pistachio" style="display:none">ราคาเฉลี่ยและราคาล่าสุดต่อหน่วยของวัตถุดิบ Pistachio Butter คำนวณจากประวัติการซื้อทั้งหมด</p>
-          <div id="ing-card-pistachio" style="margin-top:6px"></div>
-        </div>
       </div>
 
       <div class="subcard" style="margin-top:14px;background:transparent;padding:12px 14px">
-        <h3 style="font-size:13px;margin:0 0 6px">Flavoring — แยกตามไอเทม (ราคาต่อกรัม) <button type="button" class="info-btn" onclick="toggleEl('hint-ing-flavor')">i</button></h3>
-        <p class="hint" id="hint-ing-flavor" style="display:none">รายชื่อไอเทมที่ถูกจับเข้ากลุ่ม "Flavoring" ในกราฟยอดซื้อวัตถุดิบหลักด้านบน (จับคู่ด้วยคำสำคัญ เช่น matcha, houjicha, cacao, ชา ฯลฯ) — คำนวณราคาเฉลี่ย/ล่าสุดต่อกรัมจากน้ำหนักที่อยู่ในชื่อไอเทม (เช่น "500g", "1kg") สีของแต่ละการ์ดคือสีเดียวกับรสเค้กที่ตรงกันในหน้าแรก</p>
+        <h3 style="font-size:13px;margin:0 0 6px">Flavoring — แยกตามชนิดวัตถุดิบ (ราคาต่อกรัม) <button type="button" class="info-btn" onclick="toggleEl('hint-ing-flavor')">i</button></h3>
+        <p class="hint" id="hint-ing-flavor" style="display:none">รวมทุกไอเทมที่เป็นวัตถุดิบชนิดเดียวกัน (เช่น Mini Pure Matcha, Mini Pure Matcha 50g, Mini Pure Matcha Plus — ไม่ว่าจะซื้อขนาดไหน/ยี่ห้อไหน ถ้าเข้าข่ายรสเดียวกัน) เข้าเป็นกลุ่มเดียว รวมน้ำหนักที่เคยซื้อทั้งหมดก่อนแล้วค่อยหารเฉลี่ยเป็นราคาต่อกรัม (น้ำหนักอ่านจากชื่อไอเทม เช่น "500g", "1kg") รวม Pistachio Butter ไว้ในกลุ่มนี้ด้วย</p>
         <div id="ing-card-flavoring-list"></div>
       </div>
 
@@ -3170,10 +3158,27 @@ async function renderRecentPurchases(){
 const PURCHASE_SPEND_TRACK_GROUPS=[
   {label:'Cream Cheese',keywords:['cream cheese','ครีมชีส']},
   {label:'Whipping Cream',keywords:['whipping cream','วิปปิ้งครีม','วิปครีม']},
-  {label:'Pistachio Butter',keywords:['pistachio butter','pistachio','พิสตาชิโอ']},
-  {label:'Flavoring',keywords:['matcha','มัทฉะ','houjicha','hojicha','โฮจิฉะ','cacao','โกโก้','คาเคา','ชาเขียว','ชาดำ','ชาไทย','earl grey','oolong','อูหลง','ชา']},
+  {label:'Flavoring',keywords:['matcha','มัทฉะ','houjicha','hojicha','โฮจิฉะ','cacao','โกโก้','คาเคา','ชาเขียว','ชาดำ','ชาไทย','earl grey','oolong','อูหลง','ชา','pistachio','พิสตาชิโอ']},
   {label:'Drinks',keywords:['tavi','brew']}
 ];
+// กลุ่มย่อยภายใน Flavoring — เอาไว้รวมไอเทมที่เป็นวัตถุดิบชนิดเดียวกันแต่คนละชื่อ/คนละขนาดบรรจุเข้าด้วยกัน (เช่น "Mini Pure Matcha", "Mini Pure Matcha 50g", "Mini Pure Matcha Plus" → รวมเป็น "Matcha" ก้อนเดียว)
+// อยากเพิ่ม/แก้กลุ่มไหน บอกได้เลย
+const FLAVORING_SUBGROUPS=[
+  {label:'Matcha',keywords:['matcha','มัทฉะ']},
+  {label:'Houjicha',keywords:['houjicha','hojicha','โฮจิฉะ']},
+  {label:'Cacao',keywords:['cacao','โกโก้','คาเคา']},
+  {label:'Thai Tea',keywords:['ชาไทย']},
+  {label:'Black Tea',keywords:['ชาดำ']},
+  {label:'Green Tea',keywords:['ชาเขียว']},
+  {label:'Earl Grey',keywords:['earl grey']},
+  {label:'Oolong',keywords:['oolong','อูหลง']},
+  {label:'Pistachio',keywords:['pistachio','พิสตาชิโอ']}
+];
+function classifyFlavoringBucket(itemName){
+  const n=(itemName||'').toLowerCase();
+  const found=FLAVORING_SUBGROUPS.find(g=>g.keywords.some(kw=>n.includes(kw.toLowerCase())));
+  return found ? found.label : 'อื่นๆ';
+}
 async function renderPurchaseSpendDashboard(){
   const canvas=document.getElementById('chart-pur-spend');
   if(!canvas) return;
@@ -3249,39 +3254,39 @@ function extractGramsFromItemName(name){
   if(m) return parseFloat(m[1]);
   return null;
 }
-// การ์ด Flavoring: แยกแสดงทีละไอเทมที่ถูกจับเข้ากลุ่มนี้ เป็นการ์ดเล็กๆ สีตามรสเค้กที่ตรงกัน (ต่างจาก Cream Cheese/Whipping Cream ที่รวมเป็นก้อนเดียว เพราะ Flavoring มีหลายรสปนกัน อยากรู้ว่าตอนนี้มีไอเทมอะไรบ้าง)
-// ใช้ราคาต่อกรัมแทนราคาต่อหน่วยที่ซื้อ เพราะแต่ละไอเทมบรรจุคนละน้ำหนัก เทียบราคาต่อหน่วยตรงๆ ไม่ได้ ต้องหารด้วยน้ำหนักที่อ่านได้จากชื่อไอเทมก่อน
+// การ์ด Flavoring: รวมไอเทมที่เป็นวัตถุดิบชนิดเดียวกัน (ตาม FLAVORING_SUBGROUPS) เข้าเป็นกลุ่มเดียว ไม่ว่าจะซื้อคนละชื่อ/คนละขนาดบรรจุกี่ครั้งก็ตาม
+// วิธีเฉลี่ย: รวมน้ำหนักที่เคยซื้อทั้งหมด (กรัม × จำนวนที่ซื้อ) กับยอดเงินที่จ่ายทั้งหมดของกลุ่มนั้นก่อน แล้วค่อยหารกัน (ยอดเงินรวม ÷ น้ำหนักรวม) เพื่อให้ได้ราคาเฉลี่ยต่อกรัมที่สะท้อนของจริงที่เคยซื้อมา ไม่ใช่แค่เฉลี่ยราคาต่อกรัมของแต่ละครั้งแบบถัวเท่ากันทุกครั้ง
 function renderFlavoringBreakdown(rows,keywords){
   const el=document.getElementById('ing-card-flavoring-list');
   if(!el) return;
   const matched=purchasesMatchingKeywords(rows,keywords);
-  const byName={};
+  const byBucket={};
   matched.forEach(p=>{
-    const key=p.item_name||'(ไม่ระบุชื่อ)';
-    if(!byName[key]) byName[key]=[];
-    byName[key].push(p);
+    const bucket=classifyFlavoringBucket(p.item_name);
+    if(!byBucket[bucket]) byBucket[bucket]=[];
+    byBucket[bucket].push({...p, grams:extractGramsFromItemName(p.item_name)});
   });
-  const names=Object.keys(byName);
-  if(!names.length){ el.innerHTML='<div class="emptystate">ยังไม่พบไอเทมที่ตรงกับกลุ่ม Flavoring</div>'; return; }
-  el.innerHTML=names.sort((a,b)=>a.localeCompare(b,'th')).map(name=>{
-    const bgColor=flavorColorForMenuNameCssFallback(name);
-    const textColor=readableTextColorFor(bgColor);
-    const grams=extractGramsFromItemName(name);
-    const priced=byName[name].filter(p=>Number(p.unit_price)>0);
+  const bucketNames=Object.keys(byBucket);
+  if(!bucketNames.length){ el.innerHTML='<div class="emptystate">ยังไม่พบไอเทมที่ตรงกับกลุ่ม Flavoring</div>'; return; }
+  el.innerHTML=bucketNames.sort((a,b)=>a.localeCompare(b,'th')).map(label=>{
+    const withGrams=byBucket[label].filter(p=>p.grams && Number(p.unit_price)>0);
     let priceLine;
-    if(!grams || !priced.length){
+    if(!withGrams.length){
       priceLine='ไม่พบน้ำหนักในชื่อไอเทม';
     }else{
-      priced.sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id)); // ล่าสุดก่อน
-      const perGramList=priced.map(p=>Number(p.unit_price)/grams);
-      const avgPerGram=perGramList.reduce((s,x)=>s+x,0)/perGramList.length;
-      const latestPerGram=Number(priced[0].unit_price)/grams;
+      withGrams.sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id)); // ล่าสุดก่อน
+      let totalSpent=0, totalGrams=0;
+      withGrams.forEach(p=>{
+        const qty=Number(p.qty)||1;
+        totalSpent+=Number(p.unit_price)*qty;
+        totalGrams+=p.grams*qty;
+      });
+      const avgPerGram=totalGrams>0 ? totalSpent/totalGrams : 0;
+      const latest=withGrams[0];
+      const latestPerGram=Number(latest.unit_price)/latest.grams;
       priceLine=`เฉลี่ย ${fmtGramPrice(avgPerGram)}/ก. · ล่าสุด ${fmtGramPrice(latestPerGram)}/ก.`;
     }
-    return `<div class="ing-mini-card" style="background:${bgColor};color:${textColor}">
-      <div class="ing-mini-name">${escapeHtml(name)}</div>
-      <div class="ing-mini-price">${priceLine}</div>
-    </div>`;
+    return `<div class="list-item"><div>${escapeHtml(label)}</div><div style="text-align:right;font-size:12px;color:var(--muted);flex-shrink:0">${priceLine}</div></div>`;
   }).join('');
 }
 async function renderMainIngredientCards(){
@@ -3290,7 +3295,6 @@ async function renderMainIngredientCards(){
   PURCHASE_SPEND_TRACK_GROUPS.forEach(g=>{ groupByLabel[g.label]=g.keywords; });
   renderIngredientStatCard('ing-card-cc', ingredientPriceStats(rows, groupByLabel['Cream Cheese']||[]));
   renderIngredientStatCard('ing-card-wc', ingredientPriceStats(rows, groupByLabel['Whipping Cream']||[]));
-  renderIngredientStatCard('ing-card-pistachio', ingredientPriceStats(rows, groupByLabel['Pistachio Butter']||[]));
   renderFlavoringBreakdown(rows, groupByLabel['Flavoring']||[]);
 }
 
