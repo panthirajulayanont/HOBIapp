@@ -3128,6 +3128,7 @@ async function renderPurchaseSpendDashboard(){
   renderMainIngredientCards();
   const stats=PURCHASE_SPEND_TRACK_GROUPS.map(g=>({label:g.label,count:0,total:0}));
   rows.forEach(p=>{
+    if((p.category||'วัตถุดิบ')!=='วัตถุดิบ') return; // กันของที่ไม่ใช่วัตถุดิบ (เช่น อุปกรณ์ทำครัว/แพ็กเกจจิ้ง) หลุดเข้ามาแค่เพราะชื่อมีคำพ้อง
     const nameLower=(p.item_name||'').toLowerCase();
     const gi=PURCHASE_SPEND_TRACK_GROUPS.findIndex(g=>g.keywords.some(kw=>nameLower.includes(kw.toLowerCase())));
     if(gi>=0){ stats[gi].count++; stats[gi].total+=Number(p.total||0); }
@@ -3158,6 +3159,7 @@ async function renderPurchaseSpendDashboard(){
 // เอาไว้จับคู่ไอเทมในรายการซื้อกับกลุ่มติดตาม ใช้ keyword เดียวกับ PURCHASE_SPEND_TRACK_GROUPS (case-insensitive substring)
 function purchasesMatchingKeywords(rows,keywords){
   return rows.filter(p=>{
+    if((p.category||'วัตถุดิบ')!=='วัตถุดิบ') return false; // กันของที่ไม่ใช่วัตถุดิบ (เช่น อุปกรณ์ทำครัว/แพ็กเกจจิ้ง) หลุดเข้ามาแค่เพราะชื่อมีคำพ้อง
     const n=(p.item_name||'').toLowerCase();
     return keywords.some(kw=>n.includes(kw.toLowerCase()));
   });
