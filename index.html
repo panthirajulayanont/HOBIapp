@@ -3177,8 +3177,14 @@ const FLAVORING_SUBGROUPS=[
   {label:'Ceylon',keywords:['ceylon','ซีลอน']},
   {label:'Pistachio',keywords:['pistachio','พิสตาชิโอ']}
 ];
+// เคสพิเศษที่ต้องบังคับกลุ่มตรงๆ แยกจาก FLAVORING_SUBGROUPS — ใช้กับไอเทมที่ชื่อมีคำจากหลายกลุ่มปนกัน (เช่นเคยตั้งชื่อไว้ใช้คำว่า "matcha" ปนอยู่ แต่จริงๆ ตัวสินค้าคือฮูจิฉะ) เช็คก่อนกฎทั่วไปเสมอ
+const FLAVORING_MANUAL_OVERRIDES=[
+  {test:n=>n.includes('darkhoujicha'), label:'Houjicha'} // "Dark Houjicha 100g trial matcha" มีคำว่า matcha ปนอยู่ในชื่อ แต่ตัวสินค้าจริงคือฮูจิฉะ
+];
 function classifyFlavoringBucket(itemName){
   const n=normalizeIngredientText(itemName);
+  const override=FLAVORING_MANUAL_OVERRIDES.find(o=>o.test(n));
+  if(override) return override.label;
   const found=FLAVORING_SUBGROUPS.find(g=>g.keywords.some(kw=>n.includes(normalizeIngredientText(kw))));
   return found ? found.label : 'อื่นๆ';
 }
