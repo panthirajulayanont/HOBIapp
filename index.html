@@ -1618,23 +1618,25 @@ function findItemCost(name,optsForItem){
 }
 // ต้นทุนเพิ่มของตัวเลือก 1 รายการ (ตั้งค่าไว้ในหน้า Settings > Options Menu) — คืน 0 ถ้าไม่พบหรือไม่ได้ตั้งค่าไว้
 // ถ้าออปชั่นนี้ผูกกับเมนูหลัก (linked_menu) ไว้ ให้ดึงต้นทุนจาก Main Menu มาใช้เสมอแทนค่าที่ตั้งไว้ในตัวมันเอง (Main Menu เป็น single source of truth กันตัวเลข 2 ที่ไม่ตรงกัน)
+// หาเมนูที่ผูกไว้แบบ "ตรงชื่อเป๊ะเท่านั้น" (ไม่ใช้ fuzzyFindMenu/substring) — ตั้งใจเข้มงวดเพราะ field linked_menu บางรายการเก่าอาจมีข้อความที่ไม่ใช่ชื่อเมนูเดี่ยวๆ ตกค้างอยู่ (เช่น พิมพ์หลายชื่อคั่นด้วยคอมม่าไว้เป็นโน้ตตอนที่ field นี้ยังไม่ถูกใช้งานจริง)
+// ถ้าใช้ fuzzy/substring จะเสี่ยงจับคู่มั่วกับเมนูอื่นที่บังเอิญมีชื่อซ้อนอยู่ในข้อความนั้น ทำให้ราคา/ต้นทุนของออปชั่นผิดไปหมด
+function findLinkedMenuExact(linkedMenuName){
+  if(!linkedMenuName) return null;
+  return menuCache.find(m=>m.name===linkedMenuName) || null;
+}
 function findOptionCost(group,optionName){
   const o=optionCache.find(x=>x.group===group && x.name===optionName);
   if(!o) return 0;
-  if(o.linked_menu){
-    const m=fuzzyFindMenu(o.linked_menu);
-    if(m) return Number(m.cost)||0;
-  }
+  const m=findLinkedMenuExact(o.linked_menu);
+  if(m) return Number(m.cost)||0;
   return Number(o.cost)||0;
 }
-// ราคาเพิ่มของตัวเลือก 1 รายการ — หลักการเดียวกับ findOptionCost คือถ้าผูกกับเมนูหลักไว้ ให้ใช้ราคาขายของเมนูนั้นเสมอ
+// ราคาเพิ่มของตัวเลือก 1 รายการ — หลักการเดียวกับ findOptionCost คือถ้าผูกกับเมนูหลักไว้ (ตรงชื่อเป๊ะ) ให้ใช้ราคาขายของเมนูนั้นเสมอ
 function findOptionPrice(group,optionName){
   const o=optionCache.find(x=>x.group===group && x.name===optionName);
   if(!o) return 0;
-  if(o.linked_menu){
-    const m=fuzzyFindMenu(o.linked_menu);
-    if(m) return Number(m.price)||0;
-  }
+  const m=findLinkedMenuExact(o.linked_menu);
+  if(m) return Number(m.price)||0;
   return Number(o.extra_price)||0;
 }
 function findMenuPrice(name){
@@ -1974,7 +1976,7 @@ function onOptionLinkedMenuChange(sel){
   const priceEl=document.getElementById('og-price');
   const costEl=document.getElementById('og-cost');
   const hintEl=document.getElementById('og-linked-hint');
-  const m=sel.value ? fuzzyFindMenu(sel.value) : null;
+  const m=sel.value ? findLinkedMenuExact(sel.value) : null;
   if(m){
     priceEl.value=Number(m.price)||0;
     costEl.value=Number(m.cost)||0;
@@ -4834,7 +4836,8 @@ async function renderOptionManage(){
       const optsInGroup=getOptionsForGroup(g);
       const rows=optsInGroup.map(o=>{
         const livePrice=findOptionPrice(o.group,o.name), liveCost=findOptionCost(o.group,o.name);
-        const linkedTag=o.linked_menu?` <span style="color:var(--muted)">(ผูกกับ ${escapeHtml(o.linked_menu)})</span>`:'';
+        // โชว์ป้าย "ผูกกับ" เฉพาะตอนที่ linked_menu ตรงชื่อเมนูจริงเป๊ะเท่านั้น กันโชว์ข้อความขยะเก่าที่ไม่ใช่ชื่อเมนูจริง (เช่น field นี้เคยเก็บโน้ตอิสระไว้ก่อนถูกเอามาใช้งานจริง)
+        const linkedTag=findLinkedMenuExact(o.linked_menu)?` <span style="color:var(--muted)">(ผูกกับ ${escapeHtml(o.linked_menu)})</span>`:'';
         return `<div class="list-item">
           <div>${escapeHtml(o.name)} ${livePrice?('+ '+fmtMoney(livePrice)):''}${liveCost?(' <span style="color:var(--muted)">(ต้นทุน '+fmtMoney(liveCost)+')</span>'):''}${linkedTag}</div>
           <div style="display:flex;gap:4px;flex-shrink:0">
@@ -4883,7 +4886,8 @@ function editOptionGroupRow(id){
   document.getElementById('og-group').value=o.group||'';
   document.getElementById('og-name').value=o.name||'';
   const linkedSel=document.getElementById('og-linked');
-  linkedSel.innerHTML=buildLinkedMenuOptionsHtml(o.linked_menu||'');
+  // ถ้า linked_menu เดิมไม่ตรงชื่อเมนูจริงเป๊ะ (เช่นข้อมูลเก่าตกค้างที่ไม่ใช่ชื่อเมนูเดี่ยวๆ) ให้ถือว่ายังไม่ได้ผูกไว้ กันดรอปดาวน์ไปโชว์ค่าขยะเป็นตัวเลือกที่ "เลือกอยู่"
+  linkedSel.innerHTML=buildLinkedMenuOptionsHtml(findLinkedMenuExact(o.linked_menu)?o.linked_menu:'');
   // ต้องเซ็ตราคา/ต้นทุนดิบก่อน แล้วค่อยเรียก sync (เผื่อกรณีผูกเมนูไว้ จะดึงค่าล่าสุดจาก Main Menu มาทับให้ถูกต้องเสมอ แม้ราคาเมนูจะเปลี่ยนไปหลังจากตั้งค่าออปชั่นนี้ครั้งล่าสุด)
   document.getElementById('og-price').value=o.extra_price||0;
   document.getElementById('og-cost').value=o.cost||0;
