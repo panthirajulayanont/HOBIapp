@@ -141,6 +141,10 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
   #p-items .itemrow select.cat{flex:1 1 100%;}
   #p-items .itemrow input.qty,#p-items .itemrow input.unit,#p-items .itemrow input.price{flex:1 1 calc(33.33% - 14px);}
   #p-items .itemrow .row-total{flex:1 1 100%;text-align:right;margin-left:0;padding-top:2px;}
+  #tab-purchases .pur-spend-row,#tab-purchases .ing-card-row{flex-direction:column;}
+  #tab-purchases .pur-spend-row>*,#tab-purchases .ing-card-row>*{min-width:0;}
+  .filter-inline-field{flex-direction:column;align-items:stretch !important;gap:3px !important;}
+  .filter-inline-field label{width:auto !important;}
 }
 .itemblock{border:1px solid var(--border);border-radius:11px;padding:8px;margin-bottom:8px;background:#fffae8;}
 .itemblock .itemrow{background:transparent;padding:0;margin-bottom:6px;}
@@ -157,10 +161,13 @@ nav.bottomnav button.active .ic svg{stroke:var(--pink-dark);}
 @keyframes slideup{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
 .modal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;position:sticky;top:-18px;background:var(--card);padding-top:2px;}
 .modal-header h3{margin:0;font-size:16px;color:var(--pink-dark);}
-.detail-row{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:13.5px;}
+.detail-row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:13.5px;}
 .detail-row:last-child{border-bottom:none;}
-.detail-row .k{color:var(--muted);}
-.detail-row .v{font-weight:600;text-align:right;}
+.detail-row .k{color:var(--muted);flex:1 1 auto;min-width:0;}
+.detail-row .v{font-weight:600;text-align:right;flex:0 0 auto;white-space:nowrap;}
+.filter-inline-field{display:flex;align-items:center;gap:8px;}
+.filter-inline-field label{margin:0;white-space:nowrap;width:56px;flex-shrink:0;}
+.filter-inline-field select,.filter-inline-field input{flex:1;min-width:0;}
 .list-item.clickable{cursor:pointer;}
 .list-item.clickable:hover{background:#fff9df;border-radius:8px;}
 .group-header{background:var(--butter);color:#5a4a2a;font-weight:700;font-size:12.5px;padding:8px 10px;border-radius:8px;margin:14px 0 4px;}
@@ -663,7 +670,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       </form>
       </div>
 
-      <div class="row" style="margin-top:14px">
+      <div class="row pur-spend-row" style="margin-top:14px">
         <div class="chart-card" style="margin-top:0;flex:1 1 0;min-width:0;display:flex;flex-direction:column">
           <div class="chart-card-head">
             <div class="cc-icon" style="background:var(--terracotta)"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 3v9l7.5 4.3"/></svg></div>
@@ -697,8 +704,8 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
           <input type="hidden" id="rp-from"><input type="hidden" id="rp-to">
           </div>
 
-          <div style="display:flex;align-items:center;gap:8px"><label style="margin:0;white-space:nowrap;width:56px;flex-shrink:0">category</label>
-            <select id="rp-category" onchange="renderRecentPurchases()" style="flex:1">
+          <div class="filter-inline-field"><label>category</label>
+            <select id="rp-category" onchange="renderRecentPurchases()">
               <option value="all">all</option>
               <option value="วัตถุดิบ">ingredient</option>
               <option value="แพ็กเกจจิ้ง">packaging</option>
@@ -706,9 +713,9 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
               <option value="อื่นๆ">other</option>
             </select>
           </div>
-          <div style="display:flex;align-items:center;gap:8px"><label style="margin:0;white-space:nowrap;width:56px;flex-shrink:0">search</label><input type="text" id="rp-search" placeholder="พิมพ์คำค้นหา เช่น ครีมชีส" oninput="renderRecentPurchases()" style="flex:1"></div>
-          <div style="display:flex;align-items:center;gap:8px"><label style="margin:0;white-space:nowrap;width:56px;flex-shrink:0">sort</label>
-            <select id="rp-sort" onchange="renderRecentPurchases()" style="flex:1">
+          <div class="filter-inline-field"><label>search</label><input type="text" id="rp-search" placeholder="พิมพ์คำค้นหา เช่น ครีมชีส" oninput="renderRecentPurchases()"></div>
+          <div class="filter-inline-field"><label>sort</label>
+            <select id="rp-sort" onchange="renderRecentPurchases()">
               <option value="date_desc">วันที่ซื้อ (ล่าสุดก่อน)</option>
               <option value="date_asc">วันที่ซื้อ (เก่าสุดก่อน)</option>
               <option value="name_asc">ชื่อไอเทม (ก-ฮ)</option>
@@ -717,7 +724,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
         </div>
       </div>
 
-      <div class="row" style="margin-top:14px">
+      <div class="row ing-card-row" style="margin-top:14px">
         <div class="chart-card" style="margin-top:0;flex:1 1 0;min-width:0">
           <div class="chart-card-head">
             <div class="cc-title">Cream Cheese</div>
@@ -3223,13 +3230,21 @@ async function renderPurchaseSpendDashboard(){
   canvas.style.display='';
   const centerEl=document.getElementById('donut-pur-spend-center');
   if(centerEl) centerEl.style.display='';
-  if(summaryEl) summaryEl.innerHTML='';
+  const isNarrow=window.innerWidth<=520;
+  if(summaryEl){
+    if(isNarrow){
+      const donutColors=['#fff2bf','#ddd1a8','#c2b796','#aba186','#948a77','#7d7467','#665e58'];
+      summaryEl.innerHTML=withData.map((g,i)=>`<div class="detail-row"><span class="k"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${donutColors[i%donutColors.length]};margin-right:6px;vertical-align:middle"></span>${escapeHtml(g.label)}</span><span class="v">${fmtMoney(g.total)}</span></div>`).join('');
+    }else{
+      summaryEl.innerHTML='';
+    }
+  }
   drawPie('chart-pur-spend',
     withData.map(g=>g.label),
     withData.map(g=>g.total),
     'donut-pur-spend-center',
     null,
-    {sliceLabels:true, small:true, cutout:'45%'});
+    {sliceLabels:!isNarrow, small:true, cutout:'45%'});
 }
 // เอาไว้จับคู่ไอเทมในรายการซื้อกับกลุ่มติดตาม ใช้ keyword เดียวกับ PURCHASE_SPEND_TRACK_GROUPS (case-insensitive substring)
 function purchasesMatchingKeywords(rows,keywords){
