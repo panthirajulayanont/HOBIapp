@@ -1062,7 +1062,7 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <div class="btn-row"><button class="btn-secondary" onclick="runItemNameCleanup()">Run Cleanup Now</button></div>
 
       <h3>Find Orders Missing Set-Menu Options <button type="button" class="info-btn" onclick="toggleEl('hint-missing-opts')">i</button></h3>
-      <p class="hint" id="hint-missing-opts" style="display:none">สแกนหาออเดอร์ที่สั่งเซ็ทเมนู (เช่น Melty Wakey Set, Kyoto Tea Twins) แต่ระบบหารสที่เลือกไว้ไม่เจอ (เช่นขึ้น "ไม่ระบุรสเค้ก" ในการ์ด Cake Sold หน้า Home) — ส่วนใหญ่เป็นออเดอร์เก่าที่บันทึกไว้ก่อนมีการแก้บั๊กจับคู่ตัวเลือก กดปุ่มด้านล่างเพื่อหารายชื่อออเดอร์ที่ต้องเปิดไปแก้/เลือกรสใหม่แล้ว Save ซ้ำ</p>
+      <p class="hint" id="hint-missing-opts" style="display:none">สแกนหาออเดอร์ที่สั่ง Melty Wakey Set (เซ็ทที่ลูกค้าเลือกรสเค้ก/เครื่องดื่มเอง) แต่ระบบหารสที่เลือกไว้ไม่เจอ (เช่นขึ้น "ไม่ระบุรสเค้ก" ในการ์ด Cake Sold หน้า Home) — ไม่รวมเซ็ทสูตรตายตัวอย่าง Bestseller/Kyoto/GreenXBrown เพราะเซ็ทพวกนี้แจงรสถูกอยู่แล้วโดยไม่ต้องพึ่งข้อมูลออปชั่นเลย ส่วนใหญ่ที่ขึ้นในนี้เป็นออเดอร์เก่าที่บันทึกไว้ก่อนมีการแก้บั๊กจับคู่ตัวเลือก กดปุ่มด้านล่างเพื่อหารายชื่อออเดอร์ที่ต้องเปิดไปแก้/เลือกรสใหม่แล้ว Save ซ้ำ</p>
       <div class="btn-row"><button class="btn-secondary" onclick="findOrdersWithMissingSetOptions()">Scan Now</button></div>
       <div id="missing-opts-result" style="margin-top:8px"></div>
 
@@ -4662,7 +4662,8 @@ async function refreshDbStats(){
   const opts=await idbAll('option_groups');
   document.getElementById('db-stats').textContent=`ออเดอร์: ${orders.length} รายการ · ซื้อของ: ${pur.length} รายการ · เมนู: ${menu.length} รายการ · ตัวเลือก: ${opts.length} รายการ`;
 }
-// สแกนหา order_items ที่เป็นเซ็ทเมนู (มีสูตรแจกแจงรสตายตัว เช่น Melty Wakey/Kyoto/Bestseller) แต่หาออปชั่นที่เลือกไว้ไม่เจอเลย (ระบบเลยไปนับเป็น "ไม่ระบุรส" ในการ์ด Cake Sold/แดชบอร์ด)
+// สแกนหา order_items ที่เป็นเซ็ทเมนูแบบ "ลูกค้าเลือกรสเอง" (ตอนนี้มีแค่ Melty Wakey) แต่หาออปชั่นที่เลือกไว้ไม่เจอเลย (ระบบเลยไปนับเป็น "ไม่ระบุรส" ในการ์ด Cake Sold/แดชบอร์ด)
+// ตั้งใจไม่รวมเซ็ทแบบ FIXED_SET_RULES (Bestseller, Kyoto, GreenXBrown) เพราะเซ็ทพวกนี้มีสูตรส่วนผสมตายตัว ไม่ได้พึ่งข้อมูล option ในการแจกแจงรสเลย ไม่ว่าจะมี/ไม่มี option ก็แจงถูกอยู่แล้ว ถ้าเอามาเช็คด้วยจะฟ้องเป็น "ปัญหา" ผิดๆ ทั้งที่ไม่มีอะไรต้องแก้
 // ส่วนใหญ่เป็นออเดอร์เก่าที่บันทึกไว้ก่อนมีการผูก order_item_id — ให้ผู้ใช้กดเปิดแก้ไขแต่ละออเดอร์ตรงๆ แทนการไล่หาเองทีละอัน
 async function findOrdersWithMissingSetOptions(){
   const resultEl=document.getElementById('missing-opts-result');
@@ -4672,8 +4673,7 @@ async function findOrdersWithMissingSetOptions(){
   const problems=[];
   allItems.forEach(it=>{
     const n=normFuzzy(canonicalMenuName(it.name));
-    const isRecognizedSet=FIXED_SET_RULES.some(r=>r.test(n))||MELTY_WAKEY_TEST(n);
-    if(!isRecognizedSet) return;
+    if(!MELTY_WAKEY_TEST(n)) return;
     if(!getOptsForOrderItem(it,optsIdx).length) problems.push(it);
   });
   if(!problems.length){
