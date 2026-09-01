@@ -1091,6 +1091,11 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       <div class="btn-row"><button class="btn-secondary" onclick="findOrdersWithMissingSetOptions()">Scan Now</button></div>
       <div id="missing-opts-result" style="margin-top:8px"></div>
 
+      <h3>Find Set-Menu Options That Don't Match Any Menu Item <button type="button" class="info-btn" onclick="toggleEl('hint-unmatched-opts')">i</button></h3>
+      <p class="hint" id="hint-unmatched-opts" style="display:none">ต่างจากเครื่องมือด้านบน — นี่คือเคสที่ออเดอร์ Melty Wakey Set "มี" ข้อมูลตัวเลือกที่ลูกค้าเลือกไว้จริง แต่ตัวเลือกนั้นจับคู่กับเมนูใน Main Menu ไม่เจอเลย (เช่น สะกดไม่ตรง, ยังไม่มีเมนูนั้นอยู่จริง, หรือความจริงมันไม่ใช่ตัวเลือกรสเค้ก/เครื่องดื่มแต่ดันไปอยู่ในกลุ่มที่ระบบเดาว่าใช่) ทำให้การ์ด Cake Sold หน้า Home ขึ้นบับเบิลแปลกๆ ที่โชว์ข้อความตัวเลือกดิบตรงๆ แทนชื่อรส กดปุ่มด้านล่างเพื่อหาว่าตัวเลือกไหนบ้างที่จับคู่ไม่เจอ แล้วไปแก้ชื่อให้ตรงกับ Main Menu หรือแก้ไขตัวเลือกในออเดอร์นั้น</p>
+      <div class="btn-row"><button class="btn-secondary" onclick="findOrdersWithUnmatchedSetOptions()">Scan Now</button></div>
+      <div id="unmatched-opts-result" style="margin-top:8px"></div>
+
       <h3 style="color:var(--red)">Delete All Data</h3>
       <div class="warn-box">ระบบจะดาวน์โหลดไฟล์ Excel สำรองข้อมูลปัจจุบันให้อัตโนมัติก่อนลบทุกครั้ง และต้องพิมพ์ยืนยันให้ตรงก่อนปุ่มลบถึงจะกดได้ เพื่อกันเผลอกดโดน</div>
       <label>พิมพ์คำว่า <b>ลบทั้งหมด</b> เพื่อยืนยัน</label>
@@ -4773,6 +4778,38 @@ async function findOrdersWithMissingSetOptions(){
     const ord=allOrders.find(o=>o.id===it.order_id || (o.order_no===it.order_no && o.date===it.date));
     return `<div class="list-item">
       <div>${escapeHtml(it.name)} — ${escapeHtml(it.order_no||'(ไม่มีเลขออเดอร์)')} · ${escapeHtml(formatDateDDMM(it.date))}</div>
+      <button class="btn-ghost btn-sm" ${ord?`onclick="editOrderById('${ord.id}')"`:'disabled'}>เปิดแก้ไข</button>
+    </div>`;
+  }).join('');
+}
+// สแกนหา order_items ที่เป็น Melty Wakey Set และ "มี" ข้อมูลตัวเลือกที่เลือกไว้ (ไม่เข้าเงื่อนไขของ findOrdersWithMissingSetOptions ด้านบน)
+// แต่ตัวเลือกที่เลือกไว้บางอัน จับคู่กับเมนูจริงใน Main Menu ไม่เจอเลย (fuzzyFindMenu คืนค่า null) — เคสนี้ระบบยังคงพยายามเดาหมวดหมู่จากชื่อกลุ่มตัวเลือกแทน (เช่น ชื่อกลุ่มมีคำว่า "เค้ก" ก็เดาว่าเป็นเค้ก)
+// แล้วโชว์บับเบิลด้วย "ข้อความตัวเลือกดิบ" ตรงๆ (เช่น "Melty Wakey (ประเภทเล็ก)") แทนชื่อรสจริง ซึ่งอาจไม่ใช่รสเค้กจริงๆ (เช่นเป็นตัวเลือกขนาด/ประเภทเซ็ท ไม่ใช่รส) ทำให้ Cake Sold โชว์บับเบิลแปลกๆ
+// เครื่องมือนี้ช่วยหาว่าตัวเลือกไหนบ้างที่จับคู่ไม่เจอ จะได้ไปแก้ที่ต้นตอ (เช่น เพิ่มเมนูนั้นเข้า Main Menu ให้ครบ, แก้ชื่อให้ตรงกัน, หรือแก้ชื่อกลุ่มตัวเลือกถ้าจริงๆ ไม่ใช่ตัวเลือกรสเค้ก/เครื่องดื่ม)
+async function findOrdersWithUnmatchedSetOptions(){
+  const resultEl=document.getElementById('unmatched-opts-result');
+  resultEl.innerHTML='<div class="hint">กำลังสแกน...</div>';
+  const [allItems,allOpts,allOrders]=await Promise.all([idbAll('order_items'),idbAll('order_item_options'),idbAll('orders')]);
+  const optsIdx=buildOrderItemOptsIndex(allOpts);
+  const problems=[];
+  allItems.forEach(it=>{
+    const n=normFuzzy(canonicalMenuName(it.name));
+    if(!MELTY_WAKEY_TEST(n)) return;
+    if(/summary/i.test(it.order_no||'')) return;
+    const opts=getOptsForOrderItem(it,optsIdx);
+    if(!opts.length) return; // เคสไม่มีข้อมูลตัวเลือกเลย ไปเช็คด้วยเครื่องมือด้านบนแทน
+    const unmatched=opts.filter(o=>!fuzzyFindMenu(o.option));
+    if(unmatched.length) problems.push({item:it, unmatched});
+  });
+  if(!problems.length){
+    resultEl.innerHTML='<div class="emptystate">ไม่พบตัวเลือกที่จับคู่เมนูไม่เจอ</div>';
+    return;
+  }
+  resultEl.innerHTML=`<p class="hint">พบ ${problems.length} รายการ — ตัวเลือกที่ขึ้นสีแดงคือจับคู่กับ Main Menu ไม่เจอ (เดาหมวดหมู่จากชื่อกลุ่มแทน) กดเปิดแก้ไขเพื่อดู/แก้ตัวเลือก หรือไปเพิ่ม/แก้ชื่อเมนูให้ตรงกันใน Main Menu</p>`+problems.map(({item,unmatched})=>{
+    const ord=allOrders.find(o=>o.id===item.order_id || (o.order_no===item.order_no && o.date===item.date));
+    const unmatchedTxt=unmatched.map(o=>`<span style="color:#c0392b">${escapeHtml(o.group)}: ${escapeHtml(o.option)}</span>`).join(', ');
+    return `<div class="list-item">
+      <div>${escapeHtml(item.name)} — ${escapeHtml(item.order_no||'(ไม่มีเลขออเดอร์)')} · ${escapeHtml(formatDateDDMM(item.date))}<br><span class="meta">${unmatchedTxt}</span></div>
       <button class="btn-ghost btn-sm" ${ord?`onclick="editOrderById('${ord.id}')"`:'disabled'}>เปิดแก้ไข</button>
     </div>`;
   }).join('');
