@@ -711,6 +711,31 @@ a.linklike{color:var(--pink-dark);text-decoration:underline;cursor:pointer;font-
       </div>
       <div id="pur-recent" class="emptystate" style="margin-top:10px">ยังไม่มีข้อมูล</div>
     </div>
+
+    <div class="row" style="margin-top:14px">
+      <div class="chart-card" style="margin-top:0;flex:1 1 0;min-width:0">
+        <div class="chart-card-head">
+          <div class="cc-title">Cream Cheese</div>
+          <button type="button" class="info-btn" onclick="toggleEl('hint-ing-cc')">i</button>
+        </div>
+        <p class="hint" id="hint-ing-cc" style="display:none">ราคาเฉลี่ยและราคาล่าสุดต่อหน่วยของวัตถุดิบ Cream Cheese คำนวณจากประวัติการซื้อทั้งหมด (จับคู่ไอเทมด้วยคำสำคัญเดียวกับกราฟยอดซื้อวัตถุดิบหลักด้านบน)</p>
+        <div id="ing-card-cc" style="margin-top:6px"></div>
+      </div>
+      <div class="chart-card" style="margin-top:0;flex:1 1 0;min-width:0">
+        <div class="chart-card-head">
+          <div class="cc-title">Whipping Cream</div>
+          <button type="button" class="info-btn" onclick="toggleEl('hint-ing-wc')">i</button>
+        </div>
+        <p class="hint" id="hint-ing-wc" style="display:none">ราคาเฉลี่ยและราคาล่าสุดต่อหน่วยของวัตถุดิบ Whipping Cream คำนวณจากประวัติการซื้อทั้งหมด</p>
+        <div id="ing-card-wc" style="margin-top:6px"></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:10px;padding:12px 14px">
+      <h3 style="font-size:13px;margin:0 0 6px">Flavoring — แยกตามไอเทม <button type="button" class="info-btn" onclick="toggleEl('hint-ing-flavor')">i</button></h3>
+      <p class="hint" id="hint-ing-flavor" style="display:none">รายชื่อไอเทมที่ถูกจับเข้ากลุ่ม "Flavoring" ในกราฟยอดซื้อวัตถุดิบหลักด้านบน (จับคู่ด้วยคำสำคัญ เช่น matcha, houjicha, cacao, ชา ฯลฯ) พร้อมราคาเฉลี่ยต่อหน่วยของแต่ละไอเทม — เอาไว้เช็คว่าตอนนี้มีไอเทมไหนถูกนับรวมอยู่บ้าง</p>
+      <div id="ing-card-flavoring-list"></div>
+    </div>
   </div>
 
   <!-- DASHBOARD TAB -->
@@ -3082,7 +3107,8 @@ async function renderRecentPurchases(){
   el.innerHTML=header+rows.map(p=>`<div class="order-row clickable" onclick="showPurchaseDetail('${p.id}')">
       ${purCategoryIconSvg(p.category)}
       <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0"><b>${escapeHtml(p.item_name)}</b></span>
-      <span class="or-date">${formatThaiDateShort(p.date)}</span>
+      <span class="or-date">${formatDateDDMM(p.date)}</span>
+      <span class="or-total">${fmtMoney(p.unit_price)}${p.unit?'/'+escapeHtml(p.unit):''}</span>
     </div>`).join('');
 }
 
@@ -3099,6 +3125,7 @@ async function renderPurchaseSpendDashboard(){
   if(!canvas) return;
   // กราฟนี้แสดงยอดรวม "ตลอดกาล" เสมอ ไม่ผูกกับตัวกรองช่วงเวลาด้านบนของหน้า Purchases แล้ว
   const rows=await idbAll('purchases');
+  renderMainIngredientCards();
   const stats=PURCHASE_SPEND_TRACK_GROUPS.map(g=>({label:g.label,count:0,total:0}));
   rows.forEach(p=>{
     const nameLower=(p.item_name||'').toLowerCase();
@@ -3127,6 +3154,62 @@ async function renderPurchaseSpendDashboard(){
     'donut-pur-spend-center',
     null,
     {sliceLabels:true, small:true, cutout:'45%'});
+}
+// เอาไว้จับคู่ไอเทมในรายการซื้อกับกลุ่มติดตาม ใช้ keyword เดียวกับ PURCHASE_SPEND_TRACK_GROUPS (case-insensitive substring)
+function purchasesMatchingKeywords(rows,keywords){
+  return rows.filter(p=>{
+    const n=(p.item_name||'').toLowerCase();
+    return keywords.some(kw=>n.includes(kw.toLowerCase()));
+  });
+}
+// สรุปสถิติราคาต่อหน่วยของกลุ่มวัตถุดิบ 1 กลุ่ม (เฉลี่ยทุกครั้งที่เคยซื้อ + ราคาครั้งล่าสุด) — ใช้กับการ์ด Cream Cheese/Whipping Cream
+function ingredientPriceStats(rows,keywords){
+  const matched=purchasesMatchingKeywords(rows,keywords).filter(p=>Number(p.unit_price)>0);
+  if(!matched.length) return null;
+  matched.sort((a,b)=>(b.date+b.id).localeCompare(a.date+a.id)); // ล่าสุดก่อน
+  const avg=matched.reduce((s,p)=>s+Number(p.unit_price),0)/matched.length;
+  const latest=matched[0];
+  return {avg, latestPrice:Number(latest.unit_price), latestUnit:latest.unit||'', latestDate:latest.date, count:matched.length};
+}
+function renderIngredientStatCard(elId,stats){
+  const el=document.getElementById(elId);
+  if(!el) return;
+  if(!stats){ el.innerHTML='<div class="emptystate">ยังไม่มีข้อมูลการซื้อ</div>'; return; }
+  const unitSuffix=stats.latestUnit?('/'+escapeHtml(stats.latestUnit)):'';
+  el.innerHTML=`
+    <div class="detail-row"><span class="k">ราคาเฉลี่ยต่อหน่วย</span><span class="v">${fmtMoney(stats.avg)}${unitSuffix}</span></div>
+    <div class="detail-row"><span class="k">ราคาล่าสุดที่ซื้อ</span><span class="v">${fmtMoney(stats.latestPrice)}${unitSuffix}</span></div>
+    <p class="hint" style="margin-top:2px">จากประวัติซื้อ ${stats.count} ครั้ง · ล่าสุด ${formatDateDDMM(stats.latestDate)}</p>
+  `;
+}
+// การ์ด Flavoring: แยกแสดงทีละไอเทมที่ถูกจับเข้ากลุ่มนี้ (ต่างจาก Cream Cheese/Whipping Cream ที่รวมเป็นก้อนเดียว เพราะ Flavoring มีหลายรสปนกัน อยากรู้ว่าตอนนี้มีไอเทมอะไรบ้าง)
+function renderFlavoringBreakdown(rows,keywords){
+  const el=document.getElementById('ing-card-flavoring-list');
+  if(!el) return;
+  const matched=purchasesMatchingKeywords(rows,keywords);
+  const byName={};
+  matched.forEach(p=>{
+    const key=p.item_name||'(ไม่ระบุชื่อ)';
+    if(!byName[key]) byName[key]={prices:[],latest:null};
+    if(Number(p.unit_price)>0) byName[key].prices.push(Number(p.unit_price));
+    if(!byName[key].latest || p.date>byName[key].latest.date) byName[key].latest=p;
+  });
+  const names=Object.keys(byName);
+  if(!names.length){ el.innerHTML='<div class="emptystate">ยังไม่พบไอเทมที่ตรงกับกลุ่ม Flavoring</div>'; return; }
+  el.innerHTML=names.sort((a,b)=>a.localeCompare(b,'th')).map(name=>{
+    const d=byName[name];
+    const avg=d.prices.length ? d.prices.reduce((s,x)=>s+x,0)/d.prices.length : 0;
+    const unitSuffix=d.latest.unit?('/'+escapeHtml(d.latest.unit)):'';
+    return `<div class="list-item"><div>${escapeHtml(name)}</div><div style="text-align:right;font-size:12px;color:var(--muted);flex-shrink:0">เฉลี่ย ${fmtMoney(avg)}${unitSuffix}</div></div>`;
+  }).join('');
+}
+async function renderMainIngredientCards(){
+  const rows=await idbAll('purchases');
+  const groupByLabel={};
+  PURCHASE_SPEND_TRACK_GROUPS.forEach(g=>{ groupByLabel[g.label]=g.keywords; });
+  renderIngredientStatCard('ing-card-cc', ingredientPriceStats(rows, groupByLabel['Cream Cheese']||[]));
+  renderIngredientStatCard('ing-card-wc', ingredientPriceStats(rows, groupByLabel['Whipping Cream']||[]));
+  renderFlavoringBreakdown(rows, groupByLabel['Flavoring']||[]);
 }
 
 /* ============ DASHBOARD ============ */
