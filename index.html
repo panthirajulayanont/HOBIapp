@@ -1147,7 +1147,7 @@ service cloud.firestore {
 
     <div class="card">
       <h2>Options Menu <button type="button" class="info-btn" onclick="toggleEl('hint-option-groups')">i</button></h2>
-      <p class="hint" id="hint-option-groups" style="display:none">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน "ต้นทุนเพิ่ม" คือต้นทุนวัตถุดิบของตัวเลือกนั้น (ถ้ามี) ระบบจะบวกเข้ากับต้นทุนเมนูหลักอัตโนมัติตอนคำนวณกำไรของออเดอร์ที่เลือกตัวเลือกนี้</p>
+      <p class="hint" id="hint-option-groups" style="display:none">ตัวเลือก/ท็อปปิ้งที่ลูกค้าเลือกได้ในแต่ละเมนู (เช่น Taste Note, Choose the Melty Cheesecake) — ใช้เป็นตัวเลือกในฟอร์มบันทึกออเดอร์ และให้ AI ช่วยจับคู่ชื่อให้ตรงกัน "ต้นทุนเพิ่ม" คือต้นทุนวัตถุดิบของตัวเลือกนั้น (ถ้ามี) ระบบจะบวกเข้ากับต้นทุนเมนูหลักอัตโนมัติตอนคำนวณกำไรของออเดอร์ที่เลือกตัวเลือกนี้ ถ้าตัวเลือกนี้คือสินค้าเดียวกับที่มีขายเดี่ยวใน Main Menu อยู่แล้ว (เช่น ท็อปปิ้ง Salted caramel) ให้เลือก "เมนูที่ผูกด้วย" เป็นเมนูนั้น ระบบจะดึงราคา/ต้นทุนจาก Main Menu มาใช้ให้อัตโนมัติเสมอ กันตัวเลขเพี้ยนจากการกรอกซ้ำ 2 ที่ไม่ตรงกัน</p>
       <div id="opt-manage-list"></div>
       <div class="subcard">
         <h3 class="collapsible-head" onclick="toggleSection(this,'opt-add-form-body')">Add Option <span class="chevron">▾</span></h3>
@@ -1158,12 +1158,13 @@ service cloud.firestore {
           </div>
           <div><label>ชื่อออปชั่น</label><input type="text" id="og-name" placeholder="เช่น vanilla choco"></div>
         </div>
+        <label>เมนูที่ผูกด้วย (ถ้ามี)</label>
+        <select id="og-linked" onchange="onOptionLinkedMenuChange(this)"></select>
+        <p class="hint" id="og-linked-hint" style="display:none;margin-top:2px">ผูกกับเมนูนี้แล้ว — ราคาเพิ่ม/ต้นทุนด้านล่างดึงมาจาก Main Menu อัตโนมัติ ไม่ต้องกรอกซ้ำ ถ้าจะแก้ราคา/ต้นทุน ให้ไปแก้ที่เมนูหลักแทน</p>
         <div class="row">
           <div><label>ราคาเพิ่ม (฿)</label><input type="number" id="og-price" value="0" step="0.01"></div>
           <div><label>ต้นทุนเพิ่ม (฿)</label><input type="number" id="og-cost" value="0" step="0.01"></div>
         </div>
-        <label>เมนูที่ผูกด้วย (ถ้ามี)</label>
-        <input type="text" id="og-linked" placeholder="เช่น Black cold brew, Milky cold brew">
         <input type="hidden" id="og-edit-id">
         <div class="btn-row">
           <button class="btn-secondary" onclick="addOptionGroupManual()">+ Add Option</button>
@@ -1611,9 +1612,25 @@ function findItemCost(name,optsForItem){
   return cost;
 }
 // ต้นทุนเพิ่มของตัวเลือก 1 รายการ (ตั้งค่าไว้ในหน้า Settings > Options Menu) — คืน 0 ถ้าไม่พบหรือไม่ได้ตั้งค่าไว้
+// ถ้าออปชั่นนี้ผูกกับเมนูหลัก (linked_menu) ไว้ ให้ดึงต้นทุนจาก Main Menu มาใช้เสมอแทนค่าที่ตั้งไว้ในตัวมันเอง (Main Menu เป็น single source of truth กันตัวเลข 2 ที่ไม่ตรงกัน)
 function findOptionCost(group,optionName){
   const o=optionCache.find(x=>x.group===group && x.name===optionName);
-  return o? Number(o.cost)||0 : 0;
+  if(!o) return 0;
+  if(o.linked_menu){
+    const m=fuzzyFindMenu(o.linked_menu);
+    if(m) return Number(m.cost)||0;
+  }
+  return Number(o.cost)||0;
+}
+// ราคาเพิ่มของตัวเลือก 1 รายการ — หลักการเดียวกับ findOptionCost คือถ้าผูกกับเมนูหลักไว้ ให้ใช้ราคาขายของเมนูนั้นเสมอ
+function findOptionPrice(group,optionName){
+  const o=optionCache.find(x=>x.group===group && x.name===optionName);
+  if(!o) return 0;
+  if(o.linked_menu){
+    const m=fuzzyFindMenu(o.linked_menu);
+    if(m) return Number(m.price)||0;
+  }
+  return Number(o.extra_price)||0;
 }
 function findMenuPrice(name){
   const m=fuzzyFindMenu(name);
@@ -1900,6 +1917,44 @@ function buildMenuOptionsHtml(selected){
     html+=`<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)} (ไม่อยู่ในรายการเมนู)</option>`;
   }
   return html;
+}
+// ดรอปดาวน์ "เมนูที่ผูกด้วย" ในฟอร์ม Option Menu — เอาไว้เลือกว่าออปชั่นนี้คือสินค้าเดียวกับเมนูหลักตัวไหน (ถ้ามี) เพื่อดึงราคา/ต้นทุนจาก Main Menu มาใช้แทนการกรอกซ้ำ
+function buildLinkedMenuOptionsHtml(selected){
+  let html='<option value="">-- ไม่ผูกกับเมนู (กรอกราคา/ต้นทุนเองอิสระ) --</option>';
+  if(!menuCache.length) return html;
+  const cats=[...new Set(menuCache.map(m=>m.category||'อื่นๆ'))];
+  cats.forEach(cat=>{
+    const items=menuCache.filter(m=>(m.category||'อื่นๆ')===cat);
+    if(!items.length) return;
+    html+=`<optgroup label="${escapeHtml(cat)}">`;
+    items.forEach(m=>{
+      const label=m.short_name?`${m.short_name} — ${m.name}`:m.name;
+      html+=`<option value="${escapeHtml(m.name)}" ${m.name===selected?'selected':''}>${escapeHtml(label)}</option>`;
+    });
+    html+='</optgroup>';
+  });
+  if(selected && !menuCache.some(m=>m.name===selected)){
+    html+=`<option value="${escapeHtml(selected)}" selected>${escapeHtml(selected)} (ไม่อยู่ในรายการเมนู)</option>`;
+  }
+  return html;
+}
+// ตอนเลือก/เปลี่ยน "เมนูที่ผูกด้วย" ในฟอร์ม Option Menu — ถ้าผูกกับเมนูจริง ให้ดึงราคา/ต้นทุนจากเมนูนั้นมาใส่ให้อัตโนมัติ แล้วล็อกช่องไม่ให้แก้เอง (ป้องกันตัวเลข 2 ที่ไม่ตรงกัน)
+function onOptionLinkedMenuChange(sel){
+  const priceEl=document.getElementById('og-price');
+  const costEl=document.getElementById('og-cost');
+  const hintEl=document.getElementById('og-linked-hint');
+  const m=sel.value ? fuzzyFindMenu(sel.value) : null;
+  if(m){
+    priceEl.value=Number(m.price)||0;
+    costEl.value=Number(m.cost)||0;
+    priceEl.readOnly=true; costEl.readOnly=true;
+    priceEl.style.background='var(--card-alt, #f0ede4)'; costEl.style.background='var(--card-alt, #f0ede4)';
+    if(hintEl) hintEl.style.display='block';
+  }else{
+    priceEl.readOnly=false; costEl.readOnly=false;
+    priceEl.style.background=''; costEl.style.background='';
+    if(hintEl) hintEl.style.display='none';
+  }
 }
 function onOrderItemNameChange(sel){
   const price=findMenuPrice(sel.value);
@@ -3525,10 +3580,11 @@ async function adjustStockQty(delta){
   await setTodayStockQty(stockModalMenuId,next);
   document.getElementById('stock-modal-qty').textContent=next;
 }
-// รวมจำนวนเมนูหมวด cheesecake slice ต่อ 1 menu id จากรายการไอเทมของออเดอร์ (จับคู่ชื่อแบบ fuzzy กันชื่อสะกดไม่ตรงเป๊ะ) — ใช้คำนวณหักสต็อก Today's Stock อัตโนมัติ
+// รวมจำนวนเมนูที่มีติดตามสต็อกใน Today's Stock (หมวด cheesecake slice + soft jelly) ต่อ 1 menu id จากรายการไอเทมของออเดอร์ (จับคู่ชื่อแบบ fuzzy กันชื่อสะกดไม่ตรงเป๊ะ) — ใช้คำนวณหักสต็อก Today's Stock อัตโนมัติ
 // เซ็ทเมนูที่มีสูตรตายตัว (เช่น Kyoto Tea Twin Set = โฮจิฉะ 1 + มัทฉะ 1) ให้แจกแจงเป็นรายรสก่อนนับ ไม่งั้นสต็อกรายรสจะไม่ถูกหักตอนขายเป็นเซ็ท
+// เดิมกรองแค่หมวด "cheesecake slice" หมวดเดียว ทำให้เมนูที่ track สต็อกในหมวดอื่น (เช่น Soft Jelly/Tokyo Coffee Jelly) ไม่ถูกหักสต็อกเลยตอนขาย — ขยายให้ครอบคลุมทุกหมวดที่ Today's Stock แสดงผล
 function sumCakeQtyByMenuId(items){
-  const targetCat=normCatName('cheesecake slice');
+  const trackedCats=new Set([normCatName('cheesecake slice'), normCatName('soft jelly')]);
   const map={};
   (items||[]).forEach(it=>{
     const qty=Number(it.qty)||0;
@@ -3536,7 +3592,7 @@ function sumCakeQtyByMenuId(items){
     const bd=breakdownSetMenuItem(it, it.options);
     if(bd){
       bd.forEach(b=>{
-        if(normCatName(b.category)!==targetCat) return;
+        if(!trackedCats.has(normCatName(b.category))) return;
         const menuId=b.menu_id || (fuzzyFindMenu(b.menuName)||{}).id;
         if(!menuId) return;
         map[menuId]=(map[menuId]||0)+b.qty;
@@ -3544,7 +3600,7 @@ function sumCakeQtyByMenuId(items){
       return;
     }
     const m=fuzzyFindMenu(it.name);
-    if(!m || normCatName(m.category)!==targetCat) return;
+    if(!m || !trackedCats.has(normCatName(m.category))) return;
     map[m.id]=(map[m.id]||0)+qty;
   });
   return map;
@@ -4728,8 +4784,10 @@ async function renderOptionManage(){
     el.innerHTML=groups.map((g,idx)=>{
       const optsInGroup=getOptionsForGroup(g);
       const rows=optsInGroup.map(o=>{
+        const livePrice=findOptionPrice(o.group,o.name), liveCost=findOptionCost(o.group,o.name);
+        const linkedTag=o.linked_menu?` <span style="color:var(--muted)">(ผูกกับ ${escapeHtml(o.linked_menu)})</span>`:'';
         return `<div class="list-item">
-          <div>${escapeHtml(o.name)} ${o.extra_price?('+ '+fmtMoney(o.extra_price)):''}${o.cost?(' <span style="color:var(--muted)">(ต้นทุน '+fmtMoney(o.cost)+')</span>'):''}</div>
+          <div>${escapeHtml(o.name)} ${livePrice?('+ '+fmtMoney(livePrice)):''}${liveCost?(' <span style="color:var(--muted)">(ต้นทุน '+fmtMoney(liveCost)+')</span>'):''}${linkedTag}</div>
           <div style="display:flex;gap:4px;flex-shrink:0">
             <button class="icon-btn" onclick="editOptionGroupRow('${o.id}')" aria-label="แก้ไข">${ICON_EDIT}</button>
             <button class="icon-btn danger" onclick="deleteOptionGroupRow('${o.id}')" aria-label="ลบ">${ICON_DELETE}</button>
@@ -4745,6 +4803,8 @@ async function renderOptionManage(){
   }
   const dl=document.getElementById('og-group-list');
   if(dl) dl.innerHTML=getOptionGroupNames().map(g=>`<option value="${escapeHtml(g)}">`).join('');
+  const linkedSel=document.getElementById('og-linked');
+  if(linkedSel) linkedSel.innerHTML=buildLinkedMenuOptionsHtml('');
 }
 async function deleteOptionGroupRow(id){
   if(!(await confirmDeleteModal('ลบตัวเลือกนี้?'))) return;
@@ -4773,9 +4833,12 @@ function editOptionGroupRow(id){
   document.getElementById('og-edit-id').value=o.id;
   document.getElementById('og-group').value=o.group||'';
   document.getElementById('og-name').value=o.name||'';
+  const linkedSel=document.getElementById('og-linked');
+  linkedSel.innerHTML=buildLinkedMenuOptionsHtml(o.linked_menu||'');
+  // ต้องเซ็ตราคา/ต้นทุนดิบก่อน แล้วค่อยเรียก sync (เผื่อกรณีผูกเมนูไว้ จะดึงค่าล่าสุดจาก Main Menu มาทับให้ถูกต้องเสมอ แม้ราคาเมนูจะเปลี่ยนไปหลังจากตั้งค่าออปชั่นนี้ครั้งล่าสุด)
   document.getElementById('og-price').value=o.extra_price||0;
   document.getElementById('og-cost').value=o.cost||0;
-  document.getElementById('og-linked').value=o.linked_menu||'';
+  onOptionLinkedMenuChange(linkedSel);
   document.getElementById('og-cancel-btn').style.display='inline-block';
   openCollapsible('opt-add-form-body');
   document.getElementById('og-group').scrollIntoView({behavior:'smooth',block:'center'});
@@ -4786,7 +4849,9 @@ function resetOptionForm(){
   document.getElementById('og-name').value='';
   document.getElementById('og-price').value='0';
   document.getElementById('og-cost').value='0';
-  document.getElementById('og-linked').value='';
+  const linkedSel=document.getElementById('og-linked');
+  linkedSel.innerHTML=buildLinkedMenuOptionsHtml('');
+  onOptionLinkedMenuChange(linkedSel);
   document.getElementById('og-cancel-btn').style.display='none';
 }
 /* ============ SERVICE WORKER (ทำให้ติดตั้งเป็นแอพจริงได้ + แคชให้โหลดเร็วขึ้น) ============ */
